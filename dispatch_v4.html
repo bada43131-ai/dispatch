@@ -1,6 +1,770 @@
+자주 사용하는 앱에서 바로 AI를 사용해 보세요 … Gemini를 사용하여 초안을 생성하고 콘텐츠를 다듬고, Google의 차세대 AI가 지원되는 Gemini Pro를 이용하세요.
+dispatch_v4.html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>송도 배차 플래너</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:12px;background:#fff;color:#111;max-width:600px;margin:0 auto;}
+h2{font-size:15px;font-weight:700;margin-bottom:4px;color:#222;}
+.sub{font-size:11px;color:#888;margin-bottom:14px;}
+.section-title{font-size:12px;font-weight:700;color:#555;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #eee;}
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;}
+.input-row{display:flex;align-items:center;justify-content:space-between;background:#f7f7f7;border-radius:8px;padding:7px 10px;}
+.input-label{font-size:11px;color:#555;flex:1;display:flex;align-items:center;gap:4px;}
+.type-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.cur-input{width:44px;height:30px;border:1px solid #ddd;border-radius:6px;text-align:center;font-size:13px;font-weight:700;background:#fff;}
+.apply-btn{width:100%;padding:12px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin:8px 0 0;-webkit-tap-highlight-color:transparent;}
+.apply-btn:active{background:#0d4a8a;}
+.excl-row{display:flex;align-items:center;justify-content:space-between;background:#f7f7f7;border-radius:8px;padding:7px 10px;cursor:pointer;}
+.excl-row.excluded{background:#FEE2E2;}
+.excl-label{font-size:11px;flex:1;display:flex;align-items:center;gap:4px;}
+.excl-toggle{width:28px;height:18px;border-radius:9px;position:relative;flex-shrink:0;transition:background 0.2s;}
+.excl-toggle .knob{position:absolute;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left 0.2s;}
+.excl-toggle.on{background:#DC2626;}.excl-toggle.on .knob{left:12px;}
+.excl-toggle.off{background:#ccc;}.excl-toggle.off .knob{left:2px;}
+.ctrl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;background:#f7f7f7;border-radius:10px;padding:10px 12px;}
+.ctrl-label{font-size:13px;color:#444;font-weight:600;}
+.ctrl-right{display:flex;align-items:center;}
+.btn{width:38px;height:38px;border:none;background:#e0e0e0;font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333;user-select:none;-webkit-tap-highlight-color:transparent;}
+.btn:active{background:#bbb;}
+.btn-minus{border-radius:8px 0 0 8px;}
+.btn-plus{border-radius:0 8px 8px 0;}
+.ctrl-val{min-width:54px;text-align:center;font-size:16px;font-weight:700;background:#fff;height:38px;display:flex;align-items:center;justify-content:center;border-top:1px solid #ddd;border-bottom:1px solid #ddd;}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
+.metric{background:#f5f5f5;border-radius:8px;padding:8px 4px;text-align:center;}
+.metric-label{font-size:10px;color:#888;margin-bottom:2px;}
+.metric-value{font-size:16px;font-weight:700;}
+table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+th{padding:6px 4px;font-size:11px;color:#888;border-bottom:1px solid #eee;text-align:left;font-weight:500;}
+td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.zone-hd td{background:#efefef;font-size:11px;font-weight:700;color:#555;white-space:normal;padding:5px 6px;}
+.subtotal td{background:#fafafa;font-weight:700;font-size:11px;border-top:1px solid #ddd;}
+.grandtotal td{font-weight:700;font-size:12px;border-top:2px solid #bbb;background:#f5f5f5;}
+.unselected{opacity:0.3;}
+.excluded-row{opacity:0.25;background:#fff5f5;}
+.skip-row td{color:#aaa;font-style:italic;}
+.rank{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;font-size:9px;font-weight:700;margin-right:3px;flex-shrink:0;}
+.badge{display:inline-block;padding:1px 4px;border-radius:3px;font-size:9px;font-weight:700;}
+.mixed{background:#FFF3CD;color:#856404;}
+.inflow{background:#D1FAE5;color:#065F46;}
+.consume{background:#FEE2E2;color:#991B1B;}
+.bar-wrap{width:100%;height:5px;background:#eee;border-radius:3px;position:relative;overflow:hidden;}
+.comment{margin-top:10px;padding:8px 10px;background:#f0f0f0;border-radius:8px;font-size:11px;color:#555;line-height:1.6;}
+.legend{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.legend span{font-size:10px;color:#666;display:flex;align-items:center;gap:3px;}
+.legend-dot{width:10px;height:5px;border-radius:2px;display:inline-block;}
+.save-btn{width:100%;padding:11px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.repair-row{display:flex;align-items:center;justify-content:space-between;background:#fff8f0;border-radius:8px;padding:8px 12px;margin-bottom:6px;}
+</style>
+</head>
+<body>
+
+<h2>송도 배차 플래너</h2>
+<div class="sub">현재수량 입력 → 배차수량 조절 → 현재수량 반영</div>
+
+<!-- ① 현재수량 입력 -->
+<div class="section-title">① 현재수량 입력</div>
+
+<!-- 카카오 자동 불러오기 버튼 -->
+<button onclick="fetchFromKakao()" id="btn-kakao"
+  style="width:100%;padding:11px;background:#FFCD00;color:#3C1E1E;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px;-webkit-tap-highlight-color:transparent;">
+  🚲 카카오 운영웹에서 현재수량 자동 불러오기
+</button>
+<div id="kakao-status" style="font-size:11px;text-align:center;margin-bottom:8px;color:#888;"></div>
+
+<div class="input-grid" id="input-grid"></div>
+
+<!-- 현재수량 합계 표시 -->
+<div id="cur-total-row" style="display:flex;justify-content:flex-end;align-items:center;padding:4px 10px;margin-top:2px;">
+  <span id="cur-total" style="font-size:12px;font-weight:700;color:#185FA5;background:#EFF6FF;padding:3px 10px;border-radius:6px;"></span>
+</div>
+
+<!-- ② 배차 설정 -->
+<div class="section-title">② 배차 설정</div>
+<div class="ctrl-row">
+  <div class="ctrl-label">배차 포인트 수</div>
+  <div class="ctrl-right">
+    <button class="btn btn-minus" onclick="adj('spot',-1)">−</button>
+    <div class="ctrl-val" id="spot-val">6곳</div>
+    <button class="btn btn-plus" onclick="adj('spot',1)">+</button>
+  </div>
+</div>
+<div class="ctrl-row">
+  <div class="ctrl-label">총 배차수량</div>
+  <div class="ctrl-right">
+    <button class="btn btn-minus" onclick="adj('total',-1)">−</button>
+    <div class="ctrl-val" id="total-val">50대</div>
+    <button class="btn btn-plus" onclick="adj('total',1)">+</button>
+  </div>
+</div>
+
+
+<!-- 요약 -->
+<div class="metric-grid" style="margin-top:10px;">
+  <div class="metric"><div class="metric-label">선택포인트</div><div class="metric-value" id="m-spot">-</div></div>
+  <div class="metric"><div class="metric-label">B존</div><div class="metric-value" style="color:#0F6E56" id="m-b">-</div></div>
+  <div class="metric"><div class="metric-label">A존</div><div class="metric-value" style="color:#185FA5" id="m-a">-</div></div>
+  <div class="metric"><div class="metric-label">달성율</div><div class="metric-value" id="m-pct">-</div></div>
+</div>
+
+<div class="legend">
+  <span><span class="legend-dot" style="background:#1D9E75;"></span>B존 ~100%</span>
+  <span><span class="legend-dot" style="background:#378ADD;"></span>A존 ~100%</span>
+  <span><span class="legend-dot" style="background:#F59E0B;"></span>100~110%</span>
+  <span><span class="legend-dot" style="background:#eee;"></span>85%↑ 배차제외</span>
+</div>
+
+<table>
+  <colgroup>
+    <col style="width:33%"><col style="width:10%"><col style="width:10%"><col style="width:11%"><col style="width:11%"><col style="width:25%">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>현장명</th>
+      <th style="text-align:center;">적정</th>
+      <th style="text-align:center;">현재</th>
+      <th style="text-align:center;">배차</th>
+      <th style="text-align:center;">배차후</th>
+      <th>달성율</th>
+    </tr>
+  </thead>
+  <tbody id="table-body"></tbody>
+</table>
+<div class="comment" id="comment"></div>
+
+<!-- DB 저장 섹션 -->
+<div style="margin-top:14px;">
+  <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #eee;">📊 데이터 저장</div>
+
+  <!-- 아침 확정 저장 -->
+  <div style="margin-bottom:8px;">
+    <button onclick="saveMorning()" id="btn-morning" class="save-btn" style="background:#185FA5;color:#fff;">
+      ① 아침 현재수량 확정 저장 (하루 1회)
+    </button>
+    <div id="morning-status" style="font-size:11px;color:#888;text-align:center;margin-top:4px;"></div>
+  </div>
+
+  <!-- 실제 배차량 + 수리물량 -->
+  <div id="dispatch-section">
+    <div style="font-size:11px;color:#555;margin-bottom:6px;font-weight:600;">② 오늘 실제 배차량 입력 (작업 완료 후)</div>
+    <div class="input-grid" id="dispatch-grid"></div>
+
+    <!-- 배차 합계 -->
+    <div style="display:flex;justify-content:flex-end;margin-top:2px;margin-bottom:4px;">
+      <span id="disp-total" style="font-size:12px;font-weight:700;color:#0F6E56;background:#ECFDF5;padding:3px 10px;border-radius:6px;"></span>
+    </div>
+
+    <!-- 수리 물량 -->
+    <div style="font-size:11px;color:#555;margin:12px 0 6px;font-weight:600;">③ 오늘 수리 물량 (고장 바이크)</div>
+    <div class="repair-row">
+      <span style="font-size:13px;color:#555;font-weight:600;">수리 완료 대수</span>
+      <input type="number" id="repair-count" value="0" min="0" max="50"
+        style="width:52px;height:32px;border:1px solid #ddd;border-radius:6px;text-align:center;font-size:14px;font-weight:700;background:#fff;">
+    </div>
+
+    <!-- 저장 버튼 -->
+    <button onclick="saveDispatch()" class="save-btn" style="background:#0F6E56;color:#fff;margin-top:12px;">
+      실제 배차량 + 수리 물량 저장
+    </button>
+    <div id="dispatch-status" style="font-size:11px;color:#888;text-align:center;margin-top:4px;"></div>
+  </div>
+</div>
+
+<!-- 옵션: 제외 포인트 -->
+<div style="margin-top:16px;">
+  <div onclick="toggleExclPanel()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f7f7f7;border-radius:10px;cursor:pointer;user-select:none;">
+    <span style="font-size:12px;font-weight:700;color:#555;">⚙ 특정 포인트 배차 제외 (옵션) <span id="excl-count" style="color:#DC2626;font-size:11px;font-weight:600;"></span></span>
+    <span id="excl-arrow" style="font-size:14px;color:#888;transition:transform 0.2s;">▼</span>
+  </div>
+  <div id="excl-panel" style="display:none;margin-top:6px;">
+    <div style="font-size:11px;color:#888;margin-bottom:8px;padding:0 4px;">오늘 배차하지 않을 포인트를 선택하세요</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="exclude-grid"></div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyz1jsjXBxDpU01opnhX1W447B5pDHtE3ZmyYpwcmRt5UKXfoLKadjeEGkUZKPbwW3B/exec';
+
+let spots=6, budget=50;
+const excluded=new Set();
+
+const bPoints=[
+  {name:'힐스테이트',   zone:'B',opt:12,cur:7, type:'mixed'},
+  {name:'이편한세상',   zone:'B',opt:20,cur:17,type:'mixed'},
+  {name:'송도국제학교', zone:'B',opt:15,cur:13,type:'inflow'},
+  {name:'더샵마스터뷰', zone:'B',opt:15,cur:13,type:'inflow'},
+  {name:'지식정보단지', zone:'B',opt:20,cur:17,type:'consume'},
+  {name:'라이크홈',     zone:'B',opt:17,cur:16,type:'consume'},
+];
+const aPoints=[
+  {name:'인천대1번',    zone:'A',opt:18,cur:9, type:'consume'},
+  {name:'송도시외버스', zone:'A',opt:15,cur:7, type:'consume'},
+  {name:'인천대2번',    zone:'A',opt:15,cur:8, type:'consume'},
+  {name:'테라스정원',   zone:'A',opt:20,cur:12,type:'mixed'},
+  {name:'산책정원',     zone:'A',opt:20,cur:12,type:'consume'},
+  {name:'센트럴파크',   zone:'A',opt:12,cur:8, type:'consume'},
+  {name:'타임스페이스', zone:'A',opt:15,cur:14,type:'consume'},
+];
+const all=[...bPoints,...aPoints];
+const optSum=all.reduce((s,p)=>s+p.opt,0);
+
+function buildInputs(){
+  const grid=document.getElementById('input-grid');
+  grid.innerHTML='';
+  const allIds=all.map(p=>'inp-'+p.name);
+  all.forEach((p,idx)=>{
+    const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
+    const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
+    const nextFocus=`const ids=${JSON.stringify(allIds)};const ni=ids.indexOf(this.id)+1;if(ni<ids.length){const nx=document.getElementById(ids[ni]);nx.focus();nx.select();}`;
+    grid.innerHTML+=`<div class="input-row">
+      <div class="input-label">
+        <span class="type-dot" style="background:${typeColor};"></span>
+        <span style="color:${zColor};font-weight:700;font-size:10px;">[${p.zone}]</span>${p.name}
+      </div>
+      <input class="cur-input" type="number" id="inp-${p.name}" placeholder="0" min="0" max="30"
+        oninput="update();updateCurTotal()"
+        onfocus="this.select()"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();${nextFocus}}">
+    </div>`;
+  });
+  updateCurTotal();
+}
+
+function updateCurTotal(){
+  const el=document.getElementById('cur-total');
+  if(!el) return;
+  const total=all.reduce((s,p)=>{
+    const v=parseInt(document.getElementById('inp-'+p.name)?.value)||0;
+    return s+v;
+  },0);
+  const pct=Math.round(total/optSum*100);
+  const pctColor=pct>=100?'#059669':pct>=85?'#D97706':'#DC2626';
+  el.innerHTML='현재수량 합계: '+total+'대 <span style="color:'+pctColor+';font-weight:700;">'+pct+'%</span>';
+}
+
+function buildDispatchGrid(){
+  const grid=document.getElementById('dispatch-grid');
+  if(!grid) return;
+  grid.innerHTML='';
+  const dispIds=all.map(p=>'disp-'+p.name);
+  all.forEach((p,idx)=>{
+    const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
+    const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
+    const nextFocus=`const ids=${JSON.stringify(dispIds)};const ni=ids.indexOf(this.id)+1;if(ni<ids.length){const nx=document.getElementById(ids[ni]);nx.focus();nx.select();}`;
+    grid.innerHTML+=`<div class="input-row">
+      <div class="input-label">
+        <span class="type-dot" style="background:${typeColor};"></span>
+        <span style="color:${zColor};font-weight:700;font-size:10px;">[${p.zone}]</span>${p.name}
+      </div>
+      <input class="cur-input" type="number" id="disp-${p.name}" placeholder="0" min="0" max="50"
+        oninput="updateDispTotal()"
+        onfocus="this.select()"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();${nextFocus}}">
+    </div>`;
+  });
+}
+
+function updateDispTotal(){
+  const el=document.getElementById('disp-total');
+  if(!el) return;
+  const total=all.reduce((s,p)=>{
+    const v=parseInt(document.getElementById('disp-'+p.name)?.value)||0;
+    return s+v;
+  },0);
+  el.textContent='배차 합계: '+total+'대';
+}
+
+function buildExcludes(){
+  const grid=document.getElementById('exclude-grid');
+  grid.innerHTML='';
+  all.forEach(p=>{
+    const isExcl=excluded.has(p.name);
+    const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
+    const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
+    grid.innerHTML+=`<div class="excl-row${isExcl?' excluded':''}" onclick="toggleExclude('${p.name}')">
+      <div class="excl-label">
+        <span class="type-dot" style="background:${typeColor};"></span>
+        <span style="color:${zColor};font-weight:700;font-size:10px;">[${p.zone}]</span>${p.name}
+      </div>
+      <div class="excl-toggle ${isExcl?'on':'off'}"><div class="knob"></div></div>
+    </div>`;
+  });
+  const cnt=excluded.size;
+  document.getElementById('excl-count').textContent=cnt>0?`(${cnt}곳 제외중)`:'';
+}
+
+function toggleExclude(name){
+  if(excluded.has(name)) excluded.delete(name);
+  else excluded.add(name);
+  buildExcludes();
+  update();
+}
+
+function toggleExclPanel(){
+  const panel=document.getElementById('excl-panel');
+  const arrow=document.getElementById('excl-arrow');
+  const isOpen=panel.style.display!=='none';
+  panel.style.display=isOpen?'none':'block';
+  arrow.style.transform=isOpen?'':'rotate(180deg)';
+}
+
+function applyInputs(){
+  all.forEach(p=>{
+    const el=document.getElementById('inp-'+p.name);
+    if(el){const v=parseInt(el.value);if(!isNaN(v)&&v>=0)p.cur=v;}
+  });
+  update();
+}
+
+function adj(type,delta){
+  if(type==='spot'){spots=Math.min(11,Math.max(1,spots+delta));document.getElementById('spot-val').textContent=spots+'곳';}
+  else{budget=Math.min(100,Math.max(0,budget+delta));document.getElementById('total-val').textContent=budget+'대';}
+  update();
+}
+
+function getToday(){
+  // 한국 시간(KST=UTC+9) 기준으로 날짜 계산
+  const d=new Date(new Date().getTime()+9*60*60*1000);
+  const s=d.toISOString();
+  return s.substring(0,10);
+}
+
+function update(){
+  // 현재수량 반영 + 지표 계산
+  all.forEach(p=>{
+    const el=document.getElementById('inp-'+p.name);
+    if(el){const v=parseInt(el.value);if(!isNaN(v)&&v>=0)p.cur=v;}
+    p.curPct=p.cur/p.opt;
+    p.need100=Math.max(0,p.opt-p.cur);
+    p.need110=Math.max(0,Math.floor(p.opt*1.1)-p.cur);
+    // 85% 이하 배차 대상 (B존/A존 동일)
+    p.needsDispatch = p.curPct < 0.85;
+    // 우선순위: 유입형(200점대) → 혼합형(100점대) → 소비형(0점대)
+    // 같은 유형 안에서는 부족량 큰 순
+    const shortageRatio = p.need100/p.opt;
+    const typeBase = p.type==='inflow' ? 200 : p.type==='mixed' ? 100 : 0;
+    p.score = p.needsDispatch ? (typeBase + shortageRatio*100) : -1;
+  });
+  const curSum=all.reduce((s,p)=>s+p.cur,0);
+
+  // 전체 포인트 중 85% 이하인 곳을 유입→혼합→소비 순으로 정렬 후 슬라이더 수만큼 선택
+  const allDispatchable = [...bPoints,...aPoints]
+    .filter(p=>!excluded.has(p.name) && p.needsDispatch)
+    .sort((a,b)=>b.score-a.score);
+  const totalSlots = Math.min(spots, allDispatchable.length);
+  const selSet = new Set(allDispatchable.slice(0,totalSlots).map(p=>p.name));
+  const bSel = new Set(bPoints.filter(p=>selSet.has(p.name)).map(p=>p.name));
+  const aSel = new Set(aPoints.filter(p=>selSet.has(p.name)).map(p=>p.name));
+
+  all.forEach(p=>p.dispatch=0);
+  let rem=budget;
+
+  // 1단계: 선택된 전체 포인트 100%까지 (유입→혼합→소비 순서로)
+  allDispatchable.filter(p=>selSet.has(p.name)).forEach(p=>{
+    const g=Math.min(p.need100,rem); p.dispatch=g; rem-=g;
+  });
+  // 2단계: 선택된 전체 포인트 110%까지 (같은 순서로)
+  if(rem>0) allDispatchable.filter(p=>selSet.has(p.name)).forEach(p=>{
+    const e=Math.min(p.need110-p.dispatch,rem);
+    if(e>0){p.dispatch+=e;rem-=e;}
+  });
+
+  const tB=bPoints.reduce((s,p)=>s+p.dispatch,0);
+  const tA=aPoints.reduce((s,p)=>s+p.dispatch,0);
+  const tD=tB+tA;
+  const afterSum=all.reduce((s,p)=>s+p.cur+p.dispatch,0);
+  const aPct=Math.round(afterSum/optSum*100);
+  const pCol=aPct>=100?'#059669':aPct>=85?'#D97706':'#DC2626';
+
+  document.getElementById('m-spot').textContent=bSel.size+'B+'+aSel.size+'A (총'+totalSlots+'곳)';
+  document.getElementById('m-b').textContent=tB+'대';
+  document.getElementById('m-a').textContent=tA+'대';
+  document.getElementById('m-pct').textContent=aPct+'%';
+  document.getElementById('m-pct').style.color=pCol;
+
+  const tb=document.getElementById('table-body');
+  tb.innerHTML='';
+
+  // B존 → A존 순서로 표시, 선택된 곳 먼저
+  [['B',bPoints,bSel,'#0F6E56','#1D9E75'],['A',aPoints,aSel,'#185FA5','#378ADD']].forEach(([z,pts,sel,zC,bC])=>{
+    const allZonePts=z==='B'?bPoints:aPoints;
+    const zOpt=allZonePts.reduce((s,p)=>s+p.opt,0);
+    const zCur=allZonePts.reduce((s,p)=>s+p.cur,0);
+    const zD=allZonePts.reduce((s,p)=>s+p.dispatch,0);
+    const zAfter=allZonePts.reduce((s,p)=>s+p.cur+p.dispatch,0);
+    const zPct=Math.round(zAfter/zOpt*100);
+    const zPC=zPct>=100?'#059669':zPct>=85?'#D97706':'#DC2626';
+    const zoneNote='유입→혼합→소비 순 · 85%↓ 배차대상'; tb.innerHTML+=`<tr class="zone-hd"><td colspan="6">${z}존 — ${sel.size}곳 (${zoneNote})</td></tr>`;
+
+    // 정렬: 유입→혼합→소비 순 + 같은 유형내 부족량 큰순 → 85%↑제외 → 수동제외
+    const typeOrder = p => p.type==='inflow'?0:p.type==='mixed'?1:2;
+    const sorted=[
+      ...pts.filter(p=>sel.has(p.name)).sort((a,b)=>
+        typeOrder(a)!==typeOrder(b) ? typeOrder(a)-typeOrder(b) : b.score-a.score
+      ),
+      ...pts.filter(p=>!sel.has(p.name)&&!excluded.has(p.name)&&p.needsDispatch).sort((a,b)=>b.score-a.score),
+      ...pts.filter(p=>!sel.has(p.name)&&!excluded.has(p.name)&&!p.needsDispatch),
+      ...pts.filter(p=>excluded.has(p.name)),
+    ];
+
+    let rank=1;
+    sorted.forEach(p=>{
+      const isExcl=excluded.has(p.name);
+      const isSel=sel.has(p.name);
+      const isSkip=!p.needsDispatch&&!isExcl;
+      const ac=p.cur+p.dispatch;
+      const ap=Math.round(ac/p.opt*100);
+      const nW=Math.round(Math.min(100,ap)/110*100);
+      const oW=ap>100?Math.round(Math.min(10,ap-100)/110*100):0;
+      const dC=p.dispatch>0?zC:'#bbb';
+      const pC=ap>=100?'#059669':ap>=85?'#D97706':'#DC2626';
+      const tl=p.type==='inflow'?'유입':p.type==='mixed'?'혼합':'소비';
+      const tc=p.type==='inflow'?'inflow':p.type==='mixed'?'mixed':'consume';
+      const rowClass=isExcl?'excluded-row':isSkip?'skip-row':isSel?'':'unselected';
+      const skipBadge=isSkip?'<span style="font-size:9px;background:#E0F2E9;color:#0F6E56;padding:1px 4px;border-radius:3px;font-weight:700;">85%↑</span> ':'';
+      const exclBadge=isExcl?'<span style="font-size:9px;background:#FEE2E2;color:#991B1B;padding:1px 4px;border-radius:3px;font-weight:700;">제외</span> ':'';
+      const rk=isSel
+        ?`<span class="rank" style="background:${z==='A'?'#DBEAFE':'#D1FAE5'};color:${zC};">${rank++}</span>`
+        :`<span style="display:inline-block;width:20px;"></span>`;
+
+      tb.innerHTML+=`<tr class="${rowClass}">
+        <td>${rk}${skipBadge}${exclBadge}<span style="font-weight:${isSel?'700':'400'}">${p.name}</span> <span class="badge ${tc}">${tl}</span></td>
+        <td style="text-align:center;color:#888;">${p.opt}</td>
+        <td style="text-align:center;">${p.cur}</td>
+        <td style="text-align:center;font-weight:700;color:${dC}">${p.dispatch>0?'+'+p.dispatch:isSkip?'✓':'-'}</td>
+        <td style="text-align:center;font-weight:${isSel?'700':'400'}">${ac}${ap>=110?'▲':''}</td>
+        <td><div style="display:flex;align-items:center;gap:3px;">
+          <div class="bar-wrap">
+            <div style="position:absolute;top:0;left:0;width:${nW}%;height:5px;background:${bC};opacity:${isSel?1:0.3};"></div>
+            ${oW>0?`<div style="position:absolute;top:0;left:${nW}%;width:${oW}%;height:5px;background:#F59E0B;"></div>`:''}
+          </div>
+          <span style="font-size:11px;font-weight:700;color:${pC};min-width:28px;">${ap}%</span>
+        </div></td>
+      </tr>`;
+    });
+    tb.innerHTML+=`<tr class="subtotal"><td>소계</td><td style="text-align:center;">${zOpt}</td><td style="text-align:center;">${zCur}</td><td style="text-align:center;color:${zC}">+${zD}</td><td style="text-align:center;">${zAfter}</td><td style="color:${zPC};font-weight:700;">${zPct}%</td></tr>`;
+  });
+
+  const lo=budget-tD;
+  tb.innerHTML+=`<tr class="grandtotal"><td>전체</td><td style="text-align:center;">${optSum}</td><td style="text-align:center;">${curSum}</td><td style="text-align:center;">+${tD}</td><td style="text-align:center;">${curSum+tD}</td><td style="color:${pCol}">${aPct}%</td></tr>`;
+  document.getElementById('comment').textContent=
+    `유입형 우선배차 · B존 ${bSel.size}곳 ${tB}대 · A존 ${aSel.size}곳 ${tA}대 · 달성율 ${aPct}%`
+    +(lo>0?` · 미배분 ${lo}대`:'')
+    +(excluded.size>0?` · 제외 ${excluded.size}곳`:'');
+}
+
+// 아침 현재수량 확정 저장
+async function saveMorning(){
+  const btn=document.getElementById('btn-morning');
+  const status=document.getElementById('morning-status');
+  all.forEach(p=>{
+    const el=document.getElementById('inp-'+p.name);
+    if(el){const v=parseInt(el.value);if(!isNaN(v)&&v>=0)p.cur=v;}
+  });
+  const repair=parseInt(document.getElementById('repair-count').value)||0;
+  const payload={
+    type:'morning',
+    date:getToday(),
+    repair,
+    points:all.map(p=>({name:p.name,zone:p.zone,type:p.type,opt:p.opt,cur:p.cur}))
+  };
+  btn.textContent='저장 중...';
+  btn.disabled=true;
+  try{
+    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
+    btn.textContent='✓ 아침 데이터 저장 완료';
+    btn.style.background='#059669';
+    status.textContent=`${getToday()} 저장됨 · 수리 ${repair}대`;
+    status.style.color='#059669';
+    localStorage.setItem('morning_saved_date', getToday());
+    // 아침 현재수량을 포인트별로 저장
+    const morningMap={};
+    all.forEach(p=>{ morningMap[p.name]=p.cur; });
+    localStorage.setItem('morning_data_'+getToday(), JSON.stringify(morningMap));
+    document.getElementById('dispatch-section').style.display='block';
+    buildDispatchGrid();
+  }catch(err){
+    btn.textContent='① 아침 현재수량 확정 저장 (하루 1회)';
+    btn.disabled=false;
+    status.textContent='저장 실패 — 인터넷 연결 확인';
+    status.style.color='#DC2626';
+  }
+}
+
+// 실제 배차량 + 수리 저장
+async function saveDispatch(){
+  const status=document.getElementById('dispatch-status');
+  // 아침 저장된 현재수량을 localStorage에서 가져오기
+  const morningData = JSON.parse(localStorage.getItem('morning_data_'+getToday())||'{}');
+  all.forEach(p=>{
+    const de=document.getElementById('disp-'+p.name);
+    p.actualDispatch=de?parseInt(de.value)||0:0;
+    // 아침 현재수량: localStorage에 저장된 값 사용 (없으면 현재 입력값)
+    const morningPoint = morningData[p.name];
+    p.morningCur = morningPoint !== undefined ? morningPoint : (parseInt(document.getElementById('inp-'+p.name)?.value)||0);
+  });
+  const repair=parseInt(document.getElementById('repair-count').value)||0;
+  const payload={
+    type:'dispatch',
+    date:getToday(),
+    repair,
+    points:all.map(p=>({name:p.name,zone:p.zone,type:p.type,opt:p.opt,cur:p.morningCur,dispatch:p.actualDispatch}))
+  };
+  status.textContent='저장 중...';
+  try{
+    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
+    status.textContent=`✓ ${getToday()} 배차실적 + 수리 ${repair}대 저장 완료`;
+    status.style.color='#059669';
+  }catch(err){
+    status.textContent='저장 실패 — 인터넷 연결 확인';
+    status.style.color='#DC2626';
+  }
+}
+
+buildInputs();
+buildDispatchGrid();
+buildExcludes();
+update();
+checkMorningSaved();
+loadFromUrlHash(); // URL 해시에서 카카오 데이터 자동 입력
+
+// 페이지 열릴때 오늘 아침 저장 여부 확인 (DB + localStorage 둘 다 체크)
+// URL 해시에서 카카오 데이터 읽어 자동 입력
+function loadFromUrlHash(){
+  const hash = location.hash.replace('#','');
+  if(!hash || !hash.includes('=')) return;
+  try{
+    const params = new URLSearchParams(hash);
+    let count = 0;
+    all.forEach(p=>{
+      const val = params.get(p.name);
+      if(val !== null){
+        const el = document.getElementById('inp-'+p.name);
+        if(el){ el.value = parseInt(val)||0; p.cur = parseInt(val)||0; count++; }
+      }
+    });
+    if(count > 0){
+      update();
+      updateCurTotal();
+      // 해시 제거 (깔끔하게)
+      history.replaceState(null, '', location.pathname + location.search);
+      // 카카오 버튼 상태 업데이트
+      const btn = document.getElementById('btn-kakao');
+      const status = document.getElementById('kakao-status');
+      if(btn){
+        btn.textContent = '✓ 카카오에서 현재수량 불러오기 완료';
+        btn.style.background = '#059669';
+        btn.style.color = '#fff';
+      }
+      if(status){
+        status.textContent = count+'개 포인트 자동 입력됨 ('+new Date().toLocaleTimeString('ko-KR')+')';
+        status.style.color = '#059669';
+      }
+    }
+  } catch(e){ console.log('URL hash 파싱 실패:', e); }
+}
+
+// 카카오 운영웹 API에서 현재수량 자동 불러오기
+const KAKAO_ZONE_MAP = {
+  '힐스테이트':   4947,
+  '이편한세상':   386,
+  '송도국제학교': 4941,
+  '더샵마스터뷰': 4942,
+  '지식정보단지': 378,
+  '라이크홈':     387,
+  '인천대1번':    368,
+  '송도시외버스': 375,
+  '인천대2번':    364,
+  '테라스정원':   366,
+  '산책정원':     365,
+  '센트럴파크':   4940,
+  '타임스페이스': 370,
+};
+
+async function fetchFromKakao(){
+  const btn = document.getElementById('btn-kakao');
+  const status = document.getElementById('kakao-status');
+  btn.textContent = '⏳ 불러오는 중...';
+  btn.disabled = true;
+  status.textContent = '';
+
+  // 이 파일이 file:// 로 열렸는지 확인
+  const isLocalFile = location.protocol === 'file:';
+
+  if(isLocalFile){
+    // file:// 에서는 CORS로 직접 fetch 불가
+    // 카카오 운영웹에서 수동으로 실행할 코드를 안내
+    btn.textContent = '🚲 카카오 운영웹에서 현재수량 자동 불러오기';
+    btn.style.background = '#FFCD00';
+    btn.style.color = '#3C1E1E';
+    btn.disabled = false;
+    status.innerHTML = `
+      ⚠️ 파일로 열면 보안 제한으로 직접 불러오기 불가<br>
+      👉 <strong>해결방법:</strong> 카카오 운영웹 브라우저 주소창에서 F12 → Console에 아래 코드 붙여넣기:
+      <br><br>
+      <textarea id="copy-code" style="width:100%;height:60px;font-size:10px;border:1px solid #ddd;border-radius:4px;padding:4px;"
+        onclick="this.select()"
+        readonly>${generateKakaoScript()}</textarea>
+      <button onclick="copyKakaoCode()" style="margin-top:4px;padding:4px 10px;background:#185FA5;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer;">📋 복사</button>
+      <span id="copy-done" style="color:#059669;font-size:11px;margin-left:6px;"></span>
+    `;
+    status.style.color = '#D97706';
+    return;
+  }
+
+  // https:// 로 열린 경우 직접 fetch
+  try{
+    const results = await Promise.all(
+      Object.entries(KAKAO_ZONE_MAP).map(([name, id]) =>
+        fetch(`https://t-bike-operating.kakao.com/api/v2/operating/bike_zones/${id}`, {
+          credentials: 'include'
+        })
+        .then(r => {
+          if(!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(data => ({
+          name,
+          count: data.available_device_count ?? data.current_count ?? null
+        }))
+        .catch(e => ({ name, count: null, error: e.message }))
+      )
+    );
+
+    applyKakaoResults(results);
+
+  } catch(err){
+    btn.textContent = '🚲 카카오 운영웹에서 현재수량 자동 불러오기';
+    btn.style.background = '#FFCD00';
+    btn.style.color = '#3C1E1E';
+    btn.disabled = false;
+    status.textContent = '실패 — 카카오 운영웹에 로그인되어 있는지 확인하세요';
+    status.style.color = '#DC2626';
+  }
+}
+
+function generateKakaoScript(){
+  const ids = JSON.stringify(KAKAO_ZONE_MAP);
+  return `(async()=>{const m=${ids};const r=await Promise.all(Object.entries(m).map(([n,id])=>fetch('/api/v2/operating/bike_zones/'+id).then(x=>x.json()).then(d=>n+'='+d.available_device_count)));prompt('결과를 복사하세요:',r.join(','));})()`;
+}
+
+function copyKakaoCode(){
+  const ta = document.getElementById('copy-code');
+  ta.select();
+  document.execCommand('copy');
+  document.getElementById('copy-done').textContent = '✓ 복사됨!';
+}
+
+function applyKakaoResults(results){
+  const btn = document.getElementById('btn-kakao');
+  const status = document.getElementById('kakao-status');
+  let successCount = 0, failCount = 0;
+
+  results.forEach(({name, count, error}) => {
+    const el = document.getElementById('inp-' + name);
+    if(el && count !== null && count !== undefined){
+      el.value = count;
+      successCount++;
+    } else {
+      failCount++;
+    }
+  });
+
+  update();
+  updateCurTotal();
+
+  if(successCount === 13){
+    btn.textContent = '✓ 카카오에서 현재수량 불러오기 완료';
+    btn.style.background = '#059669';
+    btn.style.color = '#fff';
+    status.textContent = `13개 포인트 모두 업데이트됨 (${new Date().toLocaleTimeString('ko-KR')})`;
+    status.style.color = '#059669';
+    btn.disabled = false;
+  } else if(successCount > 0){
+    btn.textContent = '⚠️ 일부만 불러옴 — 다시 시도';
+    btn.style.background = '#D97706';
+    btn.style.color = '#fff';
+    status.textContent = `${successCount}개 성공 · ${failCount}개 실패`;
+    status.style.color = '#D97706';
+    btn.disabled = false;
+  } else {
+    btn.textContent = '🚲 카카오 운영웹에서 현재수량 자동 불러오기';
+    btn.style.background = '#FFCD00';
+    btn.style.color = '#3C1E1E';
+    status.textContent = '실패 — 카카오 운영웹에 로그인되어 있는지 확인하세요';
+    status.style.color = '#DC2626';
+    btn.disabled = false;
+  }
+}
+
+async function checkMorningSaved(){
+  const today = getToday();
+
+  // 1. 먼저 localStorage 확인 (같은 기기면 바로 완료)
+  const savedDate = localStorage.getItem('morning_saved_date');
+  if(savedDate === today){
+    showMorningSaved(today);
+    return;
+  }
+
+  // 2. 다른 기기인 경우 → Apps Script GET으로 DB 조회
+  // fetch로 DB 직접 조회, 실패시 JSONP 재시도
+  try{
+    const res=await fetch(SCRIPT_URL+'?type=check&date='+today+'&cb='+Date.now(),{redirect:'follow'});
+    const data=await res.json();
+    if(data&&data.saved){
+      localStorage.setItem('morning_saved_date',today);
+      if(data.morningData&&Object.keys(data.morningData).length>0)
+        localStorage.setItem('morning_data_'+today,JSON.stringify(data.morningData));
+      showMorningSaved(today);
+    }
+  } catch(e){
+    try{
+      const s=document.createElement('script');
+      const cb='_cb_'+Date.now();
+      window[cb]=function(data){
+        try{document.head.removeChild(s);}catch(e){}
+        delete window[cb];
+        if(data&&data.saved){
+          localStorage.setItem('morning_saved_date',today);
+          if(data.morningData&&Object.keys(data.morningData).length>0)
+            localStorage.setItem('morning_data_'+today,JSON.stringify(data.morningData));
+          showMorningSaved(today);
+        }
+      };
+      s.onerror=()=>{try{document.head.removeChild(s);}catch(e){}delete window[cb];};
+      s.src=SCRIPT_URL+'?type=check&date='+today+'&callback='+cb+'&cb='+Date.now();
+      document.head.appendChild(s);
+    }catch(e2){}
+  }
+}
+
+function showMorningSaved(today){
+  const btn=document.getElementById('btn-morning');
+  btn.textContent='✓ 아침 데이터 저장 완료';
+  btn.style.background='#059669';
+  document.getElementById('morning-status').textContent=today+' 저장됨';
+  document.getElementById('morning-status').style.color='#059669';
+  buildDispatchGrid();
+  // localStorage에서 아침 현재수량 복원
+  const morningData=JSON.parse(localStorage.getItem('morning_data_'+today)||'{}');
+  if(Object.keys(morningData).length>0){
+    all.forEach(p=>{
+      const el=document.getElementById('inp-'+p.name);
+      if(el&&morningData[p.name]!==undefined){
+        el.value=morningData[p.name];
+        p.cur=Number(morningData[p.name]);
+      }
+    });
+    update();
+    updateCurTotal();
+    document.getElementById('morning-status').textContent=today+' 저장됨 · 현재수량 복원됨';
+  }
+}
+</script>
+</body>
+</html>
