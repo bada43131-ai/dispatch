@@ -837,7 +837,7 @@ function applyKakaoResults(results){
     btn.textContent = '✓ 카카오에서 현재수량 불러오기 완료';
     btn.style.background = '#059669';
     btn.style.color = '#fff';
-    status.textContent = `13개 포인트 모두 업데이트됨 (${new Date().toLocaleTimeString('ko-KR')})`;
+    status.textContent = `13개 포인트 모두 업데이트됨 (${formatDateTimeKo()})`;
     status.style.color = '#059669';
     btn.disabled = false;
   } else if(successCount > 0){
