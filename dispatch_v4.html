@@ -633,13 +633,14 @@ function getYesterday(){
   return d.toISOString().substring(0,10);
 }
 
-// 버튼 초기화: 당일 불러온 이력 있으면 완료상태, 없으면 전일 데이터 로드
-async function initKakaoButton(){
+// 버튼 초기화: 당일 불러온 이력 있으면 완료상태, 없으면 전일 localStorage 데이터 로드
+function initKakaoButton(){
   const btn = document.getElementById('btn-kakao');
   const status = document.getElementById('kakao-status');
   const today = getToday();
+  const yesterday = getYesterday();
 
-  // 당일 북마크릿으로 불러온 적 있는지 확인
+  // 1. 당일 북마크릿으로 불러온 적 있는지 확인
   const kakaoLoadedTime = localStorage.getItem('kakao_loaded_'+today);
   if(kakaoLoadedTime){
     btn.textContent = '✓ '+kakaoLoadedTime+' 현재수량 불러오기 완료';
@@ -651,18 +652,34 @@ async function initKakaoButton(){
     return;
   }
 
-  // 전일 데이터 DB에서 가져오기
-  const yesterday = getYesterday();
-  btn.textContent = '📋 '+formatDateKo(yesterday)+' 전일 데이터 불러오는 중...';
-  btn.style.background = '#9CA3AF';
-  btn.style.color = '#fff';
-  btn.disabled = true;
+  // 2. 전일 아침 localStorage 데이터 확인 (아침 저장 시 자동 기록됨)
+  const yestData = JSON.parse(localStorage.getItem('morning_data_'+yesterday)||'{}');
+  if(Object.keys(yestData).length > 0){
+    all.forEach(p=>{
+      const el = document.getElementById('inp-'+p.name);
+      if(el && yestData[p.name] !== undefined){
+        el.value = yestData[p.name];
+        p.cur = Number(yestData[p.name]);
+      }
+    });
+    update();
+    updateCurTotal();
+    btn.textContent = '📋 전일 ('+formatDateKo(yesterday)+') 데이터 표시 중';
+    btn.style.background = '#9CA3AF';
+    btn.style.color = '#fff';
+    status.textContent = '북마크릿으로 오늘 현재수량을 불러오면 자동 업데이트됩니다';
+    status.style.color = '#888';
+    return;
+  }
 
-  try{
-    const res = await fetch(SCRIPT_URL+'?type=check&date='+yesterday+'&cb='+Date.now(), {redirect:'follow'});
-    const data = await res.json();
+  // 3. localStorage에 전일 데이터도 없으면 → JSONP로 DB 조회 시도
+  const script = document.createElement('script');
+  const cb = '_ycb_'+Date.now();
+  window[cb] = function(data){
+    try{ document.head.removeChild(script); } catch(e){}
+    delete window[cb];
     if(data && data.morningData && Object.keys(data.morningData).length > 0){
-      // 전일 데이터 입력창에 표시
+      localStorage.setItem('morning_data_'+yesterday, JSON.stringify(data.morningData));
       all.forEach(p=>{
         const el = document.getElementById('inp-'+p.name);
         if(el && data.morningData[p.name] !== undefined){
@@ -677,18 +694,34 @@ async function initKakaoButton(){
       btn.style.color = '#fff';
       status.textContent = '북마크릿으로 오늘 현재수량을 불러오면 자동 업데이트됩니다';
       status.style.color = '#888';
-    } else {
-      btn.textContent = '🚲 카카오 운영웹에서 현재수량 자동 불러오기';
-      btn.style.background = '#FFCD00';
-      btn.style.color = '#3C1E1E';
-      status.textContent = '';
     }
-  } catch(e){
-    btn.textContent = '🚲 카카오 운영웹에서 현재수량 자동 불러오기';
-    btn.style.background = '#FFCD00';
-    btn.style.color = '#3C1E1E';
-  }
-  btn.disabled = false;
+    // 실패해도 노란 버튼 그대로 유지 (북마크릿 안내)
+  };
+  script.onerror = ()=>{
+    try{document.head.removeChild(script);}catch(e){}
+    delete window[cb];
+    // DB 조회 실패 시 버튼에 안내 표시
+    btn.textContent = '⚠️ 전일 데이터 조회 실패 — 북마크릿으로 불러오세요';
+    btn.style.background = '#D97706';
+    btn.style.color = '#fff';
+    status.textContent = '카카오 운영웹에서 북마크릿을 클릭하면 현재수량이 자동 입력됩니다';
+    status.style.color = '#888';
+  };
+  script.src = SCRIPT_URL+'?type=check&date='+yesterday+'&callback='+cb+'&cb='+Date.now();
+  document.head.appendChild(script);
+
+  // 5초 후에도 응답 없으면 타임아웃 처리
+  setTimeout(()=>{
+    if(window[cb]){
+      try{document.head.removeChild(script);}catch(e){}
+      delete window[cb];
+      btn.textContent = '⚠️ 전일 데이터 조회 실패 — 북마크릿으로 불러오세요';
+      btn.style.background = '#D97706';
+      btn.style.color = '#fff';
+      status.textContent = '카카오 운영웹에서 북마크릿을 클릭하면 현재수량이 자동 입력됩니다';
+      status.style.color = '#888';
+    }
+  }, 5000);
 }
 
 // 카카오 운영웹 API에서 현재수량 자동 불러오기
