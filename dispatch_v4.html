@@ -76,9 +76,14 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
 
 <div class="input-grid" id="input-grid"></div>
 
-<!-- 현재수량 합계 표시 -->
-<div id="cur-total-row" style="display:flex;justify-content:flex-end;align-items:center;padding:4px 10px;margin-top:2px;">
-  <span id="cur-total" style="font-size:12px;font-weight:700;color:#185FA5;background:#EFF6FF;padding:3px 10px;border-radius:6px;"></span>
+<!-- 현재수량 합계 표시 - 타임스페이스 옆 열에 맞춰 배치 -->
+<div style="display:flex;justify-content:flex-end;align-items:center;padding:2px 0;margin-top:-2px;">
+  <div id="cur-total" style="
+    display:flex;align-items:center;justify-content:flex-end;gap:8px;
+    background:#EFF6FF;border:1.5px solid #185FA5;
+    border-radius:8px;padding:6px 14px;
+    width:calc(50% - 3px);
+  "></div>
 </div>
 
 <!-- ② 배차 설정 -->
@@ -241,7 +246,11 @@ function updateCurTotal(){
   },0);
   const pct=Math.round(total/optSum*100);
   const pctColor=pct>=100?'#059669':pct>=85?'#D97706':'#DC2626';
-  el.innerHTML='현재수량 합계: '+total+'대 <span style="color:'+pctColor+';font-weight:700;">'+pct+'%</span>';
+  el.innerHTML=
+    '<span style="font-size:16px;font-weight:700;color:#185FA5;">'
+    +total+'대</span>'
+    +'<span style="font-size:22px;font-weight:900;color:'+pctColor+';letter-spacing:-0.5px;">'
+    +pct+'%</span>';
 }
 
 function buildDispatchGrid(){
