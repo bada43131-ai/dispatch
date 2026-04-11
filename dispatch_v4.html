@@ -538,41 +538,157 @@ buildExcludes();
 update();
 checkMorningSaved();
 loadFromUrlHash(); // URL 해시에서 카카오 데이터 자동 입력
+initKakaoButton(); // 버튼 초기 상태 설정 + 전일 데이터 로드
 
 // 페이지 열릴때 오늘 아침 저장 여부 확인 (DB + localStorage 둘 다 체크)
 // URL 해시에서 카카오 데이터 읽어 자동 입력
 function loadFromUrlHash(){
   const hash = location.hash.replace('#','');
   if(!hash || !hash.includes('=')) return;
-  try{
-    const params = new URLSearchParams(hash);
-    let count = 0;
-    all.forEach(p=>{
-      const val = params.get(p.name);
-      if(val !== null){
-        const el = document.getElementById('inp-'+p.name);
-        if(el){ el.value = parseInt(val)||0; p.cur = parseInt(val)||0; count++; }
+
+  // 페이지가 완전히 로딩된 후 실행 (모바일 대응)
+  function doLoad(){
+    try{
+      const params = new URLSearchParams(hash);
+      let count = 0;
+      all.forEach(p=>{
+        const val = params.get(p.name);
+        if(val !== null){
+          const el = document.getElementById('inp-'+p.name);
+          if(el){ el.value = parseInt(val)||0; p.cur = parseInt(val)||0; count++; }
+        }
+      });
+      if(count > 0){
+        update();
+        updateCurTotal();
+        // 해시 제거
+        history.replaceState(null, '', location.pathname + location.search);
+        // 카카오 버튼 상태 업데이트
+        const btn = document.getElementById('btn-kakao');
+        const status = document.getElementById('kakao-status');
+        if(btn){
+          btn.textContent = '✓ 카카오에서 현재수량 불러오기 완료';
+          btn.style.background = '#059669';
+          btn.style.color = '#fff';
+        }
+        if(status){
+          const timeStr = formatDateTimeKo();
+          localStorage.setItem('kakao_loaded_'+getToday(), timeStr);
+          status.textContent = count+'개 포인트 자동 입력 완료 ✓';
+          status.style.color = '#059669';
+          status.style.fontWeight = '700';
+          status.style.fontSize = '12px';
+          // 버튼도 완료 상태로 업데이트
+          const kakaoBtn = document.getElementById('btn-kakao');
+          if(kakaoBtn){
+            kakaoBtn.textContent = '✓ '+timeStr+' 현재수량 불러오기 완료';
+            kakaoBtn.style.background = '#059669';
+            kakaoBtn.style.color = '#fff';
+            kakaoBtn.disabled = false;
+          }
+        }
+        // 상단에 완료 알림 표시 (모바일에서도 잘 보이게)
+        const toast = document.createElement('div');
+        toast.textContent = '✓ '+count+'개 포인트 현재수량 입력 완료!';
+        toast.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#059669;color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.25);font-family:sans-serif;white-space:nowrap;';
+        document.body.appendChild(toast);
+        setTimeout(()=>{ toast.style.opacity='0'; toast.style.transition='opacity 0.5s'; setTimeout(()=>document.body.removeChild(toast), 500); }, 3000);
       }
-    });
-    if(count > 0){
+    } catch(e){ console.log('URL hash 파싱 실패:', e); }
+  }
+
+  // 입력창이 생성될 때까지 대기 (최대 3초)
+  let attempts = 0;
+  const waitForInputs = setInterval(()=>{
+    attempts++;
+    const testEl = document.getElementById('inp-힐스테이트');
+    if(testEl){
+      clearInterval(waitForInputs);
+      doLoad();
+    } else if(attempts > 30){ // 3초 초과시 포기
+      clearInterval(waitForInputs);
+    }
+  }, 100);
+}
+
+// 날짜를 'M월 D일 요일' 형태로 변환
+function formatDateKo(dateStr){
+  const d = dateStr ? new Date(dateStr+'T00:00:00+09:00') : new Date(new Date().getTime()+9*60*60*1000);
+  const days = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+  return (d.getMonth()+1)+'월 '+d.getDate()+'일 '+days[d.getDay()];
+}
+
+// 시간을 'M월 D일 HH:MM' 형태로 변환
+function formatDateTimeKo(){
+  const d = new Date(new Date().getTime()+9*60*60*1000);
+  const days = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  return (d.getMonth()+1)+'월 '+d.getDate()+'일 '+days[d.getDay()]+' '+hh+':'+mm;
+}
+
+// 전일 날짜 계산
+function getYesterday(){
+  const d = new Date(new Date().getTime()+9*60*60*1000-86400000);
+  return d.toISOString().substring(0,10);
+}
+
+// 버튼 초기화: 당일 불러온 이력 있으면 완료상태, 없으면 전일 데이터 로드
+async function initKakaoButton(){
+  const btn = document.getElementById('btn-kakao');
+  const status = document.getElementById('kakao-status');
+  const today = getToday();
+
+  // 당일 북마크릿으로 불러온 적 있는지 확인
+  const kakaoLoadedTime = localStorage.getItem('kakao_loaded_'+today);
+  if(kakaoLoadedTime){
+    btn.textContent = '✓ '+kakaoLoadedTime+' 현재수량 불러오기 완료';
+    btn.style.background = '#059669';
+    btn.style.color = '#fff';
+    status.textContent = '카카오 운영웹 실시간 데이터';
+    status.style.color = '#059669';
+    status.style.fontWeight = '700';
+    return;
+  }
+
+  // 전일 데이터 DB에서 가져오기
+  const yesterday = getYesterday();
+  btn.textContent = '📋 '+formatDateKo(yesterday)+' 전일 데이터 불러오는 중...';
+  btn.style.background = '#9CA3AF';
+  btn.style.color = '#fff';
+  btn.disabled = true;
+
+  try{
+    const res = await fetch(SCRIPT_URL+'?type=check&date='+yesterday+'&cb='+Date.now(), {redirect:'follow'});
+    const data = await res.json();
+    if(data && data.morningData && Object.keys(data.morningData).length > 0){
+      // 전일 데이터 입력창에 표시
+      all.forEach(p=>{
+        const el = document.getElementById('inp-'+p.name);
+        if(el && data.morningData[p.name] !== undefined){
+          el.value = data.morningData[p.name];
+          p.cur = Number(data.morningData[p.name]);
+        }
+      });
       update();
       updateCurTotal();
-      // 해시 제거 (깔끔하게)
-      history.replaceState(null, '', location.pathname + location.search);
-      // 카카오 버튼 상태 업데이트
-      const btn = document.getElementById('btn-kakao');
-      const status = document.getElementById('kakao-status');
-      if(btn){
-        btn.textContent = '✓ 카카오에서 현재수량 불러오기 완료';
-        btn.style.background = '#059669';
-        btn.style.color = '#fff';
-      }
-      if(status){
-        status.textContent = count+'개 포인트 자동 입력됨 ('+new Date().toLocaleTimeString('ko-KR')+')';
-        status.style.color = '#059669';
-      }
+      btn.textContent = '📋 전일 ('+formatDateKo(yesterday)+') 데이터 표시 중';
+      btn.style.background = '#9CA3AF';
+      btn.style.color = '#fff';
+      status.textContent = '북마크릿으로 오늘 현재수량을 불러오면 자동 업데이트됩니다';
+      status.style.color = '#888';
+    } else {
+      btn.textContent = '🚲 카카오 운영웹에서 현재수량 자동 불러오기';
+      btn.style.background = '#FFCD00';
+      btn.style.color = '#3C1E1E';
+      status.textContent = '';
     }
-  } catch(e){ console.log('URL hash 파싱 실패:', e); }
+  } catch(e){
+    btn.textContent = '🚲 카카오 운영웹에서 현재수량 자동 불러오기';
+    btn.style.background = '#FFCD00';
+    btn.style.color = '#3C1E1E';
+  }
+  btn.disabled = false;
 }
 
 // 카카오 운영웹 API에서 현재수량 자동 불러오기
