@@ -653,7 +653,27 @@ function initKakaoButton(){
     return;
   }
 
-  // 2. 전일 아침 localStorage 데이터 확인 (아침 저장 시 자동 기록됨)
+  // 2. 당일 아침 저장 데이터 확인 (아침 확정 저장 버튼 누른 경우)
+  const todayData = JSON.parse(localStorage.getItem('morning_data_'+today)||'{}');
+  if(Object.keys(todayData).length > 0){
+    all.forEach(p=>{
+      const el = document.getElementById('inp-'+p.name);
+      if(el && todayData[p.name] !== undefined){
+        el.value = todayData[p.name];
+        p.cur = Number(todayData[p.name]);
+      }
+    });
+    update();
+    updateCurTotal();
+    btn.textContent = '📋 금일 ('+formatDateKo(today)+') 아침 데이터 표시 중';
+    btn.style.background = '#185FA5';
+    btn.style.color = '#fff';
+    status.textContent = '북마크릿으로 현재수량을 불러오면 실시간으로 업데이트됩니다';
+    status.style.color = '#888';
+    return;
+  }
+
+  // 3. 전일 아침 localStorage 데이터 확인
   const yestData = JSON.parse(localStorage.getItem('morning_data_'+yesterday)||'{}');
   if(Object.keys(yestData).length > 0){
     all.forEach(p=>{
@@ -673,7 +693,7 @@ function initKakaoButton(){
     return;
   }
 
-  // 3. localStorage에 전일 데이터도 없으면 → JSONP로 DB 조회 시도
+  // 4. localStorage에 전일 데이터도 없으면 → JSONP로 DB 조회 시도
   const script = document.createElement('script');
   const cb = '_ycb_'+Date.now();
   window[cb] = function(data){
