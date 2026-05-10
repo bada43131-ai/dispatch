@@ -713,18 +713,7 @@ loadFromUrl();
 async function checkMorningSaved(){
   const today = getToday();
   const savedDate = localStorage.getItem('morning_saved_date');
-  if(savedDate === today){
-    // 로컬에서 이미 저장됨
-    const btn = document.getElementById('btn-morning');
-    btn.textContent = '✓ 아침 데이터 저장 완료';
-    btn.style.background = '#059669';
-    document.getElementById('morning-status').textContent = today + ' 저장됨';
-    document.getElementById('morning-status').style.color = '#059669';
-    document.getElementById('dispatch-section').style.display = 'block';
-    buildDispatchGrid();
-    return;
-  }
-  // Apps Script에서 오늘 아침 스냅샷 자동 확인
+  // localStorage 여부와 무관하게 항상 Apps Script에서 먼저 실제 데이터 확인
   try {
     const res = await fetch(SCRIPT_URL + '?type=check&date=' + today);
     const data = await res.json();
@@ -746,9 +735,20 @@ async function checkMorningSaved(){
       document.getElementById('dispatch-section').style.display = 'block';
       buildDispatchGrid();
       localStorage.setItem('morning_saved_date', today);
+      return;
     }
   } catch(e) {
     console.log('아침 데이터 자동 로드 실패:', e);
+  }
+  // Apps Script에 데이터 없으면 localStorage 저장 여부만 표시
+  if(savedDate === today){
+    const btn = document.getElementById('btn-morning');
+    btn.textContent = '✓ 아침 데이터 저장 완료';
+    btn.style.background = '#059669';
+    document.getElementById('morning-status').textContent = today + ' 저장됨';
+    document.getElementById('morning-status').style.color = '#059669';
+    document.getElementById('dispatch-section').style.display = 'block';
+    buildDispatchGrid();
   }
 }
 </script>
