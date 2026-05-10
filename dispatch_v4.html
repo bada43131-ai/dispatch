@@ -714,7 +714,7 @@ async function checkMorningSaved(){
   const today = getToday();
   const savedDate = localStorage.getItem('morning_saved_date');
   if(savedDate === today){
-    // 오늘 이미 저장됨 → 배차실적 바로 표시
+    // 로컬에서 이미 저장됨
     const btn = document.getElementById('btn-morning');
     btn.textContent = '✓ 아침 데이터 저장 완료';
     btn.style.background = '#059669';
@@ -722,6 +722,33 @@ async function checkMorningSaved(){
     document.getElementById('morning-status').style.color = '#059669';
     document.getElementById('dispatch-section').style.display = 'block';
     buildDispatchGrid();
+    return;
+  }
+  // Apps Script에서 오늘 아침 스냅샷 자동 확인
+  try {
+    const res = await fetch(SCRIPT_URL + '?type=check&date=' + today);
+    const data = await res.json();
+    if(data.saved && data.morningData && Object.keys(data.morningData).length > 0){
+      // 아침 스냅샷 데이터를 현재수량 필드에 자동 채우기
+      all.forEach(p => {
+        if(data.morningData[p.name] !== undefined){
+          p.cur = data.morningData[p.name];
+          const el = document.getElementById('inp-' + p.name);
+          if(el) el.value = p.cur;
+        }
+      });
+      update();
+      const btn = document.getElementById('btn-morning');
+      btn.textContent = '☀ 아침 스냅샷 자동 로드됨';
+      btn.style.background = '#0284c7';
+      document.getElementById('morning-status').textContent = today + ' 아침 스냅샷 로드 (자동)';
+      document.getElementById('morning-status').style.color = '#0284c7';
+      document.getElementById('dispatch-section').style.display = 'block';
+      buildDispatchGrid();
+      localStorage.setItem('morning_saved_date', today);
+    }
+  } catch(e) {
+    console.log('아침 데이터 자동 로드 실패:', e);
   }
 }
 </script>
