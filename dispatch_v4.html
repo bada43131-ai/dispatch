@@ -11,7 +11,7 @@ h2{font-size:15px;font-weight:700;margin-bottom:4px;color:#222;}
 .sub{font-size:11px;color:#888;margin-bottom:14px;}
 .section-title{font-size:12px;font-weight:700;color:#555;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #eee;}
 .input-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;}
-.input-row{display:flex;align-items:center;justify-content:space-between;background:#f7f7f7;border-radius:8px;padding:7px 10px;}
+.input-row{display:flex;align-items:center;justify-content:space-between;background:#f7hf7f7;border-radius:8px;padding:7px 10px;}
 .input-label{font-size:11px;color:#555;flex:1;display:flex;align-items:center;gap:4px;}
 .type-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .cur-input{width:44px;height:30px;border:1px solid #ddd;border-radius:6px;text-align:center;font-size:13px;font-weight:700;background:#fff;}
@@ -558,20 +558,20 @@ async function checkMorningSaved(){
   const savedDate = localStorage.getItem('morning_saved_date');
   // localStorage 여부와 무관하게 항상 Apps Script에서 먼저 실제 데이터 확인
   try {
-    const res = await fetch(SCRIPT_URL + '?type=check&date=' + today);
+    const res = await fetch(SCRIPT_URL + '?action=getMorningSnapshot');
     const data = await res.json();
-    if(data.saved && data.morningData && Object.keys(data.morningData).length > 0){
-      // 아침 스냅샷 데이터를 현재수량 필드에 자동 채우기
+    if(data.status === 'ok' && data.zones && data.zones.length > 0){
+      // zones 배열을 이름 기반 맵으로 변환 후 현재수량 필드에 자동 채우기
       all.forEach(p => {
-        if(data.morningData[p.name] !== undefined){
-          p.cur = data.morningData[p.name];
+        if((data.zones.find(z=>z.name===p.name)||{}).cur !== undefined){
+          p.cur = (data.zones.find(z=>z.name===p.name)||{}).cur;
           const el = document.getElementById('inp-' + p.name);
           if(el) el.value = p.cur;
         }
       });
       update();
       const btn = document.getElementById('btn-morning');
-      btn.textContent = '☀ 아침 스냅샷 자동 로드됨';
+      btn.textContent = '☀ 아침 스냅샷 자동 로드됨 (' + data.time + ')';
       btn.style.background = '#0284c7';
       document.getElementById('morning-status').textContent = today + ' 아침 스냅샷 로드 (자동)';
       document.getElementById('morning-status').style.color = '#0284c7';
