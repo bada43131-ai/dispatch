@@ -11,7 +11,7 @@ h2{font-size:15px;font-weight:700;margin-bottom:4px;color:#222;}
 .sub{font-size:11px;color:#888;margin-bottom:14px;}
 .section-title{font-size:12px;font-weight:700;color:#555;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #eee;}
 .input-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;}
-.input-row{display:flex;align-items:center;justify-content:space-between;background:#f7hf7f7;border-radius:8px;padding:7px 10px;}
+.input-row{display:flex;align-items:center;justify-content:space-between;background:#f7f7f7;border-radius:8px;padding:7px 10px;}
 .input-label{font-size:11px;color:#555;flex:1;display:flex;align-items:center;gap:4px;}
 .type-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .cur-input{width:44px;height:30px;border:1px solid #ddd;border-radius:6px;text-align:center;font-size:13px;font-weight:700;background:#fff;}
@@ -61,9 +61,7 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
 </head>
 <body>
 
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-  <h2>송도 배차 플래너</h2>
-</div>
+<h2>송도 배차 플래너</h2>
 <div class="sub">현재수량 입력 → 배차수량 조절 → 현재수량 반영</div>
 
 <!-- ① 현재수량 입력 -->
@@ -162,6 +160,31 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
       실제 배차량 + 수리 물량 저장
     </button>
     <div id="dispatch-status" style="font-size:11px;color:#888;text-align:center;margin-top:4px;"></div>
+  </div>
+</div>
+
+<!-- 북마크릿 안내 -->
+<div style="margin-top:14px;">
+  <div onclick="toggleBmPanel()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#EFF6FF;border-radius:10px;cursor:pointer;user-select:none;">
+    <span style="font-size:12px;font-weight:700;color:#185FA5;">📡 카카오 실시간 자동입력 북마크릿</span>
+    <span id="bm-arrow" style="font-size:14px;color:#185FA5;transition:transform 0.2s;">▼</span>
+  </div>
+  <div id="bm-panel" style="display:none;margin-top:6px;background:#F0F7FF;border-radius:10px;padding:12px;">
+    <div style="font-size:11px;color:#444;line-height:1.8;margin-bottom:10px;">
+      <b>사용법:</b><br>
+      1. 아래 버튼으로 북마크릿을 북마크바에 저장<br>
+      2. <b>t-bike-operating.kakao.com</b> 운영 페이지 접속<br>
+      3. 북마크릿 클릭 → 자동으로 현재수량 가져와서 이 앱에 입력됨
+    </div>
+    <div style="background:#fff;border-radius:8px;padding:10px;margin-bottom:10px;">
+      <div style="font-size:10px;color:#888;margin-bottom:6px;">북마크릿 코드 (북마크 URL로 저장):</div>
+      <textarea id="bm-code" readonly style="width:100%;height:80px;font-size:10px;border:1px solid #ddd;border-radius:6px;padding:6px;resize:none;color:#333;background:#fafafa;font-family:monospace;"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="copyBm()" style="flex:1;padding:10px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">📋 코드 복사</button>
+      <a id="bm-link" href="#" style="flex:1;padding:10px;background:#0F6E56;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;">⭐ 북마크로 저장</a>
+    </div>
+    <div id="bm-copy-status" style="font-size:11px;text-align:center;margin-top:6px;color:#059669;"></div>
   </div>
 </div>
 
@@ -479,7 +502,7 @@ async function saveMorning(){
   btn.textContent='저장 중...';
   btn.disabled=true;
   try{
-    await fetch(SCRIPT_URL+'?type=saveMorningSnapshot&data='+encodeURIComponent(JSON.stringify(payload)));
+    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
     btn.textContent='✓ 아침 데이터 저장 완료';
     btn.style.background='#059669';
     status.textContent=`${getToday()} 저장됨 · 수리 ${repair}대`;
@@ -529,62 +552,153 @@ async function saveDispatch(){
   }
 }
 
+// ── 북마크릿 생성 ────────────────────────────────────────────────
+const APP_URL = 'https://bada43131-ai.github.io/dispatch/dispatch_v4.html';
 
-// URL에서 현재수량 자동 로드 (?d=값,값,값...)
-function loadFromUrl(){
-  const params = new URLSearchParams(window.location.search);
-  const d = params.get('d');
-  if(d){
-    const vals = d.split(',');
-    all.forEach((p,i)=>{ if(vals[i]!==undefined){ p.cur=parseInt(vals[i])||0; } });
-    all.forEach(p=>{
-      const el = document.getElementById('inp-'+p.name);
-      if(el) el.value = p.cur;
+// zone ID → 포인트명 역방향 맵 (북마크릿용) — 실제 확인된 ID
+const ZONE_IDS = {
+  '힐스테이트':4947, '이편한세상':386,  '송도국제학교':4941,
+  '더샵마스터뷰':4942,'지식정보단지':378, '라이크홈':387,
+  '인천대1번':368,   '송도시외버스':375, '인천대2번':364,
+  '테라스정원':366,  '산책정원':365,    '센트럴파크':4940, '타임스페이스':370
+};
+
+function buildBookmarklet(){
+  const appUrl = APP_URL;
+  // 북마크릿 로직:
+  // 1) relocation-zones API로 zone 중심좌표 가져오기
+  // 2) devices API로 IDLE 바이크 전체 가져오기
+  // 3) 각 zone 반경 150m 내 IDLE 바이크 수 집계
+  // 4) dispatch 앱으로 hash 전달
+
+  const code = `(function(){
+var myIds=[368,364,375,366,365,4940,370,386,387,378,4941,4942,4947];
+var app='${appUrl}';
+function dist(la1,lo1,la2,lo2){var R=6371000,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180,a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+Promise.all([
+  fetch('/api/v2/operating/regions/2/relocation-zones',{credentials:'include'}).then(function(r){return r.json();}),
+  fetch('/api/v2/operating/regions/2/devices?t='+Date.now(),{credentials:'include'}).then(function(r){return r.json();})
+]).then(function(res){
+  var zData=res[0],dData=res[1];
+  var coordMap={};
+  (zData.relocationZones||[]).forEach(function(z){coordMap[z.id]={lat:z.lat,lng:z.lng};});
+  var idleDev=(dData.devices||[]).filter(function(d){return d.status==='IDLE';});
+  var result={};
+  myIds.forEach(function(zid){
+    var zc=coordMap[zid];
+    if(!zc){result[zid]=0;return;}
+    result[zid]=idleDev.filter(function(d){return dist(d.location.lat,d.location.lng,zc.lat,zc.lng)<=150;}).length;
+  });
+  var hash='#data='+encodeURIComponent(JSON.stringify(result));
+  window.open(app+hash,'_blank');
+}).catch(function(e){alert('오류: '+e.message);});
+alert('카카오 데이터 수집 중...');
+})();`;
+
+  const minified = code.replace(/\n\s*/g,' ').trim();
+  const bmCode = 'javascript:'+encodeURIComponent(minified);
+
+  const ta = document.getElementById('bm-code');
+  if(ta) ta.value = bmCode;
+
+  const link = document.getElementById('bm-link');
+  if(link) link.href = bmCode;
+}
+
+function toggleBmPanel(){
+  const panel = document.getElementById('bm-panel');
+  const arrow = document.getElementById('bm-arrow');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+  if(!isOpen) buildBookmarklet();
+}
+
+function copyBm(){
+  const ta = document.getElementById('bm-code');
+  if(!ta) return;
+  ta.select();
+  document.execCommand('copy');
+  const st = document.getElementById('bm-copy-status');
+  st.textContent = '✓ 복사됨 — 새 북마크 추가 후 URL란에 붙여넣기';
+  setTimeout(()=>{ st.textContent=''; }, 3000);
+}
+
+
+const ZONE_ID_MAP = {
+  4947: '힐스테이트',
+  386:  '이편한세상',
+  4941: '송도국제학교',
+  4942: '더샵마스터뷰',
+  378:  '지식정보단지',
+  387:  '라이크홈',
+  368:  '인천대1번',
+  375:  '송도시외버스',
+  364:  '인천대2번',
+  366:  '테라스정원',
+  365:  '산책정원',
+  4940: '센트럴파크',
+  370:  '타임스페이스',
+};
+
+// ── URL hash로 넘어온 실시간 데이터 자동 주입 ────────────────────
+function loadFromHash(){
+  const hash = window.location.hash;
+  if(!hash || !hash.startsWith('#data=')) return false;
+  try{
+    const raw = decodeURIComponent(hash.slice(6));
+    const data = JSON.parse(raw);
+    // data 형식: { zoneId: count, ... }  또는  { name: count, ... }
+    let filled = 0;
+    Object.entries(data).forEach(([key, val])=>{
+      const count = parseInt(val);
+      if(isNaN(count)) return;
+      // zone ID(숫자) 또는 포인트명(문자) 둘 다 허용
+      const name = ZONE_ID_MAP[parseInt(key)] || ZONE_ID_MAP[key] || key;
+      const el = document.getElementById('inp-'+name);
+      if(el){ el.value = count; filled++; }
     });
-    update();
-    updateCurTotal();
+    if(filled > 0){
+      updateCurTotal();
+      update();
+      // 상태 배너 표시
+      showHashBanner(filled, new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}));
+      // hash 제거 (뒤로가기 혼선 방지)
+      history.replaceState(null,'', window.location.pathname + window.location.search);
+      return true;
+    }
+  } catch(e){ console.warn('hash parse error', e); }
+  return false;
+}
+
+function showHashBanner(cnt, time){
+  let banner = document.getElementById('hash-banner');
+  if(!banner){
+    banner = document.createElement('div');
+    banner.id = 'hash-banner';
+    banner.style.cssText='background:#D1FAE5;border-radius:8px;padding:8px 12px;font-size:12px;color:#065F46;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;';
+    const grid = document.getElementById('input-grid');
+    grid.parentNode.insertBefore(banner, grid);
   }
+  banner.innerHTML = `📡 실시간 데이터 자동입력 완료 — ${cnt}개 포인트 · ${time}
+    <span onclick="this.parentNode.remove()" style="cursor:pointer;font-size:14px;color:#065F46;">✕</span>`;
 }
 
 buildInputs();
 buildExcludes();
-update();
+
+// hash 데이터 있으면 자동주입, 없으면 일반 초기화
+if(!loadFromHash()) update();
+else applyInputs();
+
 checkMorningSaved();
-loadFromUrl();
 
 // 페이지 열릴때 오늘 아침 저장 여부 확인
 async function checkMorningSaved(){
   const today = getToday();
   const savedDate = localStorage.getItem('morning_saved_date');
-  // localStorage 여부와 무관하게 항상 Apps Script에서 먼저 실제 데이터 확인
-  try {
-    const res = await fetch(SCRIPT_URL + '?action=getMorningSnapshot');
-    const data = await res.json();
-    if(data.status === 'ok' && data.zones && data.zones.length > 0){
-      // zones 배열을 이름 기반 맵으로 변환 후 현재수량 필드에 자동 채우기
-      all.forEach(p => {
-        if((data.zones.find(z=>z.name===p.name)||{}).cur !== undefined){
-          p.cur = (data.zones.find(z=>z.name===p.name)||{}).cur;
-          const el = document.getElementById('inp-' + p.name);
-          if(el) el.value = p.cur;
-        }
-      });
-      update();
-      const btn = document.getElementById('btn-morning');
-      btn.textContent = '☀ 아침 스냅샷 자동 로드됨 (' + data.time + ')';
-      btn.style.background = '#0284c7';
-      document.getElementById('morning-status').textContent = today + ' 아침 스냅샷 로드 (자동)';
-      document.getElementById('morning-status').style.color = '#0284c7';
-      document.getElementById('dispatch-section').style.display = 'block';
-      buildDispatchGrid();
-      localStorage.setItem('morning_saved_date', today);
-      return;
-    }
-  } catch(e) {
-    console.log('아침 데이터 자동 로드 실패:', e);
-  }
-  // Apps Script에 데이터 없으면 localStorage 저장 여부만 표시
   if(savedDate === today){
+    // 오늘 이미 저장됨 → 배차실적 바로 표시
     const btn = document.getElementById('btn-morning');
     btn.textContent = '✓ 아침 데이터 저장 완료';
     btn.style.background = '#059669';
