@@ -574,25 +574,21 @@ function buildBookmarklet(){
   const code = `(function(){
 var myIds=[368,364,375,366,365,4940,370,386,387,378,4941,4942,4947];
 var app='${appUrl}';
-function dist(la1,lo1,la2,lo2){var R=6371000,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180,a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
-Promise.all([
-  fetch('/api/v2/operating/regions/2/relocation-zones',{credentials:'include'}).then(function(r){return r.json();}),
-  fetch('/api/v2/operating/regions/2/devices?t='+Date.now(),{credentials:'include'}).then(function(r){return r.json();})
-]).then(function(res){
-  var zData=res[0],dData=res[1];
-  var coordMap={};
-  (zData.relocationZones||[]).forEach(function(z){coordMap[z.id]={lat:z.lat,lng:z.lng};});
-  var idleDev=(dData.devices||[]).filter(function(d){return d.status==='IDLE';});
+var win=window.open('','_blank');
+win.document.write('<p style="font-family:sans-serif;padding:20px;font-size:16px;">📡 카카오 데이터 수집 중...</p>');
+Promise.all(
+  myIds.map(function(id){
+    return fetch('/api/v2/operating/bike_zones/'+id,{credentials:'include'})
+      .then(function(r){return r.json();})
+      .then(function(d){return {id:id, count:d.available_device_count||0};})
+      .catch(function(){return {id:id,count:0};});
+  })
+).then(function(results){
   var result={};
-  myIds.forEach(function(zid){
-    var zc=coordMap[zid];
-    if(!zc){result[zid]=0;return;}
-    result[zid]=idleDev.filter(function(d){return dist(d.location.lat,d.location.lng,zc.lat,zc.lng)<=150;}).length;
-  });
+  results.forEach(function(r){result[r.id]=r.count;});
   var hash='#data='+encodeURIComponent(JSON.stringify(result));
-  window.open(app+hash,'_blank');
-}).catch(function(e){alert('오류: '+e.message);});
-alert('카카오 데이터 수집 중...');
+  win.location.href=app+hash;
+}).catch(function(e){win.document.write('<p style="color:red">오류: '+e.message+'</p>');});
 })();`;
 
   const minified = code.replace(/\n\s*/g,' ').trim();
@@ -659,6 +655,7 @@ function loadFromHash(){
       if(el){ el.value = count; filled++; }
     });
     if(filled > 0){
+      applyInputs();
       updateCurTotal();
       update();
       // 상태 배너 표시
@@ -687,9 +684,11 @@ function showHashBanner(cnt, time){
 buildInputs();
 buildExcludes();
 
-// hash 데이터 있으면 자동주입, 없으면 일반 초기화
-if(!loadFromHash()) update();
-else applyInputs();
+// hash 데이터 있으면 자동주입 (buildInputs 이후에 실행해야 DOM이 준비됨)
+// setTimeout으로 DOM 렌더링 완료 후 실행
+setTimeout(function(){
+  if(!loadFromHash()) update();
+}, 50);
 
 checkMorningSaved();
 
