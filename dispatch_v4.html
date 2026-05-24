@@ -288,6 +288,10 @@ const optSum=all.reduce((s,p)=>s+p.opt,0);
 function parseHash(){
   const hash = location.hash.slice(1);
   if(!hash) return;
+
+  // 해시를 먼저 지워서 replaceState 충돌 방지
+  history.replaceState(null,'',location.pathname);
+
   const params = new URLSearchParams(hash);
 
   // 배차 데이터
@@ -298,8 +302,6 @@ function parseHash(){
       const n = parseInt(v);
       if(!isNaN(n) && n >= 0){
         p.cur = n;
-        const el = document.getElementById('inp-'+p.name);
-        if(el) el.value = n;
         anyZone = true;
       }
     }
@@ -310,20 +312,28 @@ function parseHash(){
   if(repairJson){
     try{
       repairData = JSON.parse(decodeURIComponent(repairJson));
-      renderRepair();
     }catch(e){ console.warn('수리 데이터 파싱 오류', e); }
   }
 
   if(anyZone){
-    update(); updateCurTotal();
-    // 북마클릿으로 데이터 받으면 입력 패널 자동으로 접기
+    // buildInputs()가 이미 실행된 후이므로 input 값 직접 세팅
+    all.forEach(p=>{
+      const el = document.getElementById('inp-'+p.name);
+      if(el) el.value = p.cur;
+    });
+    update();
+    updateCurTotal();
+
+    // 입력 패널 자동 접기
     const panel=document.getElementById('input-panel');
     const arrow=document.getElementById('input-arrow');
     if(panel){ panel.style.display='none'; arrow.style.transform='rotate(180deg)'; }
     const badge=document.getElementById('cur-total-badge');
     if(badge) badge.style.display='';
   }
-  history.replaceState(null,'',location.pathname);
+
+  // 수리 데이터 렌더링 (존 데이터와 분리)
+  if(repairJson) renderRepair();
 }
 
 // ─── 수리현황 렌더링 ─────────────────────────────────────────────────
@@ -723,6 +733,15 @@ buildExcludes();
 update();
 checkMorningSaved();
 parseHash();
+
+// parseHash 이후 p.cur 값을 input에 재반영 (타이밍 보정)
+function syncInputsFromData(){
+  all.forEach(p=>{
+    const el=document.getElementById('inp-'+p.name);
+    if(el && el.value=='' && p.cur>0) el.value=p.cur;
+  });
+  updateCurTotal();
+}
 </script>
 </body>
 </html>
