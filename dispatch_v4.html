@@ -286,11 +286,15 @@ const optSum=all.reduce((s,p)=>s+p.opt,0);
 
 // ─── URL 해시에서 배차 + 수리 데이터 파싱 ───────────────────────────
 function parseHash(){
-  const hash = location.hash.slice(1);
+  // 해시 OR sessionStorage 둘 다 확인
+  let hash = location.hash.slice(1);
+  if(!hash){
+    const stored = sessionStorage.getItem('dispatch_data');
+    if(stored){ hash = stored; sessionStorage.removeItem('dispatch_data'); }
+  } else {
+    history.replaceState(null,'',location.pathname);
+  }
   if(!hash) return;
-
-  // 해시를 먼저 지워서 replaceState 충돌 방지
-  history.replaceState(null,'',location.pathname);
 
   const params = new URLSearchParams(hash);
 
