@@ -222,7 +222,7 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
   </div>
 
   <!-- 배터리 구분 -->
-  <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px;">🔋 배터리 구분 (수리 중)</div>
+  <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px;">🔋 배터리 교체 티켓</div>
   <div class="bat-grid">
     <div class="bat-card" style="background:#EFF6FF;">
       <div class="bat-label" style="color:#1E40AF;">GF 기종</div>
@@ -263,6 +263,8 @@ const excluded=new Set();
 
 // 수리 데이터 저장소
 let repairData = [];
+// 배터리 티켓 데이터 저장소
+let batData = [];
 
 const bPoints=[
   {name:'힐스테이트',   zone:'B',opt:12,cur:7, type:'mixed'},
@@ -310,9 +312,15 @@ function parseHash(){
   if(repairJson){
     try{
       repairData = JSON.parse(decodeURIComponent(repairJson));
-      renderRepair();
     }catch(e){ console.warn('수리 데이터 파싱 오류', e); }
   }
+  const batJson = params.get('battery');
+  if(batJson){
+    try{
+      batData = JSON.parse(decodeURIComponent(batJson));
+    }catch(e){ console.warn('배터리 데이터 파싱 오류', e); }
+  }
+  if(repairJson || batJson) renderRepair();
 
   if(anyZone){
     update(); updateCurTotal();
@@ -338,14 +346,14 @@ function renderRepair(){
 
   const field     = repairData.filter(d=>d.repairType==='FIELD');
   const warehouse = repairData.filter(d=>d.repairType==='WAREHOUSE');
-  const gf        = repairData.filter(d=>d.model==='GF');
-  const other     = repairData.filter(d=>d.model!=='GF');
-
   document.getElementById('r-total').textContent     = repairData.length;
   document.getElementById('r-field').textContent     = field.length;
   document.getElementById('r-warehouse').textContent = warehouse.length;
-  document.getElementById('bat-gf').textContent      = gf.length;
-  document.getElementById('bat-other').textContent   = other.length;
+  // 배터리는 batData에서 따로 표시
+  const batGf    = (batData||[]).filter(d=>d.model==='GF');
+  const batOther = (batData||[]).filter(d=>d.model!=='GF');
+  document.getElementById('bat-gf').textContent      = batGf.length;
+  document.getElementById('bat-other').textContent   = batOther.length;
 
   // 현장 → 입고 순, 각 안에서 기종 오름차순
   const sorted = [...repairData].sort((a,b)=>{
