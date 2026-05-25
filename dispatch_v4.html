@@ -391,13 +391,13 @@ function renderRepair(){
 // ─── 입력 / UI 함수들 ────────────────────────────────────────────────
 function buildInputs(){
   const grid=document.getElementById('input-grid');
-  grid.innerHTML='';
   const allIds=all.map(p=>'inp-'+p.name);
+  let html='';
   all.forEach((p)=>{
     const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
     const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
     const nextFocus=`const ids=${JSON.stringify(allIds)};const ni=ids.indexOf(this.id)+1;if(ni<ids.length){const nx=document.getElementById(ids[ni]);nx.focus();nx.select();}`;
-    grid.innerHTML+=`<div class="input-row">
+    html+=`<div class="input-row">
       <div class="input-label">
         <span class="type-dot" style="background:${typeColor};"></span>
         <span style="color:${zColor};font-weight:700;font-size:10px;">[${p.zone}]</span>${p.name}
@@ -408,6 +408,7 @@ function buildInputs(){
         onkeydown="if(event.key==='Enter'){event.preventDefault();${nextFocus}}">
     </div>`;
   });
+  grid.innerHTML=html;
   updateCurTotal();
 }
 
