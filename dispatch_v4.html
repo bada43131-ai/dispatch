@@ -57,28 +57,6 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
 .legend-dot{width:10px;height:5px;border-radius:2px;display:inline-block;}
 .save-btn{width:100%;padding:11px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .repair-row{display:flex;align-items:center;justify-content:space-between;background:#fff8f0;border-radius:8px;padding:8px 12px;margin-bottom:6px;}
-/* 수리현황 */
-.repair-summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
-.repair-stat{border-radius:10px;padding:10px 6px;text-align:center;}
-.repair-stat-label{font-size:10px;color:#888;margin-bottom:3px;}
-.repair-stat-value{font-size:20px;font-weight:700;}
-.bat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
-.bat-card{border-radius:10px;padding:12px;text-align:center;}
-.bat-label{font-size:11px;font-weight:600;margin-bottom:4px;}
-.bat-value{font-size:26px;font-weight:700;}
-.bat-sub{font-size:10px;color:#888;margin-top:2px;}
-.repair-table{width:100%;border-collapse:collapse;font-size:12px;}
-.repair-table th{padding:6px;font-size:11px;color:#888;border-bottom:1px solid #eee;text-align:left;font-weight:500;}
-.repair-table td{padding:7px 6px;border-bottom:1px solid #f5f5f5;vertical-align:top;}
-.repair-type-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;}
-.field-badge{background:#FEF3C7;color:#92400E;}
-.warehouse-badge{background:#EDE9FE;color:#5B21B6;}
-.repair-code{font-size:13px;font-weight:700;}
-.repair-model{font-size:10px;font-weight:700;display:inline-block;padding:1px 5px;border-radius:3px;margin-left:3px;}
-.model-gf{background:#DBEAFE;color:#1E40AF;}
-.model-other{background:#F3F4F6;color:#374151;}
-.repair-comment{font-size:11px;color:#555;line-height:1.5;margin-top:2px;}
-.no-data{text-align:center;color:#aaa;font-size:12px;padding:20px 0;}
 </style>
 </head>
 <body>
@@ -87,140 +65,139 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
 <div class="sub">현재수량 입력 → 배차수량 조절 → 현재수량 반영</div>
 
 <!-- ① 현재수량 입력 -->
-<div onclick="toggleInputPanel()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin:14px 0 0;padding-bottom:4px;border-bottom:1px solid #eee;">
-  <div style="font-size:12px;font-weight:700;color:#555;">① 현재수량 입력</div>
-  <div style="display:flex;align-items:center;gap:6px;">
-    <span id="cur-total-badge" style="font-size:11px;font-weight:700;color:#185FA5;background:#EFF6FF;padding:2px 8px;border-radius:5px;display:none;"></span>
-    <span id="input-arrow" style="font-size:13px;color:#aaa;">▲</span>
-  </div>
-</div>
-<div id="input-panel" style="margin-top:8px;">
-  <div class="input-grid" id="input-grid"></div>
-  <div style="display:flex;justify-content:flex-end;padding:4px 10px;margin-top:2px;">
-    <span id="cur-total" style="font-size:12px;font-weight:700;color:#185FA5;background:#EFF6FF;padding:3px 10px;border-radius:6px;"></span>
-  </div>
+<div class="section-title">① 현재수량 입력</div>
+<div class="input-grid" id="input-grid"></div>
+
+<!-- 현재수량 합계 표시 -->
+<div id="cur-total-row" style="display:flex;justify-content:flex-end;align-items:center;padding:4px 10px;margin-top:2px;">
+<span id="cur-total" style="font-size:12px;font-weight:700;color:#185FA5;background:#EFF6FF;padding:3px 10px;border-radius:6px;"></span>
 </div>
 
 <!-- ② 배차 설정 -->
 <div class="section-title">② 배차 설정</div>
 <div class="ctrl-row">
-  <div class="ctrl-label">배차 포인트 수</div>
-  <div class="ctrl-right">
-    <button class="btn btn-minus" onclick="adj('spot',-1)">−</button>
-    <div class="ctrl-val" id="spot-val">6곳</div>
-    <button class="btn btn-plus" onclick="adj('spot',1)">+</button>
-  </div>
+<div class="ctrl-label">배차 포인트 수</div>
+<div class="ctrl-right">
+<button class="btn btn-minus" onclick="adj('spot',-1)">−</button>
+<div class="ctrl-val" id="spot-val">6곳</div>
+<button class="btn btn-plus" onclick="adj('spot',1)">+</button>
+</div>
 </div>
 <div class="ctrl-row">
-  <div class="ctrl-label">총 배차수량</div>
-  <div class="ctrl-right">
-    <button class="btn btn-minus" onclick="adj('total',-1)">−</button>
-    <div class="ctrl-val" id="total-val">50대</div>
-    <button class="btn btn-plus" onclick="adj('total',1)">+</button>
-  </div>
+<div class="ctrl-label">총 배차수량</div>
+<div class="ctrl-right">
+<button class="btn btn-minus" onclick="adj('total',-1)">−</button>
+<div class="ctrl-val" id="total-val">50대</div>
+<button class="btn btn-plus" onclick="adj('total',1)">+</button>
+</div>
 </div>
 <button class="apply-btn" onclick="applyInputs()">현재수량 반영하기</button>
 
 <!-- 요약 -->
 <div class="metric-grid" style="margin-top:10px;">
-  <div class="metric"><div class="metric-label">선택포인트</div><div class="metric-value" id="m-spot">-</div></div>
-  <div class="metric"><div class="metric-label">B존</div><div class="metric-value" style="color:#0F6E56" id="m-b">-</div></div>
-  <div class="metric"><div class="metric-label">A존</div><div class="metric-value" style="color:#185FA5" id="m-a">-</div></div>
-  <div class="metric"><div class="metric-label">달성율</div><div class="metric-value" id="m-pct">-</div></div>
+<div class="metric"><div class="metric-label">선택포인트</div><div class="metric-value" id="m-spot">-</div></div>
+<div class="metric"><div class="metric-label">B존</div><div class="metric-value" style="color:#0F6E56" id="m-b">-</div></div>
+<div class="metric"><div class="metric-label">A존</div><div class="metric-value" style="color:#185FA5" id="m-a">-</div></div>
+<div class="metric"><div class="metric-label">달성율</div><div class="metric-value" id="m-pct">-</div></div>
 </div>
 
 <div class="legend">
-  <span><span class="legend-dot" style="background:#1D9E75;"></span>B존 ~100%</span>
-  <span><span class="legend-dot" style="background:#378ADD;"></span>A존 ~100%</span>
-  <span><span class="legend-dot" style="background:#F59E0B;"></span>100~110%</span>
-  <span><span class="legend-dot" style="background:#eee;"></span>90%↑ 배차제외</span>
+<span><span class="legend-dot" style="background:#1D9E75;"></span>B존 ~100%</span>
+<span><span class="legend-dot" style="background:#378ADD;"></span>A존 ~100%</span>
+<span><span class="legend-dot" style="background:#F59E0B;"></span>100~110%</span>
+<span><span class="legend-dot" style="background:#eee;"></span>90%↑ 배차제외</span>
 </div>
 
 <table>
-  <colgroup>
-    <col style="width:37%"><col style="width:11%"><col style="width:13%"><col style="width:13%"><col style="width:26%">
-  </colgroup>
-  <thead>
-    <tr>
-      <th>현장명</th>
-      <th style="text-align:center;">현재</th>
-      <th style="text-align:center;">배차</th>
-      <th style="text-align:center;">배차후</th>
-      <th>달성율</th>
-    </tr>
-  </thead>
-  <tbody id="table-body"></tbody>
+<colgroup>
+<col style="width:37%"><col style="width:11%"><col style="width:13%"><col style="width:13%"><col style="width:26%">
+</colgroup>
+<thead>
+<tr>
+<th>현장명</th>
+<th style="text-align:center;">현재</th>
+<th style="text-align:center;">배차</th>
+<th style="text-align:center;">배차후</th>
+<th>달성율</th>
+</tr>
+</thead>
+<tbody id="table-body"></tbody>
 </table>
 <div class="comment" id="comment"></div>
 
 <!-- DB 저장 섹션 -->
 <div style="margin-top:14px;">
-  <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #eee;">📊 데이터 저장</div>
+<div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #eee;">📊 데이터 저장</div>
 
-  <!-- 아침 확정 저장 -->
-  <div style="margin-bottom:8px;">
-    <button onclick="saveMorning()" id="btn-morning" class="save-btn" style="background:#185FA5;color:#fff;">
-      ① 아침 현재수량 확정 저장 (하루 1회)
-    </button>
-    <div id="morning-status" style="font-size:11px;color:#888;text-align:center;margin-top:4px;"></div>
-  </div>
-
-  <!-- 실제 배차량 + 수리물량 -->
-  <div id="dispatch-section" style="display:none;">
-    <div style="font-size:11px;color:#555;margin-bottom:6px;font-weight:600;">② 오늘 실제 배차량 입력 (작업 완료 후)</div>
-    <div class="input-grid" id="dispatch-grid"></div>
-
-    <!-- 배차 합계 -->
-    <div style="display:flex;justify-content:flex-end;margin-top:2px;margin-bottom:4px;">
-      <span id="disp-total" style="font-size:12px;font-weight:700;color:#0F6E56;background:#ECFDF5;padding:3px 10px;border-radius:6px;"></span>
-    </div>
-
-    <!-- 수리 물량 -->
-    <div style="font-size:11px;color:#555;margin:12px 0 6px;font-weight:600;">③ 오늘 수리 물량 (고장 바이크)</div>
-    <div class="repair-row">
-      <span style="font-size:13px;color:#555;font-weight:600;">수리 완료 대수</span>
-      <input type="number" id="repair-count" value="0" min="0" max="50"
-        style="width:52px;height:32px;border:1px solid #ddd;border-radius:6px;text-align:center;font-size:14px;font-weight:700;background:#fff;">
-    </div>
-
-    <!-- 저장 버튼 -->
-    <button onclick="saveDispatch()" class="save-btn" style="background:#0F6E56;color:#fff;margin-top:12px;">
-      실제 배차량 + 수리 물량 저장
-    </button>
-    <div id="dispatch-status" style="font-size:11px;color:#888;text-align:center;margin-top:4px;"></div>
-  </div>
+<!-- 아침 확정 저장 -->
+<div style="margin-bottom:8px;">
+<button onclick="saveMorning()" id="btn-morning" class="save-btn" style="background:#185FA5;color:#fff;">
+① 아침 현재수량 확정 저장 (하루 1회)
+</button>
+<div id="morning-status" style="font-size:11px;color:#888;text-align:center;margin-top:4px;"></div>
 </div>
 
-<!-- 수리현황 -->
-<div style="margin-top:16px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid #eee;">
-    <div style="font-size:12px;font-weight:700;color:#555;">🔧 수리현황 <span id="repair-time" style="font-size:10px;color:#aaa;font-weight:400;"></span></div>
-    <button onclick="renderRepair()" style="padding:6px 12px;background:#f0f0f0;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;color:#555;">새로고침</button>
-  </div>
-  <div class="repair-summary-grid">
-    <div class="repair-stat" style="background:#FEF2F2;"><div class="repair-stat-label">전체 수리</div><div class="repair-stat-value" id="r-total" style="color:#DC2626;">-</div></div>
-    <div class="repair-stat" style="background:#FEF3C7;"><div class="repair-stat-label">현장수리</div><div class="repair-stat-value" id="r-field" style="color:#D97706;">-</div></div>
-    <div class="repair-stat" style="background:#EDE9FE;"><div class="repair-stat-label">입고수리</div><div class="repair-stat-value" id="r-warehouse" style="color:#7C3AED;">-</div></div>
-  </div>
-  <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px;">🔋 배터리 구분</div>
-  <div class="bat-grid">
-    <div class="bat-card" style="background:#EFF6FF;"><div class="bat-label" style="color:#1E40AF;">GF 기종</div><div class="bat-value" id="bat-gf" style="color:#1E40AF;">-</div><div class="bat-sub">GF 배터리</div></div>
-    <div class="bat-card" style="background:#F3F4F6;"><div class="bat-label" style="color:#374151;">기타 기종</div><div class="bat-value" id="bat-other" style="color:#374151;">-</div><div class="bat-sub">HA·IA·JA·KA·MA 등</div></div>
-  </div>
-  <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px;">📋 수리 목록</div>
-  <div id="repair-list-wrap"><div class="no-data">북마클릿 실행 후 표시됩니다</div></div>
+<!-- 실제 배차량 + 수리물량 -->
+<div id="dispatch-section" style="display:none;">
+<div style="font-size:11px;color:#555;margin-bottom:6px;font-weight:600;">② 오늘 실제 배차량 입력 (작업 완료 후)</div>
+<div class="input-grid" id="dispatch-grid"></div>
+
+<!-- 배차 합계 -->
+<div style="display:flex;justify-content:flex-end;margin-top:2px;margin-bottom:4px;">
+<span id="disp-total" style="font-size:12px;font-weight:700;color:#0F6E56;background:#ECFDF5;padding:3px 10px;border-radius:6px;"></span>
+</div>
+
+<!-- 수리 물량 -->
+<div style="font-size:11px;color:#555;margin:12px 0 6px;font-weight:600;">③ 오늘 수리 물량 (고장 바이크)</div>
+<div class="repair-row">
+<span style="font-size:13px;color:#555;font-weight:600;">수리 완료 대수</span>
+<input type="number" id="repair-count" value="0" min="0" max="50"
+style="width:52px;height:32px;border:1px solid #ddd;border-radius:6px;text-align:center;font-size:14px;font-weight:700;background:#fff;">
+</div>
+
+<!-- 저장 버튼 -->
+<button onclick="saveDispatch()" class="save-btn" style="background:#0F6E56;color:#fff;margin-top:12px;">
+실제 배차량 + 수리 물량 저장
+</button>
+<div id="dispatch-status" style="font-size:11px;color:#888;text-align:center;margin-top:4px;"></div>
+</div>
+</div>
+
+<!-- 북마크릿 안내 -->
+<div style="margin-top:14px;">
+<div onclick="toggleBmPanel()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#EFF6FF;border-radius:10px;cursor:pointer;user-select:none;">
+<span style="font-size:12px;font-weight:700;color:#185FA5;">📡 카카오 실시간 자동입력 북마크릿</span>
+<span id="bm-arrow" style="font-size:14px;color:#185FA5;transition:transform 0.2s;">▼</span>
+</div>
+<div id="bm-panel" style="display:none;margin-top:6px;background:#F0F7FF;border-radius:10px;padding:12px;">
+<div style="font-size:11px;color:#444;line-height:1.8;margin-bottom:10px;">
+<b>사용법:</b><br>
+1. 아래 버튼으로 북마크릿을 북마크바에 저장<br>
+2. <b>t-bike-operating.kakao.com</b> 운영 페이지 접속<br>
+3. 북마크릿 클릭 → 자동으로 현재수량 가져와서 이 앱에 입력됨
+</div>
+<div style="background:#fff;border-radius:8px;padding:10px;margin-bottom:10px;">
+<div style="font-size:10px;color:#888;margin-bottom:6px;">북마크릿 코드 (북마크 URL로 저장):</div>
+<textarea id="bm-code" readonly style="width:100%;height:80px;font-size:10px;border:1px solid #ddd;border-radius:6px;padding:6px;resize:none;color:#333;background:#fafafa;font-family:monospace;"></textarea>
+</div>
+<div style="display:flex;gap:8px;">
+<button onclick="copyBm()" style="flex:1;padding:10px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">📋 코드 복사</button>
+<a id="bm-link" href="#" style="flex:1;padding:10px;background:#0F6E56;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;">⭐ 북마크로 저장</a>
+</div>
+<div id="bm-copy-status" style="font-size:11px;text-align:center;margin-top:6px;color:#059669;"></div>
+</div>
 </div>
 
 <!-- 옵션: 제외 포인트 -->
 <div style="margin-top:16px;">
-  <div onclick="toggleExclPanel()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f7f7f7;border-radius:10px;cursor:pointer;user-select:none;">
-    <span style="font-size:12px;font-weight:700;color:#555;">⚙ 특정 포인트 배차 제외 (옵션) <span id="excl-count" style="color:#DC2626;font-size:11px;font-weight:600;"></span></span>
-    <span id="excl-arrow" style="font-size:14px;color:#888;transition:transform 0.2s;">▼</span>
-  </div>
-  <div id="excl-panel" style="display:none;margin-top:6px;">
-    <div style="font-size:11px;color:#888;margin-bottom:8px;padding:0 4px;">오늘 배차하지 않을 포인트를 선택하세요</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="exclude-grid"></div>
-  </div>
+<div onclick="toggleExclPanel()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f7f7f7;border-radius:10px;cursor:pointer;user-select:none;">
+<span style="font-size:12px;font-weight:700;color:#555;">⚙ 특정 포인트 배차 제외 (옵션) <span id="excl-count" style="color:#DC2626;font-size:11px;font-weight:600;"></span></span>
+<span id="excl-arrow" style="font-size:14px;color:#888;transition:transform 0.2s;">▼</span>
+</div>
+<div id="excl-panel" style="display:none;margin-top:6px;">
+<div style="font-size:11px;color:#888;margin-bottom:8px;padding:0 4px;">오늘 배차하지 않을 포인트를 선택하세요</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="exclude-grid"></div>
+</div>
 </div>
 
 <script>
@@ -230,465 +207,544 @@ let spots=6, budget=50;
 const excluded=new Set();
 
 const bPoints=[
-  {name:'힐스테이트',   zone:'B',opt:12,cur:7, type:'mixed'},
-  {name:'이편한세상',   zone:'B',opt:20,cur:17,type:'mixed'},
-  {name:'송도국제학교', zone:'B',opt:15,cur:13,type:'mixed'},
-  {name:'더샵마스터뷰', zone:'B',opt:15,cur:13,type:'inflow'},
-  {name:'지식정보단지', zone:'B',opt:20,cur:17,type:'consume'},
-  {name:'라이크홈',     zone:'B',opt:17,cur:16,type:'consume'},
+{name:'힐스테이트', zone:'B',opt:12,cur:7, type:'mixed'},
+{name:'이편한세상', zone:'B',opt:20,cur:17,type:'mixed'},
+{name:'송도국제학교', zone:'B',opt:15,cur:13,type:'mixed'},
+{name:'더샵마스터뷰', zone:'B',opt:15,cur:13,type:'inflow'},
+{name:'지식정보단지', zone:'B',opt:20,cur:17,type:'consume'},
+{name:'라이크홈', zone:'B',opt:17,cur:16,type:'consume'},
 ];
 const aPoints=[
-  {name:'인천대1번',    zone:'A',opt:18,cur:9, type:'mixed'},
-  {name:'송도시외버스', zone:'A',opt:15,cur:7, type:'consume'},
-  {name:'인천대2번',    zone:'A',opt:15,cur:8, type:'consume'},
-  {name:'테라스정원',   zone:'A',opt:20,cur:12,type:'consume'},
-  {name:'산책정원',     zone:'A',opt:20,cur:12,type:'consume'},
-  {name:'센트럴파크',   zone:'A',opt:12,cur:8, type:'consume'},
-  {name:'타임스페이스', zone:'A',opt:15,cur:14,type:'consume'},
+{name:'인천대1번', zone:'A',opt:18,cur:9, type:'mixed'},
+{name:'송도시외버스', zone:'A',opt:15,cur:7, type:'consume'},
+{name:'인천대2번', zone:'A',opt:15,cur:8, type:'consume'},
+{name:'테라스정원', zone:'A',opt:20,cur:12,type:'consume'},
+{name:'산책정원', zone:'A',opt:20,cur:12,type:'consume'},
+{name:'센트럴파크', zone:'A',opt:12,cur:8, type:'consume'},
+{name:'타임스페이스', zone:'A',opt:15,cur:14,type:'consume'},
 ];
 const all=[...bPoints,...aPoints];
 const optSum=all.reduce((s,p)=>s+p.opt,0);
 
 function buildInputs(){
-  const grid=document.getElementById('input-grid');
-  grid.innerHTML='';
-  const allIds=all.map(p=>'inp-'+p.name);
-  all.forEach((p,idx)=>{
-    const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
-    const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
-    const nextFocus=`const ids=${JSON.stringify(allIds)};const ni=ids.indexOf(this.id)+1;if(ni<ids.length){const nx=document.getElementById(ids[ni]);nx.focus();nx.select();}`;
-    grid.innerHTML+=`<div class="input-row">
-      <div class="input-label">
-        <span class="type-dot" style="background:${typeColor};"></span>
-        <span style="color:${zColor};font-weight:700;font-size:10px;">[${p.zone}]</span>${p.name}
-      </div>
-      <input class="cur-input" type="number" id="inp-${p.name}" placeholder="0" min="0" max="30"
-        oninput="update();updateCurTotal()"
-        onfocus="this.select()"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();${nextFocus}}">
-    </div>`;
-  });
-  updateCurTotal();
+const grid=document.getElementById('input-grid');
+grid.innerHTML='';
+const allIds=all.map(p=>'inp-'+p.name);
+all.forEach((p,idx)=>{
+const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
+const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
+const nextFocus=`const ids=${JSON.stringify(allIds)};const ni=ids.indexOf(this.id)+1;if(ni<ids.length){const nx=document.getElementById(ids[ni]);nx.focus();nx.select();}`;
+grid.innerHTML+=`<div class="input-row">
+<div class="input-label">
+<span class="type-dot" style="background:${typeColor};"></span>
+<span style="color:${zColor};font-weight:700;font-size:10px;">[${p.zone}]</span>${p.name}
+</div>
+<input class="cur-input" type="number" id="inp-${p.name}" placeholder="0" min="0" max="30"
+oninput="update();updateCurTotal()"
+onfocus="this.select()"
+onkeydown="if(event.key==='Enter'){event.preventDefault();${nextFocus}}">
+</div>`;
+});
+updateCurTotal();
 }
 
 function updateCurTotal(){
-  const el=document.getElementById('cur-total');
-  if(!el) return;
-  const total=all.reduce((s,p)=>{
-    const v=parseInt(document.getElementById('inp-'+p.name)?.value)||0;
-    return s+v;
-  },0);
-  el.textContent='현재수량 합계: '+total+'대';
+const el=document.getElementById('cur-total');
+if(!el) return;
+const total=all.reduce((s,p)=>{
+const v=parseInt(document.getElementById('inp-'+p.name)?.value)||0;
+return s+v;
+},0);
+el.textContent='현재수량 합계: '+total+'대';
 }
 
 function buildDispatchGrid(){
-  const grid=document.getElementById('dispatch-grid');
-  if(!grid) return;
-  grid.innerHTML='';
-  const dispIds=all.map(p=>'disp-'+p.name);
-  all.forEach((p,idx)=>{
-    const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
-    const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
-    const nextFocus=`const ids=${JSON.stringify(dispIds)};const ni=ids.indexOf(this.id)+1;if(ni<ids.length){const nx=document.getElementById(ids[ni]);nx.focus();nx.select();}`;
-    grid.innerHTML+=`<div class="input-row">
-      <div class="input-label">
-        <span class="type-dot" style="background:${typeColor};"></span>
-        <span style="color:${zColor};font-weight:700;font-size:10px;">[${p.zone}]</span>${p.name}
-      </div>
-      <input class="cur-input" type="number" id="disp-${p.name}" placeholder="0" min="0" max="50"
-        oninput="updateDispTotal()"
-        onfocus="this.select()"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();${nextFocus}}">
-    </div>`;
-  });
+const grid=document.getElementById('dispatch-grid');
+if(!grid) return;
+grid.innerHTML='';
+const dispIds=all.map(p=>'disp-'+p.name);
+all.forEach((p,idx)=>{
+const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
+const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
+const nextFocus=`const ids=${JSON.stringify(dispIds)};const ni=ids.indexOf(this.id)+1;if(ni<ids.length){const nx=document.getElementById(ids[ni]);nx.focus();nx.select();}`;
+grid.innerHTML+=`<div class="input-row">
+<div class="input-label">
+<span class="type-dot" style="background:${typeColor};"></span>
+<span style="color:${zColor};font-weight:700;font-size:10px;">[${p.zone}]</span>${p.name}
+</div>
+<input class="cur-input" type="number" id="disp-${p.name}" placeholder="0" min="0" max="50"
+oninput="updateDispTotal()"
+onfocus="this.select()"
+onkeydown="if(event.key==='Enter'){event.preventDefault();${nextFocus}}">
+</div>`;
+});
 }
 
 function updateDispTotal(){
-  const el=document.getElementById('disp-total');
-  if(!el) return;
-  const total=all.reduce((s,p)=>{
-    const v=parseInt(document.getElementById('disp-'+p.name)?.value)||0;
-    return s+v;
-  },0);
-  el.textContent='배차 합계: '+total+'대';
+const el=document.getElementById('disp-total');
+if(!el) return;
+const total=all.reduce((s,p)=>{
+const v=parseInt(document.getElementById('disp-'+p.name)?.value)||0;
+return s+v;
+},0);
+el.textContent='배차 합계: '+total+'대';
 }
 
 function buildExcludes(){
-  const grid=document.getElementById('exclude-grid');
-  grid.innerHTML='';
-  all.forEach(p=>{
-    const isExcl=excluded.has(p.name);
-    const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
-    const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
-    grid.innerHTML+=`<div class="excl-row${isExcl?' excluded':''}" onclick="toggleExclude('${p.name}')">
-      <div class="excl-label">
-        <span class="type-dot" style="background:${typeColor};"></span>
-        <span style="color:${zColor};font-weight:700;font-size:10px;">[${p.zone}]</span>${p.name}
-      </div>
-      <div class="excl-toggle ${isExcl?'on':'off'}"><div class="knob"></div></div>
-    </div>`;
-  });
-  const cnt=excluded.size;
-  document.getElementById('excl-count').textContent=cnt>0?`(${cnt}곳 제외중)`:'';
+const grid=document.getElementById('exclude-grid');
+grid.innerHTML='';
+all.forEach(p=>{
+const isExcl=excluded.has(p.name);
+const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
+const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
+grid.innerHTML+=`<div class="excl-row${isExcl?' excluded':''}" onclick="toggleExclude('${p.name}')">
+<div class="excl-label">
+<span class="type-dot" style="background:${typeColor};"></span>
+<span style="color:${zColor};font-weight:700;font-size:10px;">[${p.zone}]</span>${p.name}
+</div>
+<div class="excl-toggle ${isExcl?'on':'off'}"><div class="knob"></div></div>
+</div>`;
+});
+const cnt=excluded.size;
+document.getElementById('excl-count').textContent=cnt>0?`(${cnt}곳 제외중)`:'';
 }
 
 function toggleExclude(name){
-  if(excluded.has(name)) excluded.delete(name);
-  else excluded.add(name);
-  buildExcludes();
-  update();
+if(excluded.has(name)) excluded.delete(name);
+else excluded.add(name);
+buildExcludes();
+update();
 }
 
 function toggleExclPanel(){
-  const panel=document.getElementById('excl-panel');
-  const arrow=document.getElementById('excl-arrow');
-  const isOpen=panel.style.display!=='none';
-  panel.style.display=isOpen?'none':'block';
-  arrow.style.transform=isOpen?'':'rotate(180deg)';
+const panel=document.getElementById('excl-panel');
+const arrow=document.getElementById('excl-arrow');
+const isOpen=panel.style.display!=='none';
+panel.style.display=isOpen?'none':'block';
+arrow.style.transform=isOpen?'':'rotate(180deg)';
 }
 
 function applyInputs(){
-  all.forEach(p=>{
-    const el=document.getElementById('inp-'+p.name);
-    if(el){const v=parseInt(el.value);if(!isNaN(v)&&v>=0)p.cur=v;}
-  });
-  update();
+all.forEach(p=>{
+const el=document.getElementById('inp-'+p.name);
+if(el){const v=parseInt(el.value);if(!isNaN(v)&&v>=0)p.cur=v;}
+});
+update();
 }
 
 function adj(type,delta){
-  if(type==='spot'){spots=Math.min(11,Math.max(1,spots+delta));document.getElementById('spot-val').textContent=spots+'곳';}
-  else{budget=Math.min(100,Math.max(0,budget+delta));document.getElementById('total-val').textContent=budget+'대';}
-  update();
+if(type==='spot'){spots=Math.min(11,Math.max(1,spots+delta));document.getElementById('spot-val').textContent=spots+'곳';}
+else{budget=Math.min(100,Math.max(0,budget+delta));document.getElementById('total-val').textContent=budget+'대';}
+update();
 }
 
 function getToday(){
-  // 한국 시간(KST=UTC+9) 기준으로 날짜 계산
-  const d=new Date(new Date().getTime()+9*60*60*1000);
-  const s=d.toISOString();
-  return s.substring(0,10);
+const d=new Date(new Date().getTime()+9*60*60*1000);
+const s=d.toISOString();
+return s.substring(0,10);
 }
 
 function update(){
-  // 현재수량 반영 + 지표 계산
-  all.forEach(p=>{
-    const el=document.getElementById('inp-'+p.name);
-    if(el){const v=parseInt(el.value);if(!isNaN(v)&&v>=0)p.cur=v;}
-    p.curPct=p.cur/p.opt;
-    p.need100=Math.max(0,p.opt-p.cur);
-    p.need110=Math.max(0,Math.floor(p.opt*1.1)-p.cur);
-    // 90% 초과면 배차 대상 아님
-    p.needsDispatch = p.curPct < 0.9;
-    // A존: 회전율 낮은 곳(소비 적은 곳) 먼저 → 오후 5시 잔량 유지에 유리
-    const avgConsume = {
-      '힐스테이트':3,'이편한세상':2,'송도국제학교':2,'더샵마스터뷰':3,'지식정보단지':11,'라이크홈':8,
-      '인천대1번':9,'송도시외버스':11,'인천대2번':9,'테라스정원':6,'산책정원':10,'센트럴파크':7,'타임스페이스':8
-    };
-    const consume = avgConsume[p.name] || 5;
-    const shortageRatio = p.need100/p.opt;
-    if(p.zone==='B'){
-      p.score = p.needsDispatch ? shortageRatio*100 : -1;
-    } else {
-      // 소비 적을수록 + 부족량 클수록 우선
-      p.score = p.needsDispatch ? (shortageRatio*50 + (20-consume)*3) : -1;
-    }
-  });
-  const curSum=all.reduce((s,p)=>s+p.cur,0);
+all.forEach(p=>{
+const el=document.getElementById('inp-'+p.name);
+if(el){const v=parseInt(el.value);if(!isNaN(v)&&v>=0)p.cur=v;}
+p.curPct=p.cur/p.opt;
+p.need100=Math.max(0,p.opt-p.cur);
+p.need110=Math.max(0,Math.floor(p.opt*1.1)-p.cur);
+p.needsDispatch = p.curPct < 0.9;
+const avgConsume = {
+'힐스테이트':3,'이편한세상':2,'송도국제학교':2,'더샵마스터뷰':3,'지식정보단지':11,'라이크홈':8,
+'인천대1번':9,'송도시외버스':11,'인천대2번':9,'테라스정원':6,'산책정원':10,'센트럴파크':7,'타임스페이스':8
+};
+const consume = avgConsume[p.name] || 5;
+const shortageRatio = p.need100/p.opt;
+if(p.zone==='B'){
+p.score = p.needsDispatch ? shortageRatio*100 : -1;
+} else {
+p.score = p.needsDispatch ? (shortageRatio*50 + (20-consume)*3) : -1;
+}
+});
+const curSum=all.reduce((s,p)=>s+p.cur,0);
 
-  // B존: 90% 이하 전부 무조건 배차 (포인트 수 제한 없음, 제외 설정 제외)
-  const bMust = bPoints.filter(p=>!excluded.has(p.name) && p.needsDispatch);
-  const bSel = new Set(bMust.map(p=>p.name));
+const bMust = bPoints.filter(p=>!excluded.has(p.name) && p.needsDispatch);
+const bSel = new Set(bMust.map(p=>p.name));
 
-  // A존: 90% 이하 중 포인트 수 슬라이더 기준으로 선택 (부족량 큰 순)
-  const aDispatchable = aPoints
-    .filter(p=>!excluded.has(p.name) && p.needsDispatch)
-    .sort((a,b)=>b.score-a.score);
-  const aSlots = Math.min(spots, aDispatchable.length);
-  const aSel = new Set(aDispatchable.slice(0,aSlots).map(p=>p.name));
+const aDispatchable = aPoints
+.filter(p=>!excluded.has(p.name) && p.needsDispatch)
+.sort((a,b)=>b.score-a.score);
+const aSlots = Math.min(spots, aDispatchable.length);
+const aSel = new Set(aDispatchable.slice(0,aSlots).map(p=>p.name));
 
-  all.forEach(p=>p.dispatch=0);
-  let rem=budget;
+all.forEach(p=>p.dispatch=0);
+let rem=budget;
 
-  // 1단계: B존 100%까지 (무조건)
-  bPoints.filter(p=>bSel.has(p.name)).forEach(p=>{
-    const g=Math.min(p.need100,rem); p.dispatch=g; rem-=g;
-  });
-  // 2단계: B존 110%까지 (무조건, A존보다 먼저)
-  if(rem>0) bPoints.filter(p=>bSel.has(p.name)).forEach(p=>{
-    const e=Math.min(p.need110-p.dispatch,rem);
-    if(e>0){p.dispatch+=e;rem-=e;}
-  });
-  // 3단계: A존 100%까지 (B존 완료 후 잔여 예산으로)
-  if(rem>0) aPoints.filter(p=>aSel.has(p.name)).forEach(p=>{
-    const g=Math.min(p.need100,rem); p.dispatch=g; rem-=g;
-  });
-  // 4단계: A존 110%까지
-  if(rem>0) aPoints.filter(p=>aSel.has(p.name)).forEach(p=>{
-    const e=Math.min(p.need110-p.dispatch,rem);
-    if(e>0){p.dispatch+=e;rem-=e;}
-  });
+bPoints.filter(p=>bSel.has(p.name)).forEach(p=>{
+const g=Math.min(p.need100,rem); p.dispatch=g; rem-=g;
+});
+if(rem>0) bPoints.filter(p=>bSel.has(p.name)).forEach(p=>{
+const e=Math.min(p.need110-p.dispatch,rem);
+if(e>0){p.dispatch+=e;rem-=e;}
+});
+if(rem>0) aPoints.filter(p=>aSel.has(p.name)).forEach(p=>{
+const g=Math.min(p.need100,rem); p.dispatch=g; rem-=g;
+});
+if(rem>0) aPoints.filter(p=>aSel.has(p.name)).forEach(p=>{
+const e=Math.min(p.need110-p.dispatch,rem);
+if(e>0){p.dispatch+=e;rem-=e;}
+});
 
-  const tB=bPoints.reduce((s,p)=>s+p.dispatch,0);
-  const tA=aPoints.reduce((s,p)=>s+p.dispatch,0);
-  const tD=tB+tA;
-  const afterSum=all.reduce((s,p)=>s+p.cur+p.dispatch,0);
-  const aPct=Math.round(afterSum/optSum*100);
-  const pCol=aPct>=100?'#059669':aPct>=85?'#D97706':'#DC2626';
+const tB=bPoints.reduce((s,p)=>s+p.dispatch,0);
+const tA=aPoints.reduce((s,p)=>s+p.dispatch,0);
+const tD=tB+tA;
+const afterSum=all.reduce((s,p)=>s+p.cur+p.dispatch,0);
+const aPct=Math.round(afterSum/optSum*100);
+const pCol=aPct>=100?'#059669':aPct>=85?'#D97706':'#DC2626';
 
-  document.getElementById('m-spot').textContent=bSel.size+'B+'+aSel.size+'A';
-  document.getElementById('m-b').textContent=tB+'대';
-  document.getElementById('m-a').textContent=tA+'대';
-  document.getElementById('m-pct').textContent=aPct+'%';
-  document.getElementById('m-pct').style.color=pCol;
+document.getElementById('m-spot').textContent=bSel.size+'B+'+aSel.size+'A';
+document.getElementById('m-b').textContent=tB+'대';
+document.getElementById('m-a').textContent=tA+'대';
+document.getElementById('m-pct').textContent=aPct+'%';
+document.getElementById('m-pct').style.color=pCol;
 
-  const tb=document.getElementById('table-body');
-  tb.innerHTML='';
+const tb=document.getElementById('table-body');
+tb.innerHTML='';
 
-  // B존 → A존 순서로 표시, 선택된 곳 먼저
-  [['B',bPoints,bSel,'#0F6E56','#1D9E75'],['A',aPoints,aSel,'#185FA5','#378ADD']].forEach(([z,pts,sel,zC,bC])=>{
-    const allZonePts=z==='B'?bPoints:aPoints;
-    const zOpt=allZonePts.reduce((s,p)=>s+p.opt,0);
-    const zCur=allZonePts.reduce((s,p)=>s+p.cur,0);
-    const zD=allZonePts.reduce((s,p)=>s+p.dispatch,0);
-    const zAfter=allZonePts.reduce((s,p)=>s+p.cur+p.dispatch,0);
-    const zPct=Math.round(zAfter/zOpt*100);
-    const zPC=zPct>=100?'#059669':zPct>=85?'#D97706':'#DC2626';
-    const zoneNote=z==='B'?'90%↓ 전체 무조건 배차':'포인트 수 설정 기준'; tb.innerHTML+=`<tr class="zone-hd"><td colspan="5">${z}존 — ${sel.size}곳 (${zoneNote})</td></tr>`;
+[['B',bPoints,bSel,'#0F6E56','#1D9E75'],['A',aPoints,aSel,'#185FA5','#378ADD']].forEach(([z,pts,sel,zC,bC])=>{
+const allZonePts=z==='B'?bPoints:aPoints;
+const zOpt=allZonePts.reduce((s,p)=>s+p.opt,0);
+const zCur=allZonePts.reduce((s,p)=>s+p.cur,0);
+const zD=allZonePts.reduce((s,p)=>s+p.dispatch,0);
+const zAfter=allZonePts.reduce((s,p)=>s+p.cur+p.dispatch,0);
+const zPct=Math.round(zAfter/zOpt*100);
+const zPC=zPct>=100?'#059669':zPct>=85?'#D97706':'#DC2626';
+const zoneNote=z==='B'?'90%↓ 전체 무조건 배차':'포인트 수 설정 기준';
+tb.innerHTML+=`<tr class="zone-hd"><td colspan="5">${z}존 — ${sel.size}곳 (${zoneNote})</td></tr>`;
 
-    // 정렬: 선택된곳 → 90%초과(배차불필요) → 제외설정
-    const sorted=[
-      ...pts.filter(p=>sel.has(p.name)).sort((a,b)=>b.score-a.score),
-      ...pts.filter(p=>!sel.has(p.name)&&!excluded.has(p.name)&&!p.needsDispatch),
-      ...pts.filter(p=>!sel.has(p.name)&&!excluded.has(p.name)&&p.needsDispatch),
-      ...pts.filter(p=>excluded.has(p.name)),
-    ];
+const sorted=[
+...pts.filter(p=>sel.has(p.name)).sort((a,b)=>b.score-a.score),
+...pts.filter(p=>!sel.has(p.name)&&!excluded.has(p.name)&&!p.needsDispatch),
+...pts.filter(p=>!sel.has(p.name)&&!excluded.has(p.name)&&p.needsDispatch),
+...pts.filter(p=>excluded.has(p.name)),
+];
 
-    let rank=1;
-    sorted.forEach(p=>{
-      const isExcl=excluded.has(p.name);
-      const isSel=sel.has(p.name);
-      const isSkip=!p.needsDispatch&&!isExcl;
-      const ac=p.cur+p.dispatch;
-      const ap=Math.round(ac/p.opt*100);
-      const nW=Math.round(Math.min(100,ap)/110*100);
-      const oW=ap>100?Math.round(Math.min(10,ap-100)/110*100):0;
-      const dC=p.dispatch>0?zC:'#bbb';
-      const pC=ap>=100?'#059669':ap>=85?'#D97706':'#DC2626';
-      const tl=p.type==='inflow'?'유입':p.type==='mixed'?'혼합':'소비';
-      const tc=p.type==='inflow'?'inflow':p.type==='mixed'?'mixed':'consume';
-      const rowClass=isExcl?'excluded-row':isSkip?'skip-row':isSel?'':'unselected';
-      const skipBadge=isSkip?'<span style="font-size:9px;background:#E0F2E9;color:#0F6E56;padding:1px 4px;border-radius:3px;font-weight:700;">90%↑</span> ':'';
-      const exclBadge=isExcl?'<span style="font-size:9px;background:#FEE2E2;color:#991B1B;padding:1px 4px;border-radius:3px;font-weight:700;">제외</span> ':'';
-      const rk=isSel
-        ?`<span class="rank" style="background:${z==='A'?'#DBEAFE':'#D1FAE5'};color:${zC};">${rank++}</span>`
-        :`<span style="display:inline-block;width:20px;"></span>`;
+let rank=1;
+sorted.forEach(p=>{
+const isExcl=excluded.has(p.name);
+const isSel=sel.has(p.name);
+const isSkip=!p.needsDispatch&&!isExcl;
+const ac=p.cur+p.dispatch;
+const ap=Math.round(ac/p.opt*100);
+const nW=Math.round(Math.min(100,ap)/110*100);
+const oW=ap>100?Math.round(Math.min(10,ap-100)/110*100):0;
+const dC=p.dispatch>0?zC:'#bbb';
+const pC=ap>=100?'#059669':ap>=85?'#D97706':'#DC2626';
+const tl=p.type==='inflow'?'유입':p.type==='mixed'?'혼합':'소비';
+const tc=p.type==='inflow'?'inflow':p.type==='mixed'?'mixed':'consume';
+const rowClass=isExcl?'excluded-row':isSkip?'skip-row':isSel?'':'unselected';
+const skipBadge=isSkip?'<span style="font-size:9px;background:#E0F2E9;color:#0F6E56;padding:1px 4px;border-radius:3px;font-weight:700;">90%↑</span> ':'';
+const exclBadge=isExcl?'<span style="font-size:9px;background:#FEE2E2;color:#991B1B;padding:1px 4px;border-radius:3px;font-weight:700;">제외</span> ':'';
+const rk=isSel
+?`<span class="rank" style="background:${z==='A'?'#DBEAFE':'#D1FAE5'};color:${zC};">${rank++}</span>`
+:`<span style="display:inline-block;width:20px;"></span>`;
 
-      tb.innerHTML+=`<tr class="${rowClass}">
-        <td>${rk}${skipBadge}${exclBadge}<span style="font-weight:${isSel?'700':'400'}">${p.name}</span> <span class="badge ${tc}">${tl}</span></td>
-        <td style="text-align:center;">${p.cur}</td>
-        <td style="text-align:center;font-weight:700;color:${dC}">${p.dispatch>0?'+'+p.dispatch:isSkip?'✓':'-'}</td>
-        <td style="text-align:center;font-weight:${isSel?'700':'400'}">${ac}${ap>=110?'▲':''}</td>
-        <td><div style="display:flex;align-items:center;gap:3px;">
-          <div class="bar-wrap">
-            <div style="position:absolute;top:0;left:0;width:${nW}%;height:5px;background:${bC};opacity:${isSel?1:0.3};"></div>
-            ${oW>0?`<div style="position:absolute;top:0;left:${nW}%;width:${oW}%;height:5px;background:#F59E0B;"></div>`:''}
-          </div>
-          <span style="font-size:11px;font-weight:700;color:${pC};min-width:28px;">${ap}%</span>
-        </div></td>
-      </tr>`;
-    });
-    tb.innerHTML+=`<tr class="subtotal"><td>소계</td><td style="text-align:center;">${zCur}</td><td style="text-align:center;color:${zC}">+${zD}</td><td style="text-align:center;">${zAfter}</td><td style="color:${zPC};font-weight:700;">${zPct}%</td></tr>`;
-  });
+tb.innerHTML+=`<tr class="${rowClass}">
+<td>${rk}${skipBadge}${exclBadge}<span style="font-weight:${isSel?'700':'400'}">${p.name}</span> <span class="badge ${tc}">${tl}</span></td>
+<td style="text-align:center;">${p.cur}</td>
+<td style="text-align:center;font-weight:700;color:${dC}">${p.dispatch>0?'+'+p.dispatch:isSkip?'✓':'-'}</td>
+<td style="text-align:center;font-weight:${isSel?'700':'400'}">${ac}${ap>=110?'▲':''}</td>
+<td><div style="display:flex;align-items:center;gap:3px;">
+<div class="bar-wrap">
+<div style="position:absolute;top:0;left:0;width:${nW}%;height:5px;background:${bC};opacity:${isSel?1:0.3};"></div>
+${oW>0?`<div style="position:absolute;top:0;left:${nW}%;width:${oW}%;height:5px;background:#F59E0B;"></div>`:''}
+</div>
+<span style="font-size:11px;font-weight:700;color:${pC};min-width:28px;">${ap}%</span>
+</div></td>
+</tr>`;
+});
+tb.innerHTML+=`<tr class="subtotal"><td>소계</td><td style="text-align:center;">${zCur}</td><td style="text-align:center;color:${zC}">+${zD}</td><td style="text-align:center;">${zAfter}</td><td style="color:${zPC};font-weight:700;">${zPct}%</td></tr>`;
+});
 
-  const lo=budget-tD;
-  tb.innerHTML+=`<tr class="grandtotal"><td>전체</td><td style="text-align:center;">${curSum}</td><td style="text-align:center;">+${tD}</td><td style="text-align:center;">${curSum+tD}</td><td style="color:${pCol}">${aPct}%</td></tr>`;
-  document.getElementById('comment').textContent=
-    `B존 ${bSel.size}곳(무조건) + A존 ${aSel.size}곳 · B ${tB}대 · A ${tA}대 · 달성율 ${aPct}%`
-    +(lo>0?` · 미배분 ${lo}대`:'')
-    +(excluded.size>0?` · 제외 ${excluded.size}곳`:'');
+const lo=budget-tD;
+tb.innerHTML+=`<tr class="grandtotal"><td>전체</td><td style="text-align:center;">${curSum}</td><td style="text-align:center;">+${tD}</td><td style="text-align:center;">${curSum+tD}</td><td style="color:${pCol}">${aPct}%</td></tr>`;
+document.getElementById('comment').textContent=
+`B존 ${bSel.size}곳(무조건) + A존 ${aSel.size}곳 · B ${tB}대 · A ${tA}대 · 달성율 ${aPct}%`
++(lo>0?` · 미배분 ${lo}대`:'')
++(excluded.size>0?` · 제외 ${excluded.size}곳`:'');
 }
 
 // 아침 현재수량 확정 저장
 async function saveMorning(){
-  const btn=document.getElementById('btn-morning');
-  const status=document.getElementById('morning-status');
-  all.forEach(p=>{
-    const el=document.getElementById('inp-'+p.name);
-    if(el){const v=parseInt(el.value);if(!isNaN(v)&&v>=0)p.cur=v;}
-  });
-  const repair=parseInt(document.getElementById('repair-count').value)||0;
-  const payload={
-    type:'morning',
-    date:getToday(),
-    repair,
-    points:all.map(p=>({name:p.name,zone:p.zone,type:p.type,opt:p.opt,cur:p.cur}))
-  };
-  btn.textContent='저장 중...';
-  btn.disabled=true;
-  try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
-    btn.textContent='✓ 아침 데이터 저장 완료';
-    btn.style.background='#059669';
-    status.textContent=`${getToday()} 저장됨 · 수리 ${repair}대`;
-    status.style.color='#059669';
-    localStorage.setItem('morning_saved_date', getToday());
-    // 아침 현재수량을 포인트별로 저장
-    const morningMap={};
-    all.forEach(p=>{ morningMap[p.name]=p.cur; });
-    localStorage.setItem('morning_data_'+getToday(), JSON.stringify(morningMap));
-    document.getElementById('dispatch-section').style.display='block';
-    buildDispatchGrid();
-  }catch(err){
-    btn.textContent='① 아침 현재수량 확정 저장 (하루 1회)';
-    btn.disabled=false;
-    status.textContent='저장 실패 — 인터넷 연결 확인';
-    status.style.color='#DC2626';
-  }
+const btn=document.getElementById('btn-morning');
+const status=document.getElementById('morning-status');
+all.forEach(p=>{
+const el=document.getElementById('inp-'+p.name);
+if(el){const v=parseInt(el.value);if(!isNaN(v)&&v>=0)p.cur=v;}
+});
+const repair=parseInt(document.getElementById('repair-count').value)||0;
+const payload={
+type:'morning',
+date:getToday(),
+repair,
+points:all.map(p=>({name:p.name,zone:p.zone,type:p.type,opt:p.opt,cur:p.cur}))
+};
+btn.textContent='저장 중...';
+btn.disabled=true;
+try{
+await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
+btn.textContent='✓ 아침 데이터 저장 완료';
+btn.style.background='#059669';
+status.textContent=`${getToday()} 저장됨 · 수리 ${repair}대`;
+status.style.color='#059669';
+localStorage.setItem('morning_saved_date', getToday());
+const morningMap={};
+all.forEach(p=>{ morningMap[p.name]=p.cur; });
+localStorage.setItem('morning_data_'+getToday(), JSON.stringify(morningMap));
+document.getElementById('dispatch-section').style.display='block';
+buildDispatchGrid();
+}catch(err){
+btn.textContent='① 아침 현재수량 확정 저장 (하루 1회)';
+btn.disabled=false;
+status.textContent='저장 실패 — 인터넷 연결 확인';
+status.style.color='#DC2626';
+}
 }
 
 // 실제 배차량 + 수리 저장
 async function saveDispatch(){
-  const status=document.getElementById('dispatch-status');
-  // 아침 저장된 현재수량을 localStorage에서 가져오기
-  const morningData = JSON.parse(localStorage.getItem('morning_data_'+getToday())||'{}');
-  all.forEach(p=>{
-    const de=document.getElementById('disp-'+p.name);
-    p.actualDispatch=de?parseInt(de.value)||0:0;
-    // 아침 현재수량: localStorage에 저장된 값 사용 (없으면 현재 입력값)
-    const morningPoint = morningData[p.name];
-    p.morningCur = morningPoint !== undefined ? morningPoint : (parseInt(document.getElementById('inp-'+p.name)?.value)||0);
-  });
-  const repair=parseInt(document.getElementById('repair-count').value)||0;
-  const payload={
-    type:'dispatch',
-    date:getToday(),
-    repair,
-    points:all.map(p=>({name:p.name,zone:p.zone,type:p.type,opt:p.opt,cur:p.morningCur,dispatch:p.actualDispatch}))
-  };
-  status.textContent='저장 중...';
-  try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
-    status.textContent=`✓ ${getToday()} 배차실적 + 수리 ${repair}대 저장 완료`;
-    status.style.color='#059669';
-  }catch(err){
-    status.textContent='저장 실패 — 인터넷 연결 확인';
-    status.style.color='#DC2626';
-  }
+const status=document.getElementById('dispatch-status');
+const morningData = JSON.parse(localStorage.getItem('morning_data_'+getToday())||'{}');
+all.forEach(p=>{
+const de=document.getElementById('disp-'+p.name);
+p.actualDispatch=de?parseInt(de.value)||0:0;
+const morningPoint = morningData[p.name];
+p.morningCur = morningPoint !== undefined ? morningPoint : (parseInt(document.getElementById('inp-'+p.name)?.value)||0);
+});
+const repair=parseInt(document.getElementById('repair-count').value)||0;
+const payload={
+type:'dispatch',
+date:getToday(),
+repair,
+points:all.map(p=>({name:p.name,zone:p.zone,type:p.type,opt:p.opt,cur:p.morningCur,dispatch:p.actualDispatch}))
+};
+status.textContent='저장 중...';
+try{
+await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
+status.textContent=`✓ ${getToday()} 배차실적 + 수리 ${repair}대 저장 완료`;
+status.style.color='#059669';
+}catch(err){
+status.textContent='저장 실패 — 인터넷 연결 확인';
+status.style.color='#DC2626';
+}
+}
+
+// ── 북마크릿 생성 ────────────────────────────────────────────────
+const APP_URL = 'https://bada43131-ai.github.io/dispatch/dispatch_v4.html';
+
+const ZONE_IDS = {
+'힐스테이트':4947, '이편한세상':386, '송도국제학교':4941,
+'더샵마스터뷰':4942,'지식정보단지':378, '라이크홈':387,
+'인천대1번':368, '송도시외버스':375, '인천대2번':364,
+'테라스정원':366, '산책정원':365, '센트럴파크':4940, '타임스페이스':370
+};
+
+function buildBookmarklet(){
+const appUrl = APP_URL;
+const code = `(function(){
+var myIds=[368,364,375,366,365,4940,370,386,387,378,4941,4942,4947];
+var app='${appUrl}';
+var win=window.open('','_blank');
+win.document.write('<p style="font-family:sans-serif;padding:20px;font-size:16px;">📡 카카오 데이터 수집 중...</p>');
+Promise.all(
+myIds.map(function(id){
+return fetch('/api/v2/operating/bike_zones/'+id,{credentials:'include'})
+.then(function(r){return r.json();})
+.then(function(d){return {id:id, count:d.available_device_count||0};})
+.catch(function(){return {id:id,count:0};});
+})
+).then(function(results){
+var result={};
+results.forEach(function(r){result[r.id]=r.count;});
+var hash='#data='+encodeURIComponent(JSON.stringify(result));
+win.location.href=app+hash;
+}).catch(function(e){win.document.write('<p style="color:red">오류: '+e.message+'</p>');});
+})();`;
+
+const minified = code.replace(/\n\s*/g,' ').trim();
+const bmCode = 'javascript:'+encodeURIComponent(minified);
+
+const ta = document.getElementById('bm-code');
+if(ta) ta.value = bmCode;
+
+const link = document.getElementById('bm-link');
+if(link) link.href = bmCode;
+}
+
+function toggleBmPanel(){
+const panel = document.getElementById('bm-panel');
+const arrow = document.getElementById('bm-arrow');
+const isOpen = panel.style.display !== 'none';
+panel.style.display = isOpen ? 'none' : 'block';
+arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+if(!isOpen) buildBookmarklet();
+}
+
+function copyBm(){
+const ta = document.getElementById('bm-code');
+if(!ta) return;
+ta.select();
+document.execCommand('copy');
+const st = document.getElementById('bm-copy-status');
+st.textContent = '✓ 복사됨 — 새 북마크 추가 후 URL란에 붙여넣기';
+setTimeout(()=>{ st.textContent=''; }, 3000);
+}
+
+const ZONE_ID_MAP = {
+4947: '힐스테이트', 386: '이편한세상', 4941: '송도국제학교',
+4942: '더샵마스터뷰', 378: '지식정보단지', 387: '라이크홈',
+368: '인천대1번', 375: '송도시외버스', 364: '인천대2번',
+366: '테라스정원', 365: '산책정원', 4940: '센트럴파크', 370: '타임스페이스',
+};
+
+// ── URL hash로 넘어온 실시간 데이터 자동 주입 ────────────────────
+function loadFromHash(){
+const hash = window.location.hash;
+if(!hash || !hash.startsWith('#data=')) return false;
+try{
+const raw = decodeURIComponent(hash.slice(6));
+const data = JSON.parse(raw);
+let filled = 0;
+Object.entries(data).forEach(([key, val])=>{
+const count = parseInt(val);
+if(isNaN(count)) return;
+const name = ZONE_ID_MAP[parseInt(key)] || ZONE_ID_MAP[key] || key;
+const el = document.getElementById('inp-'+name);
+if(el){ el.value = count; filled++; }
+});
+if(filled > 0){
+applyInputs();
+updateCurTotal();
+update();
+showHashBanner(filled, new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}));
+history.replaceState(null,'', window.location.pathname + window.location.search);
+return true;
+}
+} catch(e){ console.warn('hash parse error', e); }
+return false;
+}
+
+function showHashBanner(cnt, time){
+let banner = document.getElementById('hash-banner');
+if(!banner){
+banner = document.createElement('div');
+banner.id = 'hash-banner';
+banner.style.cssText='background:#D1FAE5;border-radius:8px;padding:8px 12px;font-size:12px;color:#065F46;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;';
+const grid = document.getElementById('input-grid');
+grid.parentNode.insertBefore(banner, grid);
+}
+banner.innerHTML = `📡 실시간 데이터 자동입력 완료 — ${cnt}개 포인트 · ${time}
+<span onclick="this.parentNode.remove()" style="cursor:pointer;font-size:14px;color:#065F46;">✕</span>`;
+}
+
+// ── 서버 아침 스냅샷 배너 ────────────────────────────────────────
+function showServerBanner(time){
+let banner = document.getElementById('server-banner');
+if(!banner){
+banner = document.createElement('div');
+banner.id = 'server-banner';
+banner.style.cssText='background:#EFF6FF;border-radius:8px;padding:8px 12px;font-size:12px;color:#1e40af;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;';
+const grid = document.getElementById('input-grid');
+grid.parentNode.insertBefore(banner, grid);
+}
+banner.innerHTML = `📊 아침 스냅샷 자동불러옴 (${time}) <span onclick="this.parentNode.remove()" style="cursor:pointer;font-size:14px;color:#1e40af;">✕</span>`;
+}
+
+// ── 서버에서 아침 스냅샷 불러오기 (신규) ──────────────────────────
+async function loadMorningFromServer(){
+const today = getToday();
+const status = document.getElementById('morning-status');
+status.textContent = '⏳ 아침 데이터 불러오는 중...';
+status.style.color = '#888';
+try {
+const r = await fetch(SCRIPT_URL + '?action=getMorningSnapshot');
+const d = await r.json();
+if(d.status === 'ok' && d.date === today){
+// 입력란 채우기
+d.zones.forEach(z => {
+const el = document.getElementById('inp-' + z.name);
+if(el && z.cur >= 0) el.value = z.cur;
+const pt = all.find(p => p.name === z.name);
+if(pt && z.cur >= 0) pt.cur = z.cur;
+});
+updateCurTotal();
+update();
+// 버튼/상태 업데이트
+const btn = document.getElementById('btn-morning');
+btn.textContent = '✓ 아침 데이터 저장 완료';
+btn.style.background = '#059669';
+status.textContent = d.date + ' ' + d.time + ' 서버 자동불러옴';
+status.style.color = '#059669';
+// localStorage에도 캐싱
+localStorage.setItem('morning_saved_date', today);
+const morningMap = {};
+d.zones.forEach(z => { if(z.cur >= 0) morningMap[z.name] = z.cur; });
+localStorage.setItem('morning_data_' + today, JSON.stringify(morningMap));
+document.getElementById('dispatch-section').style.display = 'block';
+buildDispatchGrid();
+showServerBanner(d.time);
+return true;
+} else {
+status.textContent = d.date !== today
+? '오늘 아침 데이터 없음 (최근: ' + (d.date||'-') + ')'
+: '오늘 아침 데이터 없음';
+status.style.color = '#aaa';
+}
+} catch(e){
+status.textContent = '';
+console.warn('서버 데이터 로드 실패:', e);
+}
+return false;
+}
+
+// ── 아침 저장 여부 확인 + 자동 불러오기 (수정됨) ──────────────────
+async function checkMorningSaved(){
+const today = getToday();
+const savedDate = localStorage.getItem('morning_saved_date');
+if(savedDate === today){
+// localStorage에 오늘 데이터 있음 → 입력란 복원
+const morningMap = JSON.parse(localStorage.getItem('morning_data_' + today) || '{}');
+if(Object.keys(morningMap).length > 0){
+all.forEach(p => {
+if(morningMap[p.name] !== undefined){
+const el = document.getElementById('inp-' + p.name);
+if(el) el.value = morningMap[p.name];
+p.cur = morningMap[p.name];
+}
+});
+updateCurTotal();
+update();
+}
+const btn = document.getElementById('btn-morning');
+btn.textContent = '✓ 아침 데이터 저장 완료';
+btn.style.background = '#059669';
+document.getElementById('morning-status').textContent = today + ' 저장됨';
+document.getElementById('morning-status').style.color = '#059669';
+document.getElementById('dispatch-section').style.display = 'block';
+buildDispatchGrid();
+} else {
+// localStorage 없음 → 서버에서 자동으로 불러오기
+await loadMorningFromServer();
+}
 }
 
 buildInputs();
 buildExcludes();
+
+setTimeout(function(){
+if(!loadFromHash()) {
 update();
 checkMorningSaved();
-parseHash();
-
-// ── 현재수량 접기/펼치기 ──
-function toggleInputPanel(){
-  const panel=document.getElementById('input-panel');
-  const arrow=document.getElementById('input-arrow');
-  const badge=document.getElementById('cur-total-badge');
-  const isOpen=panel.style.display!=='none';
-  panel.style.display=isOpen?'none':'block';
-  arrow.textContent=isOpen?'▼':'▲';
-  if(badge) badge.style.display=isOpen?'':'none';
 }
-
-// ── 수리 데이터 저장소 ──
-let repairData=[];
-
-// ── 수리현황 렌더링 ──
-function renderRepair(){
-  if(!repairData||repairData.length===0){
-    document.getElementById('repair-list-wrap').innerHTML='<div class="no-data">북마클릿 실행 후 표시됩니다</div>';
-    ['r-total','r-field','r-warehouse','bat-gf','bat-other'].forEach(id=>{document.getElementById(id).textContent='-';});
-    return;
-  }
-  const field=repairData.filter(d=>d.repairType==='FIELD');
-  const warehouse=repairData.filter(d=>d.repairType==='WAREHOUSE');
-  const gf=repairData.filter(d=>d.model==='GF');
-  const other=repairData.filter(d=>d.model!=='GF');
-  document.getElementById('r-total').textContent=repairData.length;
-  document.getElementById('r-field').textContent=field.length;
-  document.getElementById('r-warehouse').textContent=warehouse.length;
-  document.getElementById('bat-gf').textContent=gf.length;
-  document.getElementById('bat-other').textContent=other.length;
-  const sorted=[...repairData].sort((a,b)=>{
-    if(a.repairType!==b.repairType) return a.repairType==='FIELD'?-1:1;
-    return a.code.localeCompare(b.code);
-  });
-  let lastType=null;
-  let html='<table class="repair-table"><thead><tr><th style="width:28%">기종</th><th style="width:22%">구분</th><th>수리내역</th></tr></thead><tbody>';
-  sorted.forEach(d=>{
-    const isField=d.repairType==='FIELD';
-    const typeCls=isField?'field-badge':'warehouse-badge';
-    const typeLabel=isField?'현장수리':'입고수리';
-    const modelCls=d.model==='GF'?'model-gf':'model-other';
-    const comments=(d.comments||[]).join(' / ')||'내역없음';
-    if(lastType!==null&&lastType!==d.repairType){
-      html+=`<tr><td colspan="3"><div style="border-top:1px dashed #ddd;margin:2px 0;"></div></td></tr>`;
-    }
-    lastType=d.repairType;
-    html+=`<tr><td><span class="repair-code">${d.code}</span><span class="repair-model ${modelCls}">${d.model}</span></td><td><span class="repair-type-badge ${typeCls}">${typeLabel}</span></td><td><div class="repair-comment">${comments}</div></td></tr>`;
-  });
-  html+='</tbody></table>';
-  document.getElementById('repair-list-wrap').innerHTML=html;
-  const now=new Date(new Date().getTime()+9*60*60*1000);
-  document.getElementById('repair-time').textContent='('+now.toISOString().substring(11,16)+' 기준)';
-}
-
-// ── parseHash: sessionStorage에서 데이터 수신 ──
-function parseHash(){
-  const stored=sessionStorage.getItem('dispatch_data');
-  if(!stored) return;
-  sessionStorage.removeItem('dispatch_data');
-  const params=new URLSearchParams(stored);
-  let anyZone=false;
-  all.forEach(p=>{
-    const v=params.get(p.name);
-    if(v!==null){
-      const n=parseInt(v);
-      if(!isNaN(n)&&n>=0){
-        p.cur=n;
-        const el=document.getElementById('inp-'+p.name);
-        if(el) el.value=n;
-        anyZone=true;
-      }
-    }
-  });
-  const repairJson=params.get('repair');
-  if(repairJson){
-    try{ repairData=JSON.parse(decodeURIComponent(repairJson)); renderRepair(); }catch(e){}
-  }
-  if(anyZone){
-    update();
-    // 합계 배지 업데이트
-    const total=all.reduce((s,p)=>s+p.cur,0);
-    const el=document.getElementById('cur-total');
-    if(el) el.textContent='현재수량 합계: '+total+'대';
-    const badge=document.getElementById('cur-total-badge');
-    if(badge) badge.textContent='합계: '+total+'대';
-    // 입력 패널 자동 접기
-    const panel=document.getElementById('input-panel');
-    const arrow=document.getElementById('input-arrow');
-    if(panel){ panel.style.display='none'; arrow.textContent='▼'; }
-    if(badge) badge.style.display='';
-  }
-}
-
-// 페이지 열릴때 오늘 아침 저장 여부 확인
-async function checkMorningSaved(){
-  const today = getToday();
-  const savedDate = localStorage.getItem('morning_saved_date');
-  if(savedDate === today){
-    // 오늘 이미 저장됨 → 배차실적 바로 표시
-    const btn = document.getElementById('btn-morning');
-    btn.textContent = '✓ 아침 데이터 저장 완료';
-    btn.style.background = '#059669';
-    document.getElementById('morning-status').textContent = today + ' 저장됨';
-    document.getElementById('morning-status').style.color = '#059669';
-    document.getElementById('dispatch-section').style.display = 'block';
-    buildDispatchGrid();
-  }
-}
+}, 50);
 </script>
 </body>
 </html>
