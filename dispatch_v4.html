@@ -57,34 +57,27 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
 .legend-dot{width:10px;height:5px;border-radius:2px;display:inline-block;}
 .save-btn{width:100%;padding:11px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .repair-row{display:flex;align-items:center;justify-content:space-between;background:#fff8f0;border-radius:8px;padding:8px 12px;margin-bottom:6px;}
-
-/* 수리현황 스타일 */
+/* 수리현황 */
 .repair-summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
 .repair-stat{border-radius:10px;padding:10px 6px;text-align:center;}
 .repair-stat-label{font-size:10px;color:#888;margin-bottom:3px;}
 .repair-stat-value{font-size:20px;font-weight:700;}
-
-/* 배터리 요약 */
 .bat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
 .bat-card{border-radius:10px;padding:12px;text-align:center;}
 .bat-label{font-size:11px;font-weight:600;margin-bottom:4px;}
 .bat-value{font-size:26px;font-weight:700;}
 .bat-sub{font-size:10px;color:#888;margin-top:2px;}
-
-/* 수리 목록 테이블 */
 .repair-table{width:100%;border-collapse:collapse;font-size:12px;}
-.repair-table th{padding:6px 6px;font-size:11px;color:#888;border-bottom:1px solid #eee;text-align:left;font-weight:500;}
+.repair-table th{padding:6px;font-size:11px;color:#888;border-bottom:1px solid #eee;text-align:left;font-weight:500;}
 .repair-table td{padding:7px 6px;border-bottom:1px solid #f5f5f5;vertical-align:top;}
-.repair-type-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap;}
+.repair-type-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;}
 .field-badge{background:#FEF3C7;color:#92400E;}
 .warehouse-badge{background:#EDE9FE;color:#5B21B6;}
-.repair-comment{font-size:11px;color:#555;line-height:1.5;margin-top:2px;}
-.repair-code{font-size:13px;font-weight:700;color:#111;}
+.repair-code{font-size:13px;font-weight:700;}
 .repair-model{font-size:10px;font-weight:700;display:inline-block;padding:1px 5px;border-radius:3px;margin-left:3px;}
 .model-gf{background:#DBEAFE;color:#1E40AF;}
 .model-other{background:#F3F4F6;color:#374151;}
-.refresh-btn{padding:6px 12px;background:#f0f0f0;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;color:#555;}
-.refresh-btn:active{background:#ddd;}
+.repair-comment{font-size:11px;color:#555;line-height:1.5;margin-top:2px;}
 .no-data{text-align:center;color:#aaa;font-size:12px;padding:20px 0;}
 </style>
 </head>
@@ -94,11 +87,11 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
 <div class="sub">현재수량 입력 → 배차수량 조절 → 현재수량 반영</div>
 
 <!-- ① 현재수량 입력 -->
-<div onclick="toggleInputPanel()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin:14px 0 0;">
-  <div class="section-title" style="margin:0;border:none;">① 현재수량 입력</div>
+<div onclick="toggleInputPanel()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin:14px 0 0;padding-bottom:4px;border-bottom:1px solid #eee;">
+  <div style="font-size:12px;font-weight:700;color:#555;">① 현재수량 입력</div>
   <div style="display:flex;align-items:center;gap:6px;">
-    <span id="cur-total-badge" style="font-size:11px;font-weight:700;color:#185FA5;background:#EFF6FF;padding:2px 8px;border-radius:5px;"></span>
-    <span id="input-arrow" style="font-size:13px;color:#aaa;transition:transform 0.2s;">▲</span>
+    <span id="cur-total-badge" style="font-size:11px;font-weight:700;color:#185FA5;background:#EFF6FF;padding:2px 8px;border-radius:5px;display:none;"></span>
+    <span id="input-arrow" style="font-size:13px;color:#aaa;">▲</span>
   </div>
 </div>
 <div id="input-panel" style="margin-top:8px;">
@@ -198,49 +191,24 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
   </div>
 </div>
 
-<!-- ③ 수리현황 섹션 -->
+<!-- 수리현황 -->
 <div style="margin-top:16px;">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid #eee;">
     <div style="font-size:12px;font-weight:700;color:#555;">🔧 수리현황 <span id="repair-time" style="font-size:10px;color:#aaa;font-weight:400;"></span></div>
-    <button class="refresh-btn" onclick="renderRepair()">새로고침</button>
+    <button onclick="renderRepair()" style="padding:6px 12px;background:#f0f0f0;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;color:#555;">새로고침</button>
   </div>
-
-  <!-- 수리 요약 카드 -->
   <div class="repair-summary-grid">
-    <div class="repair-stat" style="background:#FEF2F2;">
-      <div class="repair-stat-label">전체 수리</div>
-      <div class="repair-stat-value" id="r-total" style="color:#DC2626;">-</div>
-    </div>
-    <div class="repair-stat" style="background:#FEF3C7;">
-      <div class="repair-stat-label">현장수리</div>
-      <div class="repair-stat-value" id="r-field" style="color:#D97706;">-</div>
-    </div>
-    <div class="repair-stat" style="background:#EDE9FE;">
-      <div class="repair-stat-label">입고수리</div>
-      <div class="repair-stat-value" id="r-warehouse" style="color:#7C3AED;">-</div>
-    </div>
+    <div class="repair-stat" style="background:#FEF2F2;"><div class="repair-stat-label">전체 수리</div><div class="repair-stat-value" id="r-total" style="color:#DC2626;">-</div></div>
+    <div class="repair-stat" style="background:#FEF3C7;"><div class="repair-stat-label">현장수리</div><div class="repair-stat-value" id="r-field" style="color:#D97706;">-</div></div>
+    <div class="repair-stat" style="background:#EDE9FE;"><div class="repair-stat-label">입고수리</div><div class="repair-stat-value" id="r-warehouse" style="color:#7C3AED;">-</div></div>
   </div>
-
-  <!-- 배터리 구분 -->
-  <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px;">🔋 배터리 구분 (수리 중)</div>
+  <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px;">🔋 배터리 구분</div>
   <div class="bat-grid">
-    <div class="bat-card" style="background:#EFF6FF;">
-      <div class="bat-label" style="color:#1E40AF;">GF 기종</div>
-      <div class="bat-value" id="bat-gf" style="color:#1E40AF;">-</div>
-      <div class="bat-sub">GF 배터리</div>
-    </div>
-    <div class="bat-card" style="background:#F3F4F6;">
-      <div class="bat-label" style="color:#374151;">기타 기종</div>
-      <div class="bat-value" id="bat-other" style="color:#374151;">-</div>
-      <div class="bat-sub">HA·IA·JA·KA·MA 등</div>
-    </div>
+    <div class="bat-card" style="background:#EFF6FF;"><div class="bat-label" style="color:#1E40AF;">GF 기종</div><div class="bat-value" id="bat-gf" style="color:#1E40AF;">-</div><div class="bat-sub">GF 배터리</div></div>
+    <div class="bat-card" style="background:#F3F4F6;"><div class="bat-label" style="color:#374151;">기타 기종</div><div class="bat-value" id="bat-other" style="color:#374151;">-</div><div class="bat-sub">HA·IA·JA·KA·MA 등</div></div>
   </div>
-
-  <!-- 수리 목록 -->
   <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px;">📋 수리 목록</div>
-  <div id="repair-list-wrap">
-    <div class="no-data">북마클릿 실행 후 데이터가 표시됩니다</div>
-  </div>
+  <div id="repair-list-wrap"><div class="no-data">북마클릿 실행 후 표시됩니다</div></div>
 </div>
 
 <!-- 옵션: 제외 포인트 -->
@@ -260,9 +228,6 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyz1jsjXBxDpU01opnhX
 
 let spots=6, budget=50;
 const excluded=new Set();
-
-// 수리 데이터 저장소
-let repairData = [];
 
 const bPoints=[
   {name:'힐스테이트',   zone:'B',opt:12,cur:7, type:'mixed'},
@@ -284,130 +249,11 @@ const aPoints=[
 const all=[...bPoints,...aPoints];
 const optSum=all.reduce((s,p)=>s+p.opt,0);
 
-// ─── URL 해시에서 배차 + 수리 데이터 파싱 ───────────────────────────
-function parseHash(){
-  // 해시 OR sessionStorage 둘 다 확인
-  let hash = location.hash.slice(1);
-  if(!hash){
-    const stored = sessionStorage.getItem('dispatch_data');
-    if(stored){ hash = stored; sessionStorage.removeItem('dispatch_data'); }
-  } else {
-    history.replaceState(null,'',location.pathname);
-  }
-  if(!hash) return;
-
-  const params = new URLSearchParams(hash);
-
-  // 배차 데이터
-  let anyZone = false;
-  all.forEach(p=>{
-    const v = params.get(p.name);
-    if(v !== null){
-      const n = parseInt(v);
-      if(!isNaN(n) && n >= 0){
-        p.cur = n;
-        anyZone = true;
-      }
-    }
-  });
-
-  // 수리 데이터 (repair=JSON)
-  const repairJson = params.get('repair');
-  if(repairJson){
-    try{
-      repairData = JSON.parse(decodeURIComponent(repairJson));
-    }catch(e){ console.warn('수리 데이터 파싱 오류', e); }
-  }
-
-  if(anyZone){
-    // buildInputs()가 이미 실행된 후이므로 input 값 직접 세팅
-    all.forEach(p=>{
-      const el = document.getElementById('inp-'+p.name);
-      if(el) el.value = p.cur;
-    });
-    update();
-    updateCurTotal();
-
-    // 입력 패널 자동 접기
-    const panel=document.getElementById('input-panel');
-    const arrow=document.getElementById('input-arrow');
-    if(panel){ panel.style.display='none'; arrow.style.transform='rotate(180deg)'; }
-    const badge=document.getElementById('cur-total-badge');
-    if(badge) badge.style.display='';
-  }
-
-  // 수리 데이터 렌더링 (존 데이터와 분리)
-  if(repairJson) renderRepair();
-}
-
-// ─── 수리현황 렌더링 ─────────────────────────────────────────────────
-function renderRepair(){
-  if(!repairData || repairData.length === 0){
-    document.getElementById('repair-list-wrap').innerHTML = '<div class="no-data">북마클릿 실행 후 데이터가 표시됩니다</div>';
-    ['r-total','r-field','r-warehouse','bat-gf','bat-other'].forEach(id=>{
-      document.getElementById(id).textContent = '-';
-    });
-    return;
-  }
-
-  const field     = repairData.filter(d=>d.repairType==='FIELD');
-  const warehouse = repairData.filter(d=>d.repairType==='WAREHOUSE');
-  const gf        = repairData.filter(d=>d.model==='GF');
-  const other     = repairData.filter(d=>d.model!=='GF');
-
-  document.getElementById('r-total').textContent     = repairData.length;
-  document.getElementById('r-field').textContent     = field.length;
-  document.getElementById('r-warehouse').textContent = warehouse.length;
-  document.getElementById('bat-gf').textContent      = gf.length;
-  document.getElementById('bat-other').textContent   = other.length;
-
-  // 현장 → 입고 순, 각 안에서 기종 오름차순
-  const sorted = [...repairData].sort((a,b)=>{
-    if(a.repairType !== b.repairType) return a.repairType==='FIELD'?-1:1;
-    return a.code.localeCompare(b.code);
-  });
-
-  let lastType = null;
-  let html = '<table class="repair-table"><thead><tr><th style="width:28%">기종</th><th style="width:22%">구분</th><th>수리내역</th></tr></thead><tbody>';
-
-  sorted.forEach(d=>{
-    const isField = d.repairType==='FIELD';
-    const typeLabel = isField ? '현장수리' : '입고수리';
-    const typeCls   = isField ? 'field-badge' : 'warehouse-badge';
-    const modelCls  = d.model==='GF' ? 'model-gf' : 'model-other';
-    const comments  = (d.comments||[]).join(' / ') || '내역없음';
-
-    // 구분선 (현장 → 입고 전환 시)
-    if(lastType !== null && lastType !== d.repairType){
-      html += `<tr><td colspan="3" style="padding:4px 0;"><div style="border-top:1px dashed #ddd;"></div></td></tr>`;
-    }
-    lastType = d.repairType;
-
-    html += `<tr>
-      <td>
-        <span class="repair-code">${d.code}</span>
-        <span class="repair-model ${modelCls}">${d.model}</span>
-      </td>
-      <td><span class="repair-type-badge ${typeCls}">${typeLabel}</span></td>
-      <td><div class="repair-comment">${comments}</div></td>
-    </tr>`;
-  });
-
-  html += '</tbody></table>';
-  document.getElementById('repair-list-wrap').innerHTML = html;
-
-  // 시간 표시
-  const now = new Date(new Date().getTime()+9*60*60*1000);
-  const hm = now.toISOString().substring(11,16).replace('T','');
-  document.getElementById('repair-time').textContent = `(${hm} 기준)`;
-}
-
-// ─── 입력 / UI 함수들 ────────────────────────────────────────────────
 function buildInputs(){
   const grid=document.getElementById('input-grid');
   grid.innerHTML='';
   const allIds=all.map(p=>'inp-'+p.name);
-  all.forEach((p)=>{
+  all.forEach((p,idx)=>{
     const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
     const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
     const nextFocus=`const ids=${JSON.stringify(allIds)};const ni=ids.indexOf(this.id)+1;if(ni<ids.length){const nx=document.getElementById(ids[ni]);nx.focus();nx.select();}`;
@@ -425,25 +271,14 @@ function buildInputs(){
   updateCurTotal();
 }
 
-function toggleInputPanel(){
-  const panel=document.getElementById('input-panel');
-  const arrow=document.getElementById('input-arrow');
-  const isOpen=panel.style.display!=='none';
-  panel.style.display=isOpen?'none':'block';
-  arrow.style.transform=isOpen?'rotate(180deg)':'';
-  document.getElementById('cur-total-badge').style.display=isOpen?'':'none';
-}
-
 function updateCurTotal(){
+  const el=document.getElementById('cur-total');
+  if(!el) return;
   const total=all.reduce((s,p)=>{
     const v=parseInt(document.getElementById('inp-'+p.name)?.value)||0;
     return s+v;
   },0);
-  const txt='합계: '+total+'대';
-  const el=document.getElementById('cur-total');
-  if(el) el.textContent='현재수량 '+txt;
-  const badge=document.getElementById('cur-total-badge');
-  if(badge) badge.textContent=txt;
+  el.textContent='현재수량 합계: '+total+'대';
 }
 
 function buildDispatchGrid(){
@@ -451,7 +286,7 @@ function buildDispatchGrid(){
   if(!grid) return;
   grid.innerHTML='';
   const dispIds=all.map(p=>'disp-'+p.name);
-  all.forEach((p)=>{
+  all.forEach((p,idx)=>{
     const typeColor=p.type==='mixed'?'#D97706':p.type==='inflow'?'#059669':'#DC2626';
     const zColor=p.zone==='B'?'#0F6E56':'#185FA5';
     const nextFocus=`const ids=${JSON.stringify(dispIds)};const ni=ids.indexOf(this.id)+1;if(ni<ids.length){const nx=document.getElementById(ids[ni]);nx.focus();nx.select();}`;
@@ -527,18 +362,23 @@ function adj(type,delta){
 }
 
 function getToday(){
+  // 한국 시간(KST=UTC+9) 기준으로 날짜 계산
   const d=new Date(new Date().getTime()+9*60*60*1000);
-  return d.toISOString().substring(0,10);
+  const s=d.toISOString();
+  return s.substring(0,10);
 }
 
 function update(){
+  // 현재수량 반영 + 지표 계산
   all.forEach(p=>{
     const el=document.getElementById('inp-'+p.name);
     if(el){const v=parseInt(el.value);if(!isNaN(v)&&v>=0)p.cur=v;}
     p.curPct=p.cur/p.opt;
     p.need100=Math.max(0,p.opt-p.cur);
     p.need110=Math.max(0,Math.floor(p.opt*1.1)-p.cur);
+    // 90% 초과면 배차 대상 아님
     p.needsDispatch = p.curPct < 0.9;
+    // A존: 회전율 낮은 곳(소비 적은 곳) 먼저 → 오후 5시 잔량 유지에 유리
     const avgConsume = {
       '힐스테이트':3,'이편한세상':2,'송도국제학교':2,'더샵마스터뷰':3,'지식정보단지':11,'라이크홈':8,
       '인천대1번':9,'송도시외버스':11,'인천대2번':9,'테라스정원':6,'산책정원':10,'센트럴파크':7,'타임스페이스':8
@@ -548,14 +388,17 @@ function update(){
     if(p.zone==='B'){
       p.score = p.needsDispatch ? shortageRatio*100 : -1;
     } else {
+      // 소비 적을수록 + 부족량 클수록 우선
       p.score = p.needsDispatch ? (shortageRatio*50 + (20-consume)*3) : -1;
     }
   });
   const curSum=all.reduce((s,p)=>s+p.cur,0);
 
+  // B존: 90% 이하 전부 무조건 배차 (포인트 수 제한 없음, 제외 설정 제외)
   const bMust = bPoints.filter(p=>!excluded.has(p.name) && p.needsDispatch);
   const bSel = new Set(bMust.map(p=>p.name));
 
+  // A존: 90% 이하 중 포인트 수 슬라이더 기준으로 선택 (부족량 큰 순)
   const aDispatchable = aPoints
     .filter(p=>!excluded.has(p.name) && p.needsDispatch)
     .sort((a,b)=>b.score-a.score);
@@ -565,16 +408,20 @@ function update(){
   all.forEach(p=>p.dispatch=0);
   let rem=budget;
 
+  // 1단계: B존 100%까지 (무조건)
   bPoints.filter(p=>bSel.has(p.name)).forEach(p=>{
     const g=Math.min(p.need100,rem); p.dispatch=g; rem-=g;
   });
+  // 2단계: B존 110%까지 (무조건, A존보다 먼저)
   if(rem>0) bPoints.filter(p=>bSel.has(p.name)).forEach(p=>{
     const e=Math.min(p.need110-p.dispatch,rem);
     if(e>0){p.dispatch+=e;rem-=e;}
   });
+  // 3단계: A존 100%까지 (B존 완료 후 잔여 예산으로)
   if(rem>0) aPoints.filter(p=>aSel.has(p.name)).forEach(p=>{
     const g=Math.min(p.need100,rem); p.dispatch=g; rem-=g;
   });
+  // 4단계: A존 110%까지
   if(rem>0) aPoints.filter(p=>aSel.has(p.name)).forEach(p=>{
     const e=Math.min(p.need110-p.dispatch,rem);
     if(e>0){p.dispatch+=e;rem-=e;}
@@ -596,6 +443,7 @@ function update(){
   const tb=document.getElementById('table-body');
   tb.innerHTML='';
 
+  // B존 → A존 순서로 표시, 선택된 곳 먼저
   [['B',bPoints,bSel,'#0F6E56','#1D9E75'],['A',aPoints,aSel,'#185FA5','#378ADD']].forEach(([z,pts,sel,zC,bC])=>{
     const allZonePts=z==='B'?bPoints:aPoints;
     const zOpt=allZonePts.reduce((s,p)=>s+p.opt,0);
@@ -604,9 +452,9 @@ function update(){
     const zAfter=allZonePts.reduce((s,p)=>s+p.cur+p.dispatch,0);
     const zPct=Math.round(zAfter/zOpt*100);
     const zPC=zPct>=100?'#059669':zPct>=85?'#D97706':'#DC2626';
-    const zoneNote=z==='B'?'90%↓ 전체 무조건 배차':'포인트 수 설정 기준';
-    tb.innerHTML+=`<tr class="zone-hd"><td colspan="5">${z}존 — ${sel.size}곳 (${zoneNote})</td></tr>`;
+    const zoneNote=z==='B'?'90%↓ 전체 무조건 배차':'포인트 수 설정 기준'; tb.innerHTML+=`<tr class="zone-hd"><td colspan="5">${z}존 — ${sel.size}곳 (${zoneNote})</td></tr>`;
 
+    // 정렬: 선택된곳 → 90%초과(배차불필요) → 제외설정
     const sorted=[
       ...pts.filter(p=>sel.has(p.name)).sort((a,b)=>b.score-a.score),
       ...pts.filter(p=>!sel.has(p.name)&&!excluded.has(p.name)&&!p.needsDispatch),
@@ -659,7 +507,7 @@ function update(){
     +(excluded.size>0?` · 제외 ${excluded.size}곳`:'');
 }
 
-// ─── 저장 함수들 ──────────────────────────────────────────────────────
+// 아침 현재수량 확정 저장
 async function saveMorning(){
   const btn=document.getElementById('btn-morning');
   const status=document.getElementById('morning-status');
@@ -669,10 +517,13 @@ async function saveMorning(){
   });
   const repair=parseInt(document.getElementById('repair-count').value)||0;
   const payload={
-    type:'morning',date:getToday(),repair,
+    type:'morning',
+    date:getToday(),
+    repair,
     points:all.map(p=>({name:p.name,zone:p.zone,type:p.type,opt:p.opt,cur:p.cur}))
   };
-  btn.textContent='저장 중...';btn.disabled=true;
+  btn.textContent='저장 중...';
+  btn.disabled=true;
   try{
     await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
     btn.textContent='✓ 아침 데이터 저장 완료';
@@ -680,6 +531,7 @@ async function saveMorning(){
     status.textContent=`${getToday()} 저장됨 · 수리 ${repair}대`;
     status.style.color='#059669';
     localStorage.setItem('morning_saved_date', getToday());
+    // 아침 현재수량을 포인트별로 저장
     const morningMap={};
     all.forEach(p=>{ morningMap[p.name]=p.cur; });
     localStorage.setItem('morning_data_'+getToday(), JSON.stringify(morningMap));
@@ -693,18 +545,23 @@ async function saveMorning(){
   }
 }
 
+// 실제 배차량 + 수리 저장
 async function saveDispatch(){
   const status=document.getElementById('dispatch-status');
+  // 아침 저장된 현재수량을 localStorage에서 가져오기
   const morningData = JSON.parse(localStorage.getItem('morning_data_'+getToday())||'{}');
   all.forEach(p=>{
     const de=document.getElementById('disp-'+p.name);
     p.actualDispatch=de?parseInt(de.value)||0:0;
+    // 아침 현재수량: localStorage에 저장된 값 사용 (없으면 현재 입력값)
     const morningPoint = morningData[p.name];
     p.morningCur = morningPoint !== undefined ? morningPoint : (parseInt(document.getElementById('inp-'+p.name)?.value)||0);
   });
   const repair=parseInt(document.getElementById('repair-count').value)||0;
   const payload={
-    type:'dispatch',date:getToday(),repair,
+    type:'dispatch',
+    date:getToday(),
+    repair,
     points:all.map(p=>({name:p.name,zone:p.zone,type:p.type,opt:p.opt,cur:p.morningCur,dispatch:p.actualDispatch}))
   };
   status.textContent='저장 중...';
@@ -718,10 +575,111 @@ async function saveDispatch(){
   }
 }
 
+buildInputs();
+buildExcludes();
+update();
+checkMorningSaved();
+parseHash();
+
+// ── 현재수량 접기/펼치기 ──
+function toggleInputPanel(){
+  const panel=document.getElementById('input-panel');
+  const arrow=document.getElementById('input-arrow');
+  const badge=document.getElementById('cur-total-badge');
+  const isOpen=panel.style.display!=='none';
+  panel.style.display=isOpen?'none':'block';
+  arrow.textContent=isOpen?'▼':'▲';
+  if(badge) badge.style.display=isOpen?'':'none';
+}
+
+// ── 수리 데이터 저장소 ──
+let repairData=[];
+
+// ── 수리현황 렌더링 ──
+function renderRepair(){
+  if(!repairData||repairData.length===0){
+    document.getElementById('repair-list-wrap').innerHTML='<div class="no-data">북마클릿 실행 후 표시됩니다</div>';
+    ['r-total','r-field','r-warehouse','bat-gf','bat-other'].forEach(id=>{document.getElementById(id).textContent='-';});
+    return;
+  }
+  const field=repairData.filter(d=>d.repairType==='FIELD');
+  const warehouse=repairData.filter(d=>d.repairType==='WAREHOUSE');
+  const gf=repairData.filter(d=>d.model==='GF');
+  const other=repairData.filter(d=>d.model!=='GF');
+  document.getElementById('r-total').textContent=repairData.length;
+  document.getElementById('r-field').textContent=field.length;
+  document.getElementById('r-warehouse').textContent=warehouse.length;
+  document.getElementById('bat-gf').textContent=gf.length;
+  document.getElementById('bat-other').textContent=other.length;
+  const sorted=[...repairData].sort((a,b)=>{
+    if(a.repairType!==b.repairType) return a.repairType==='FIELD'?-1:1;
+    return a.code.localeCompare(b.code);
+  });
+  let lastType=null;
+  let html='<table class="repair-table"><thead><tr><th style="width:28%">기종</th><th style="width:22%">구분</th><th>수리내역</th></tr></thead><tbody>';
+  sorted.forEach(d=>{
+    const isField=d.repairType==='FIELD';
+    const typeCls=isField?'field-badge':'warehouse-badge';
+    const typeLabel=isField?'현장수리':'입고수리';
+    const modelCls=d.model==='GF'?'model-gf':'model-other';
+    const comments=(d.comments||[]).join(' / ')||'내역없음';
+    if(lastType!==null&&lastType!==d.repairType){
+      html+=`<tr><td colspan="3"><div style="border-top:1px dashed #ddd;margin:2px 0;"></div></td></tr>`;
+    }
+    lastType=d.repairType;
+    html+=`<tr><td><span class="repair-code">${d.code}</span><span class="repair-model ${modelCls}">${d.model}</span></td><td><span class="repair-type-badge ${typeCls}">${typeLabel}</span></td><td><div class="repair-comment">${comments}</div></td></tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('repair-list-wrap').innerHTML=html;
+  const now=new Date(new Date().getTime()+9*60*60*1000);
+  document.getElementById('repair-time').textContent='('+now.toISOString().substring(11,16)+' 기준)';
+}
+
+// ── parseHash: sessionStorage에서 데이터 수신 ──
+function parseHash(){
+  const stored=sessionStorage.getItem('dispatch_data');
+  if(!stored) return;
+  sessionStorage.removeItem('dispatch_data');
+  const params=new URLSearchParams(stored);
+  let anyZone=false;
+  all.forEach(p=>{
+    const v=params.get(p.name);
+    if(v!==null){
+      const n=parseInt(v);
+      if(!isNaN(n)&&n>=0){
+        p.cur=n;
+        const el=document.getElementById('inp-'+p.name);
+        if(el) el.value=n;
+        anyZone=true;
+      }
+    }
+  });
+  const repairJson=params.get('repair');
+  if(repairJson){
+    try{ repairData=JSON.parse(decodeURIComponent(repairJson)); renderRepair(); }catch(e){}
+  }
+  if(anyZone){
+    update();
+    // 합계 배지 업데이트
+    const total=all.reduce((s,p)=>s+p.cur,0);
+    const el=document.getElementById('cur-total');
+    if(el) el.textContent='현재수량 합계: '+total+'대';
+    const badge=document.getElementById('cur-total-badge');
+    if(badge) badge.textContent='합계: '+total+'대';
+    // 입력 패널 자동 접기
+    const panel=document.getElementById('input-panel');
+    const arrow=document.getElementById('input-arrow');
+    if(panel){ panel.style.display='none'; arrow.textContent='▼'; }
+    if(badge) badge.style.display='';
+  }
+}
+
+// 페이지 열릴때 오늘 아침 저장 여부 확인
 async function checkMorningSaved(){
   const today = getToday();
   const savedDate = localStorage.getItem('morning_saved_date');
   if(savedDate === today){
+    // 오늘 이미 저장됨 → 배차실적 바로 표시
     const btn = document.getElementById('btn-morning');
     btn.textContent = '✓ 아침 데이터 저장 완료';
     btn.style.background = '#059669';
@@ -730,21 +688,6 @@ async function checkMorningSaved(){
     document.getElementById('dispatch-section').style.display = 'block';
     buildDispatchGrid();
   }
-}
-
-buildInputs();
-buildExcludes();
-update();
-checkMorningSaved();
-parseHash();
-
-// parseHash 이후 p.cur 값을 input에 재반영 (타이밍 보정)
-function syncInputsFromData(){
-  all.forEach(p=>{
-    const el=document.getElementById('inp-'+p.name);
-    if(el && el.value=='' && p.cur>0) el.value=p.cur;
-  });
-  updateCurTotal();
 }
 </script>
 </body>
