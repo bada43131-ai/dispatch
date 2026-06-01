@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>배터리 현황 - 송도</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f2f4f7;color:#111;max-width:480px;margin:0 auto;min-height:100vh;}
+
+.header{background:#1a56db;color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
+.header-title{font-size:16px;font-weight:700;}
+.header-sub{font-size:11px;opacity:0.75;margin-top:2px;}
+.region-badge{background:rgba(255,255,255,0.2);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;}
+
+.ts-bar{background:#1347c8;color:rgba(255,255,255,0.75);font-size:11px;padding:6px 16px;display:flex;justify-content:space-between;align-items:center;}
+.ts-bar span{font-size:10px;opacity:0.8;}
+
+.section{margin:12px 12px 0;}
+.section-title{font-size:11px;font-weight:700;color:#666;letter-spacing:0.04em;margin-bottom:8px;padding:0 2px;}
+
+.card-grid{display:grid;gap:8px;}
+.card-grid.col2{grid-template-columns:1fr 1fr;}
+
+.card{background:#fff;border-radius:12px;padding:14px 14px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.card-label{font-size:10px;color:#888;margin-bottom:6px;display:flex;align-items:center;gap:4px;}
+.card-value{font-size:30px;font-weight:700;line-height:1;}
+.card-unit{font-size:11px;color:#aaa;font-weight:400;margin-left:2px;}
+.card.blue .card-value{color:#1a56db;}
+.card.orange .card-value{color:#d97706;}
+.card.green .card-value{color:#057a55;}
+.card.purple .card-value{color:#7e3af2;}
+.card.red .card-value{color:#e02424;}
+.card.gray .card-value{color:#374151;}
+
+.total-bar{background:#fff;border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-top:8px;}
+.total-label{font-size:12px;color:#555;font-weight:600;}
+.total-value{font-size:18px;font-weight:700;color:#111;}
+
+.op-card{background:#e8faf4;border:1.5px solid #6ee7b7;border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between;}
+.op-left .op-label{font-size:10px;color:#065f46;margin-bottom:4px;}
+.op-value{font-size:34px;font-weight:700;color:#057a55;}
+.op-unit{font-size:12px;color:#6b7280;}
+.op-note{font-size:10px;color:#6b7280;text-align:right;line-height:1.5;}
+
+.save-area{padding:14px 12px 32px;}
+.refresh-btn{width:100%;padding:14px;background:#1a56db;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;}
+.refresh-btn:active{background:#1347c8;}
+
+.bookmarklet-box{background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.08);margin:12px 12px 0;}
+.bm-title{font-size:11px;font-weight:700;color:#666;margin-bottom:8px;}
+.bm-link{display:block;background:#f0f4ff;border:1.5px dashed #93c5fd;border-radius:8px;padding:10px 12px;font-size:12px;color:#1a56db;text-decoration:none;font-weight:600;text-align:center;cursor:grab;}
+.bm-desc{font-size:10px;color:#9ca3af;margin-top:6px;line-height:1.5;}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;display:none;white-space:nowrap;z-index:999;}
+
+/* 데이터 없을 때 */
+.no-data{text-align:center;padding:40px 20px;color:#9ca3af;}
+.no-data-icon{font-size:40px;margin-bottom:12px;}
+.no-data-text{font-size:13px;line-height:1.7;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">🔋 배터리 현황판</div>
+    <div class="header-sub" id="region-sub">카카오바이크 배터리 기사님용</div>
+  </div>
+  <div class="region-badge" id="region-badge">송도</div>
+</div>
+<div class="ts-bar">
+  <span id="ts-text">북마클릿으로 데이터를 불러오세요</span>
+  <span id="ts-time">—</span>
+</div>
+
+<div id="main-content" style="display:none;">
+
+  <!-- 배터리 티켓 -->
+  <div class="section">
+    <div class="section-title">⚡ 배터리 티켓</div>
+    <div class="card-grid col2">
+      <div class="card blue">
+        <div class="card-label">🔵 GF 기기</div>
+        <span class="card-value" id="bat-gf">0</span><span class="card-unit">대</span>
+      </div>
+      <div class="card orange">
+        <div class="card-label">🟠 기타 기기</div>
+        <span class="card-value" id="bat-other">0</span><span class="card-unit">대</span>
+      </div>
+    </div>
+    <div class="total-bar">
+      <span class="total-label">배터리 티켓 합계</span>
+      <span class="total-value" id="bat-total">0대</span>
+    </div>
+  </div>
+
+  <!-- 운행중 기기 -->
+  <div class="section" style="margin-top:14px;">
+    <div class="section-title">🟢 운행중 기기</div>
+    <div class="op-card">
+      <div class="op-left">
+        <div class="op-label">현재 운행중 기기수</div>
+        <span class="op-value" id="op-count">0</span>
+        <span class="op-unit">대</span>
+      </div>
+      <div class="op-note">운행중 기기 多 →<br>향후 배터리 티켓 증가 예상</div>
+    </div>
+  </div>
+
+  <!-- 현장 수리 티켓 -->
+  <div class="section" style="margin-top:14px;">
+    <div class="section-title">🔧 현장 수리 티켓</div>
+    <div class="card-grid col2">
+      <div class="card purple">
+        <div class="card-label">🛠 현장 수리</div>
+        <span class="card-value" id="rep-field">0</span><span class="card-unit">대</span>
+      </div>
+      <div class="card gray">
+        <div class="card-label">🏭 창고 입고</div>
+        <span class="card-value" id="rep-warehouse">0</span><span class="card-unit">대</span>
+      </div>
+    </div>
+    <div class="total-bar">
+      <span class="total-label">수리 티켓 합계</span>
+      <span class="total-value" id="rep-total">0대</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- 데이터 없을 때 -->
+<div id="no-data-area" class="section" style="margin-top:30px;">
+  <div class="no-data">
+    <div class="no-data-icon">📡</div>
+    <div class="no-data-text">
+      아래 북마클릿을 <b>t-bike-operating.kakao.com</b>에서<br>
+      실행하면 실시간 데이터가 표시됩니다
+    </div>
+  </div>
+</div>
+
+<!-- 북마클릿 안내 -->
+<div class="bookmarklet-box">
+  <div class="bm-title">📌 북마클릿 (즐겨찾기에 드래그하세요)</div>
+  <a id="bm-link" href="#" class="bm-link">🔋 송도 배터리 현황 불러오기</a>
+  <div class="bm-desc">
+    1. 이 링크를 북마크바에 드래그해서 저장<br>
+    2. t-bike-operating.kakao.com 접속 후 북마클릿 실행<br>
+    3. 이 페이지가 자동으로 열리며 데이터 표시
+  </div>
+</div>
+
+<div class="save-area" style="padding-top:14px;">
+  <button class="refresh-btn" onclick="window.location.reload()">🔄 새로고침</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// 송도 폴리곤 (북마클릿과 동일)
+var SONGDO_POLY = [[126.58842,37.42839],[126.6346,37.42825],[126.63923,37.40957],[126.64507,37.40971],[126.66653,37.39157],[126.70017,37.38203],[126.7012,37.37793],[126.66344,37.33768],[126.58104,37.34068]];
+
+function pointInPoly(x, y, poly) {
+  var inside = false;
+  for (var i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    var xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+
+// 북마클릿 생성
+var BATTERY_URL = location.href.split('#')[0];
+var bmScript = `(function(){
+var URL='${BATTERY_URL}';
+var b=document.createElement('div');
+b.style='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1a56db;color:#fff;padding:14px 28px;border-radius:10px;font-size:14px;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.3);font-family:sans-serif;white-space:nowrap';
+b.textContent='⏳ 배터리 현황 수집 중...';
+document.body.appendChild(b);
+(async function(){
+try{
+var store=document.querySelector('#app').__vue_app__.config.globalProperties.$store;
+var devices=store.state.devices||[];
+var poly=${JSON.stringify(SONGDO_POLY)};
+function inPoly(x,y){var inside=false;for(var i=0,j=poly.length-1;i<poly.length;j=i++){var xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];if(((yi>y)!=(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))inside=!inside;}return inside;}
+function isSongdo(d){var loc=d.adjusted_location||d.location;return loc&&inPoly(loc.lng,loc.lat);}
+function isGF(d){return (d.code||'').toLowerCase().startsWith('gf');}
+var batDevs=devices.filter(function(d){return d.batteryTicket&&isSongdo(d);});
+var repDevs=devices.filter(function(d){return d.repairTicket&&isSongdo(d);});
+var idleCount=devices.filter(function(d){return d.status==='IDLE'&&isSongdo(d);}).length;
+var batGF=batDevs.filter(isGF).length;
+var batOther=batDevs.length-batGF;
+var repField=repDevs.filter(function(d){return (d.repairTicket.type||'').indexOf('FIELD')>=0;}).length;
+var repWarehouse=repDevs.filter(function(d){return (d.repairTicket.type||'').indexOf('WAREHOUSE')>=0;}).length;
+var hash='bat_gf='+batGF+'&bat_other='+batOther+'&op='+idleCount+'&rep_field='+repField+'&rep_wh='+repWarehouse+'&ts='+Date.now()+'&region=송도';
+b.textContent='✓ 배터리 GF:'+batGF+'/기타:'+batOther+' · 수리:'+repDevs.length+' → 이동...';
+b.style.background='#059669';
+setTimeout(function(){document.body.removeChild(b);window.open(URL+'#'+hash,'_blank');},800);
+}catch(e){b.textContent='실패: '+e.message;b.style.background='#DC2626';setTimeout(function(){document.body.removeChild(b);},3000);}
+})();
+})();`;
+
+document.getElementById('bm-link').href = 'javascript:' + encodeURIComponent(bmScript);
+
+// URL 해시 파싱
+function parseHash() {
+  var hash = location.hash.replace('#', '');
+  if (!hash) return null;
+  var params = {};
+  hash.split('&').forEach(function(p) {
+    var kv = p.split('=');
+    if (kv.length >= 2) params[decodeURIComponent(kv[0])] = decodeURIComponent(kv.slice(1).join('='));
+  });
+  return params;
+}
+
+function loadFromHash() {
+  var p = parseHash();
+  if (!p || !p.bat_gf) return;
+
+  var batGF = parseInt(p.bat_gf) || 0;
+  var batOther = parseInt(p.bat_other) || 0;
+  var op = parseInt(p.op) || 0;
+  var repField = parseInt(p.rep_field) || 0;
+  var repWH = parseInt(p.rep_wh) || 0;
+  var region = p.region || '송도';
+
+  document.getElementById('bat-gf').textContent = batGF;
+  document.getElementById('bat-other').textContent = batOther;
+  document.getElementById('bat-total').textContent = (batGF + batOther) + '대';
+  document.getElementById('op-count').textContent = op.toLocaleString();
+  document.getElementById('rep-field').textContent = repField;
+  document.getElementById('rep-warehouse').textContent = repWH;
+  document.getElementById('rep-total').textContent = (repField + repWH) + '대';
+
+  document.getElementById('region-badge').textContent = region;
+  document.getElementById('region-sub').textContent = region + ' 지역 실시간 현황';
+
+  if (p.ts) {
+    var d = new Date(parseInt(p.ts));
+    document.getElementById('ts-text').textContent = '마지막 업데이트';
+    document.getElementById('ts-time').textContent = d.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  }
+
+  document.getElementById('no-data-area').style.display = 'none';
+  document.getElementById('main-content').style.display = 'block';
+}
+
+loadFromHash();
+window.addEventListener('hashchange', loadFromHash);
+</script>
+</body>
+</html>
