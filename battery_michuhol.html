@@ -211,78 +211,42 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 var BATTERY_URL = 'https://bada43131-ai.github.io/dispatch/battery_michuhol.html';
 
-var MI_POLY = [[126.633053,37.462732],[126.626015,37.449787],[126.652107,37.437521],[126.662922,37.439156],[126.679745,37.43643],[126.687984,37.433977],[126.734161,37.433977],[126.759052,37.43275],[126.763172,37.443927],[126.754589,37.449787],[126.72369,37.460825],[126.703606,37.468046],[126.694336,37.471452],[126.670818,37.467637],[126.66481,37.476084]];
-var YE_POLY = [[126.668072,37.391846],[126.688671,37.405346],[126.701202,37.424298],[126.699657,37.434113],[126.695881,37.43384],[126.692963,37.431932],[126.696396,37.424298],[126.65863,37.434522],[126.634426,37.433704],[126.639576,37.415164],[126.647129,37.407937],[126.655712,37.401119]];
+// 소수점 4자리로 줄여 북마클릿 크기 최소화
+var MI_POLY = [[126.6331,37.4627],[126.626,37.4498],[126.6521,37.4375],[126.6629,37.4392],[126.6797,37.4364],[126.688,37.434],[126.7342,37.434],[126.7591,37.4328],[126.7632,37.4439],[126.7546,37.4498],[126.7237,37.4608],[126.7036,37.468],[126.6943,37.4715],[126.6708,37.4676],[126.6648,37.4761]];
+var YE_POLY = [[126.6681,37.3918],[126.6887,37.4053],[126.7012,37.4243],[126.6997,37.4341],[126.6959,37.4338],[126.693,37.4319],[126.6964,37.4243],[126.6586,37.4345],[126.6344,37.4337],[126.6396,37.4152],[126.6471,37.4079],[126.6557,37.4011]];
 
-var bmScript = `(function(){
-var URL='${BATTERY_URL}';
-var b=document.createElement('div');
-b.style='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#7c3aed;color:#fff;padding:13px 24px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.3);font-family:sans-serif;white-space:nowrap';
-b.textContent='⏳ 미추홀+연수 배터리 현황 수집 중...';
-document.body.appendChild(b);
-(async function(){
-try{
-var store=document.querySelector('#app').__vue_app__.config.globalProperties.$store;
-var devices=store.state.devices||[];
-var miPoly=${JSON.stringify(MI_POLY)};
-var yePoly=${JSON.stringify(YE_POLY)};
+// 압축된 북마클릿
+var _U='https://bada43131-ai.github.io/dispatch/battery_michuhol.html';
+var _M=MI_POLY, _Y=YE_POLY;
 
-function inPoly(poly,x,y){var inside=false;for(var i=0,j=poly.length-1;i<poly.length;j=i++){var xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];if(((yi>y)!=(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))inside=!inside;}return inside;}
-function getLoc(d){return d.adjusted_location||d.location;}
-function inMi(d){var l=getLoc(d);return l&&inPoly(miPoly,l.lng,l.lat);}
-function inYe(d){var l=getLoc(d);return l&&inPoly(yePoly,l.lng,l.lat);}
-function modelOf(d){var m=(d.code||'').match(/^[a-zA-Z]+/);return m?m[0].toUpperCase():'';}
-function isGF(d){return modelOf(d)==='GF';}
-
-// 미추홀구
-var miBat=devices.filter(function(d){return d.batteryTicket&&inMi(d);});
-var miRep=devices.filter(function(d){return d.repairTicket&&inMi(d);});
-// 연수구
-var yeBat=devices.filter(function(d){return d.batteryTicket&&inYe(d);});
-var yeRep=devices.filter(function(d){return d.repairTicket&&inYe(d);});
-// 인천 전체
-var batIncheon=devices.filter(function(d){return d.batteryTicket;}).length;
-
-// 모델별 (전체)
-var allBat=miBat.concat(yeBat.filter(function(d){return !inMi(d);}));
-function countModel(arr,m){return arr.filter(function(d){return modelOf(d)===m;}).length;}
-
-function countRep(arr,t){
-  if(t==='FIELD') return arr.filter(function(d){var tp=d.repairTicket.type||'';return tp.indexOf('FIELD')>=0&&tp.indexOf('URGENT')<0&&tp.indexOf('EMERGENCY')<0;}).length;
-  if(t==='URGENT') return arr.filter(function(d){var tp=d.repairTicket.type||'';return tp.indexOf('URGENT')>=0||tp.indexOf('EMERGENCY')>=0;}).length;
-  return arr.filter(function(d){return (d.repairTicket.type||'').indexOf('WAREHOUSE')>=0;}).length;
-}
-
-var miGF=miBat.filter(isGF).length, miOther=miBat.length-miGF;
-var yeGF=yeBat.filter(isGF).length, yeOther=yeBat.length-yeGF;
-var allGF=miGF+yeGF;
-var batHA=countModel(miBat,'HA')+countModel(yeBat,'HA');
-var batIA=countModel(miBat,'IA')+countModel(yeBat,'IA');
-var batJA=countModel(miBat,'JA')+countModel(yeBat,'JA');
-var batKA=countModel(miBat,'KA')+countModel(yeBat,'KA');
-var batMA=countModel(miBat,'MA')+countModel(yeBat,'MA');
-var batDA=countModel(miBat,'DA')+countModel(yeBat,'DA');
-var batTotalAll=miBat.length+yeBat.length;
-var batAreaTotal=miBat.length+yeBat.length;
-
-var miF=countRep(miRep,'FIELD'),miU=countRep(miRep,'URGENT'),miW=countRep(miRep,'WH');
-var yeF=countRep(yeRep,'FIELD'),yeU=countRep(yeRep,'URGENT'),yeW=countRep(yeRep,'WH');
-
-var h='mi_gf='+miGF+'&mi_other='+miOther+'&mi_total='+miBat.length
-+'&ye_gf='+yeGF+'&ye_other='+yeOther+'&ye_total='+yeBat.length
-+'&gf_all='+allGF+'&ha='+batHA+'&ia='+batIA+'&ja='+batJA+'&ka='+batKA+'&ma='+batMA+'&da='+batDA
-+'&bat_total_all='+batTotalAll+'&bat_incheon='+batIncheon+'&bat_area='+batAreaTotal
-+'&mi_f='+miF+'&mi_u='+miU+'&mi_w='+miW
-+'&ye_f='+yeF+'&ye_u='+yeU+'&ye_w='+yeW
-+'&rep_f_all='+(miF+yeF)+'&rep_u_all='+(miU+yeU)+'&rep_w_all='+(miW+yeW)
-+'&ts='+Date.now();
-
-b.textContent='✓ 미추홀 배터리:'+miBat.length+' | 연수 배터리:'+yeBat.length+' → 이동...';
-b.style.background='#059669';
-setTimeout(function(){document.body.removeChild(b);location.href=URL+'#'+h;},800);
-}catch(e){b.textContent='실패: '+e.message;b.style.background='#DC2626';setTimeout(function(){document.body.removeChild(b);},3000);}
-})();
-})();`;
+var bmScript = '(function(){var U="'+_U+'";var b=document.createElement("div");b.style="position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#7c3aed;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;font-family:sans-serif";b.textContent="\\u23F3 \\uBBF8\\uCD94\\uD648+\\uC5F0\\uC218 \\uC218\\uC9D1\\uC911...";document.body.appendChild(b);'
++'(function(){try{'
++'var S=document.querySelector("#app").__vue_app__.config.globalProperties.$store;'
++'var D=S.state.devices||[];'
++'var M='+JSON.stringify(_M)+';'
++'var Y='+JSON.stringify(_Y)+';'
++'function P(p,x,y){var r=false;for(var i=0,j=p.length-1;i<p.length;j=i++){var a=p[i][0],b2=p[i][1],c=p[j][0],d=p[j][1];if(((b2>y)!=(d>y))&&(x<(c-a)*(y-b2)/(d-b2)+a))r=!r;}return r;}'
++'function L(d){return d.adjusted_location||d.location;}'
++'function m(d){var r=(d.code||"").match(/^[a-zA-Z]+/);return r?r[0].toUpperCase():"";}'
++'function F(a,t){return a.filter(function(d){var tp=(d.repairTicket||{}).type||"";return t=="F"?tp.indexOf("FIELD")>=0&&tp.indexOf("URGENT")<0:t=="U"?tp.indexOf("URGENT")>=0:tp.indexOf("WAREHOUSE")>=0;}).length;}'
++'var MI=D.filter(function(d){var l=L(d);return d.batteryTicket&&l&&P(M,l.lng,l.lat);});'
++'var YI=D.filter(function(d){var l=L(d);return d.batteryTicket&&l&&P(Y,l.lng,l.lat);});'
++'var MR=D.filter(function(d){var l=L(d);return d.repairTicket&&l&&P(M,l.lng,l.lat);});'
++'var YR=D.filter(function(d){var l=L(d);return d.repairTicket&&l&&P(Y,l.lng,l.lat);});'
++'var BI=D.filter(function(d){return d.batteryTicket;}).length;'
++'function C(a,k){return a.filter(function(d){return m(d)===k;}).length;}'
++'var h="mi_gf="+(C(MI,"GF"))+"&mi_other="+(MI.length-C(MI,"GF"))+"&mi_total="+MI.length'
++'+"&ye_gf="+(C(YI,"GF"))+"&ye_other="+(YI.length-C(YI,"GF"))+"&ye_total="+YI.length'
++'+"&gf_all="+(C(MI,"GF")+C(YI,"GF"))+"&ha="+(C(MI,"HA")+C(YI,"HA"))+"&ia="+(C(MI,"IA")+C(YI,"IA"))+"&ja="+(C(MI,"JA")+C(YI,"JA"))+"&ka="+(C(MI,"KA")+C(YI,"KA"))+"&ma="+(C(MI,"MA")+C(YI,"MA"))+"&da="+(C(MI,"DA")+C(YI,"DA"))'
++'+"&bat_total_all="+(MI.length+YI.length)+"&bat_incheon="+BI+"&bat_area="+(MI.length+YI.length)'
++'+"&mi_f="+F(MR,"F")+"&mi_u="+F(MR,"U")+"&mi_w="+F(MR,"W")'
++'+"&ye_f="+F(YR,"F")+"&ye_u="+F(YR,"U")+"&ye_w="+F(YR,"W")'
++'+"&rep_f_all="+(F(MR,"F")+F(YR,"F"))+"&rep_u_all="+(F(MR,"U")+F(YR,"U"))+"&rep_w_all="+(F(MR,"W")+F(YR,"W"))'
++'+"&ts="+Date.now();'
++'b.textContent="\\u2713 \\uBBF8\\uCD94\\uD648:"+MI.length+" | \\uC5F0\\uC218:"+YI.length+" \\u2192 \\uC774\\uB3D9...";'
++'b.style.background="#059669";'
++'setTimeout(function(){document.body.removeChild(b);location.href=U+"#"+h;},800);'
++'}catch(e){b.textContent="\\uC2E4\\uD328: "+e.message;b.style.background="#DC2626";setTimeout(function(){document.body.removeChild(b);},3000);}})();})();';
 
 document.getElementById('bm-link').href = 'javascript:' + encodeURIComponent(bmScript);
 
