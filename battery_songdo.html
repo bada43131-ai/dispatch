@@ -181,9 +181,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<div class="save-area" style="padding-top:14px;">
-  <button class="refresh-btn" onclick="window.location.reload()">🔄 새로고침</button>
-</div>
+<div style="height:24px;"></div>
 
 <script>
 var SONGDO_POLY = [[126.58842,37.42839],[126.6346,37.42825],[126.63923,37.40957],[126.64507,37.40971],[126.66653,37.39157],[126.70017,37.38203],[126.7012,37.37793],[126.66344,37.33768],[126.58104,37.34068]];
@@ -215,23 +213,37 @@ var repWH=repDevs.filter(function(d){return (d.repairTicket.type||'').indexOf('W
 
 b.textContent='⏳ 인천 전체 통계 수집 중...';
 
-var running=0,batIncheon=0;
-try{
-var prof=await fetch('/profile',{credentials:'include'}).then(function(r){return r.text();});
-var tmp=document.createElement('div');
-tmp.innerHTML=prof;
-var rows=[...tmp.querySelectorAll('li,tr,div,p,span')];
-rows.forEach(function(el){
-var txt=el.textContent.trim();
-if(txt.startsWith('운행중 기기')){var m=txt.match(/[\\d,]+/);if(m&&!running)running=parseInt(m[0].replace(/,/g,''));}
-if(txt.startsWith('배터리 교체 필요 기기')){var m=txt.match(/[\\d,]+/);if(m&&!batIncheon)batIncheon=parseInt(m[0].replace(/,/g,''));}
-});
-}catch(e2){}
+var running=0, batIncheon=devices.filter(function(d){return d.batteryTicket;}).length;
 
+function openPage(){
 var hash='bat_gf='+batGF+'&bat_other='+batOther+'&bat_songdo='+batSongdo+'&bat_incheon='+batIncheon+'&op='+running+'&rep_field='+repField+'&rep_wh='+repWH+'&ts='+Date.now()+'&region=송도';
 b.textContent='✓ 송도 배터리 GF:'+batGF+'/기타:'+batOther+' | 인천 운행중:'+running+' → 이동...';
 b.style.background='#059669';
-setTimeout(function(){document.body.removeChild(b);window.open(URL+'#'+hash,'_blank');},1000);
+setTimeout(function(){document.body.removeChild(b);window.open(URL+'#'+hash,'_blank');},800);
+}
+
+var ifr=document.createElement('iframe');
+ifr.src='/profile';
+ifr.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;visibility:hidden;';
+document.body.appendChild(ifr);
+var done=false;
+var tmout=setTimeout(function(){if(!done){done=true;try{document.body.removeChild(ifr);}catch(x){}openPage();}},6000);
+ifr.addEventListener('load',function(){
+setTimeout(function(){
+if(done)return;done=true;clearTimeout(tmout);
+try{
+var iDoc=ifr.contentDocument||ifr.contentWindow.document;
+var rows=[...iDoc.querySelectorAll('li,tr,div,p,span')];
+rows.forEach(function(el){
+var txt=el.textContent.trim();
+if(txt.startsWith('운행중 기기')){var m=txt.match(/[\d,]+/);if(m&&!running)running=parseInt(m[0].replace(/,/g,''));}
+if(txt.startsWith('배터리 교체 필요 기기')){var m=txt.match(/[\d,]+/);if(m)batIncheon=parseInt(m[0].replace(/,/g,''));}
+});
+}catch(xe){}
+try{document.body.removeChild(ifr);}catch(x){}
+openPage();
+},3000);
+});
 }catch(e){b.textContent='실패: '+e.message;b.style.background='#DC2626';setTimeout(function(){document.body.removeChild(b);},3000);}
 })();
 })();`;
