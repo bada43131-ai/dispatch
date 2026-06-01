@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>배터리 현황 - 미추홀+연수</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f2f4f7;color:#111;max-width:480px;margin:0 auto;min-height:100vh;}
+.header{background:#7c3aed;color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
+.header-title{font-size:16px;font-weight:700;}
+.header-sub{font-size:11px;opacity:0.75;margin-top:2px;}
+.region-badge{background:rgba(255,255,255,0.2);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;}
+.ts-bar{background:#6d28d9;color:rgba(255,255,255,0.8);font-size:11px;padding:6px 16px;display:flex;justify-content:space-between;}
+
+.section{margin:12px 12px 0;}
+.section-title{font-size:11px;font-weight:700;color:#555;letter-spacing:0.03em;margin-bottom:8px;padding:0 2px;display:flex;align-items:center;gap:6px;}
+.stag{font-size:9px;font-weight:800;padding:2px 7px;border-radius:8px;}
+.stag-total{background:#ede9fe;color:#5b21b6;}
+.stag-mi{background:#dbeafe;color:#1e40af;}
+.stag-ye{background:#fef3c7;color:#92400e;}
+.stag-incheon{background:#e0f2fe;color:#0369a1;}
+
+/* 전체 합계 큰 카드 */
+.total-hero{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 6px rgba(0,0,0,0.1);border-left:4px solid #7c3aed;}
+.hero-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;}
+.hero-label{font-size:11px;color:#888;}
+.hero-value{font-size:36px;font-weight:700;color:#7c3aed;line-height:1;}
+.hero-unit{font-size:13px;color:#aaa;margin-left:2px;}
+.hero-models{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px;border-top:1px solid #f0f0f0;padding-top:10px;}
+.model-chip{text-align:center;background:#f8f7ff;border-radius:6px;padding:5px 4px;}
+.model-chip .mk{font-size:9px;color:#7c3aed;font-weight:700;}
+.model-chip .mv{font-size:16px;font-weight:700;color:#333;}
+
+/* 구역별 비교 */
+.zone-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.zone-card{background:#fff;border-radius:12px;padding:13px;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.zone-card.mi{border-top:3px solid #3b82f6;}
+.zone-card.ye{border-top:3px solid #f59e0b;}
+.zone-name{font-size:11px;font-weight:700;margin-bottom:8px;}
+.zone-name.mi{color:#1d4ed8;}
+.zone-name.ye{color:#b45309;}
+.zstat-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+.zstat-row+.zstat-row{border-top:1px solid #f5f5f5;}
+.zstat-label{font-size:10px;color:#888;}
+.zstat-val{font-size:16px;font-weight:700;}
+.zv-gf{color:#1a56db;}
+.zv-other{color:#d97706;}
+.zv-total{color:#374151;}
+.zv-field{color:#7e3af2;}
+.zv-urgent{color:#e02424;}
+.zv-wh{color:#6b7280;}
+
+/* 배터리 교체 비교 */
+.compare-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.compare-row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;}
+.compare-row+.compare-row{border-top:1px solid #f3f4f6;}
+.compare-label{font-size:11px;color:#555;}
+.compare-val{font-size:20px;font-weight:700;}
+.cv-incheon{color:#0369a1;}
+.cv-total{color:#7c3aed;}
+
+/* 수리 티켓 전체 */
+.rep-total-card{background:#fff;border-radius:12px;padding:13px;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.rep-total-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;}
+.rep-total-row+.rep-total-row{border-top:1px solid #f5f5f5;}
+.rtl{font-size:11px;color:#666;}
+.rtv{font-size:18px;font-weight:700;}
+.rtv-field{color:#7e3af2;}
+.rtv-urgent{color:#e02424;}
+.rtv-wh{color:#6b7280;}
+.rtv-sum{color:#374151;}
+
+/* 북마클릿 */
+.bm-box{background:#fff;border-radius:12px;padding:13px;box-shadow:0 1px 3px rgba(0,0,0,0.08);margin:12px 12px 0;}
+.bm-title{font-size:11px;font-weight:700;color:#666;margin-bottom:7px;}
+.bm-link{display:block;background:#f5f3ff;border:1.5px dashed #a78bfa;border-radius:8px;padding:10px 12px;font-size:12px;color:#7c3aed;text-decoration:none;font-weight:600;text-align:center;}
+.bm-desc{font-size:10px;color:#9ca3af;margin-top:6px;line-height:1.6;}
+
+.no-data{text-align:center;padding:40px 20px;color:#9ca3af;}
+.no-data-icon{font-size:40px;margin-bottom:12px;}
+.no-data-text{font-size:13px;line-height:1.7;}
+.bottom-pad{height:30px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">🔋 배터리 현황판</div>
+    <div class="header-sub">미추홀구 + 연수구 담당 기사님용</div>
+  </div>
+  <div class="region-badge">미추홀 · 연수</div>
+</div>
+<div class="ts-bar">
+  <span id="ts-text">북마클릿으로 데이터를 불러오세요</span>
+  <span id="ts-time">—</span>
+</div>
+
+<div id="main-content" style="display:none;">
+
+  <!-- ① 배터리 티켓 전체 합계 -->
+  <div class="section">
+    <div class="section-title">⚡ 배터리 티켓 <span class="stag stag-total">전체합계</span></div>
+    <div class="total-hero">
+      <div class="hero-row">
+        <div>
+          <div class="hero-label">미추홀구 + 연수구</div>
+          <span class="hero-value" id="bat-total-all">0</span><span class="hero-unit">대</span>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;color:#888;">GF</div>
+          <div style="font-size:22px;font-weight:700;color:#1a56db;" id="bat-gf-all">0</div>
+        </div>
+      </div>
+      <div class="hero-models">
+        <div class="model-chip"><div class="mk">HA</div><div class="mv" id="bat-ha-all">0</div></div>
+        <div class="model-chip"><div class="mk">IA</div><div class="mv" id="bat-ia-all">0</div></div>
+        <div class="model-chip"><div class="mk">JA</div><div class="mv" id="bat-ja-all">0</div></div>
+        <div class="model-chip"><div class="mk">KA</div><div class="mv" id="bat-ka-all">0</div></div>
+        <div class="model-chip"><div class="mk">MA</div><div class="mv" id="bat-ma-all">0</div></div>
+        <div class="model-chip"><div class="mk">DA</div><div class="mv" id="bat-da-all">0</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 구역별 배터리 -->
+  <div class="section" style="margin-top:13px;">
+    <div class="section-title">⚡ 구역별 배터리 티켓</div>
+    <div class="zone-grid">
+      <div class="zone-card mi">
+        <div class="zone-name mi">① 미추홀구</div>
+        <div class="zstat-row"><span class="zstat-label">GF</span><span class="zstat-val zv-gf" id="mi-bat-gf">0</span></div>
+        <div class="zstat-row"><span class="zstat-label">기타</span><span class="zstat-val zv-other" id="mi-bat-other">0</span></div>
+        <div class="zstat-row"><span class="zstat-label" style="font-weight:700;">합계</span><span class="zstat-val zv-total" id="mi-bat-total">0</span></div>
+      </div>
+      <div class="zone-card ye">
+        <div class="zone-name ye">② 연수구</div>
+        <div class="zstat-row"><span class="zstat-label">GF</span><span class="zstat-val zv-gf" id="ye-bat-gf">0</span></div>
+        <div class="zstat-row"><span class="zstat-label">기타</span><span class="zstat-val zv-other" id="ye-bat-other">0</span></div>
+        <div class="zstat-row"><span class="zstat-label" style="font-weight:700;">합계</span><span class="zstat-val zv-total" id="ye-bat-total">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 배터리 교체 필요 기기 -->
+  <div class="section" style="margin-top:13px;">
+    <div class="section-title">🔋 배터리 교체 필요 기기</div>
+    <div class="compare-card">
+      <div class="compare-row">
+        <span class="compare-label">인천 전체 <span class="stag stag-incheon">INCHEON</span></span>
+        <span><span class="compare-val cv-incheon" id="bat-incheon">0</span><span style="font-size:11px;color:#aaa;margin-left:2px;">대</span></span>
+      </div>
+      <div class="compare-row">
+        <span class="compare-label">미추홀 + 연수 <span class="stag stag-total">담당구역</span></span>
+        <span><span class="compare-val cv-total" id="bat-area-total">0</span><span style="font-size:11px;color:#aaa;margin-left:2px;">대</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 현장 수리 티켓 전체 + 구역별 -->
+  <div class="section" style="margin-top:13px;">
+    <div class="section-title">🔧 현장 수리 티켓 <span class="stag stag-total">전체</span></div>
+    <div class="rep-total-card">
+      <div class="rep-total-row"><span class="rtl">🛠 현장 수리</span><span class="rtv rtv-field" id="rep-field-all">0</span></div>
+      <div class="rep-total-row"><span class="rtl">🚨 긴급현장</span><span class="rtv rtv-urgent" id="rep-urgent-all">0</span></div>
+      <div class="rep-total-row"><span class="rtl">🏭 창고 입고</span><span class="rtv rtv-wh" id="rep-wh-all">0</span></div>
+      <div class="rep-total-row"><span class="rtl" style="font-weight:700;">합계</span><span class="rtv rtv-sum" id="rep-total-all">0</span></div>
+    </div>
+    <div class="zone-grid" style="margin-top:8px;">
+      <div class="zone-card mi">
+        <div class="zone-name mi">① 미추홀구</div>
+        <div class="zstat-row"><span class="zstat-label">🛠 현장</span><span class="zstat-val zv-field" id="mi-rep-field">0</span></div>
+        <div class="zstat-row"><span class="zstat-label">🚨 긴급</span><span class="zstat-val zv-urgent" id="mi-rep-urgent">0</span></div>
+        <div class="zstat-row"><span class="zstat-label">🏭 창고</span><span class="zstat-val zv-wh" id="mi-rep-wh">0</span></div>
+      </div>
+      <div class="zone-card ye">
+        <div class="zone-name ye">② 연수구</div>
+        <div class="zstat-row"><span class="zstat-label">🛠 현장</span><span class="zstat-val zv-field" id="ye-rep-field">0</span></div>
+        <div class="zstat-row"><span class="zstat-label">🚨 긴급</span><span class="zstat-val zv-urgent" id="ye-rep-urgent">0</span></div>
+        <div class="zstat-row"><span class="zstat-label">🏭 창고</span><span class="zstat-val zv-wh" id="ye-rep-wh">0</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 데이터 없을 때 -->
+<div id="no-data-area" class="section" style="margin-top:30px;">
+  <div class="no-data">
+    <div class="no-data-icon">📡</div>
+    <div class="no-data-text">
+      아래 북마클릿을 <b>t-bike-operating.kakao.com</b>에서<br>
+      실행하면 실시간 데이터가 표시됩니다
+    </div>
+  </div>
+</div>
+
+<!-- 북마클릿 -->
+<div class="bm-box">
+  <div class="bm-title">📌 북마클릿 (즐겨찾기에 드래그하세요)</div>
+  <a id="bm-link" href="#" class="bm-link">🔋 미추홀+연수 배터리 현황 불러오기</a>
+  <div class="bm-desc">
+    1. 이 링크를 북마크바에 드래그해서 저장<br>
+    2. t-bike-operating.kakao.com 접속 후 북마클릿 실행<br>
+    3. 이 페이지가 자동으로 열리며 데이터 표시
+  </div>
+</div>
+<div class="bottom-pad"></div>
+
+<script>
+var BATTERY_URL = 'https://bada43131-ai.github.io/dispatch/battery_michuhol.html';
+
+var MI_POLY = [[126.633053,37.462732],[126.626015,37.449787],[126.652107,37.437521],[126.662922,37.439156],[126.679745,37.43643],[126.687984,37.433977],[126.734161,37.433977],[126.759052,37.43275],[126.763172,37.443927],[126.754589,37.449787],[126.72369,37.460825],[126.703606,37.468046],[126.694336,37.471452],[126.670818,37.467637],[126.66481,37.476084]];
+var YE_POLY = [[126.668072,37.391846],[126.688671,37.405346],[126.701202,37.424298],[126.699657,37.434113],[126.695881,37.43384],[126.692963,37.431932],[126.696396,37.424298],[126.65863,37.434522],[126.634426,37.433704],[126.639576,37.415164],[126.647129,37.407937],[126.655712,37.401119]];
+
+var bmScript = `(function(){
+var URL='${BATTERY_URL}';
+var b=document.createElement('div');
+b.style='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#7c3aed;color:#fff;padding:13px 24px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.3);font-family:sans-serif;white-space:nowrap';
+b.textContent='⏳ 미추홀+연수 배터리 현황 수집 중...';
+document.body.appendChild(b);
+(async function(){
+try{
+var store=document.querySelector('#app').__vue_app__.config.globalProperties.$store;
+var devices=store.state.devices||[];
+var miPoly=${JSON.stringify(MI_POLY)};
+var yePoly=${JSON.stringify(YE_POLY)};
+
+function inPoly(poly,x,y){var inside=false;for(var i=0,j=poly.length-1;i<poly.length;j=i++){var xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];if(((yi>y)!=(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))inside=!inside;}return inside;}
+function getLoc(d){return d.adjusted_location||d.location;}
+function inMi(d){var l=getLoc(d);return l&&inPoly(miPoly,l.lng,l.lat);}
+function inYe(d){var l=getLoc(d);return l&&inPoly(yePoly,l.lng,l.lat);}
+function modelOf(d){var m=(d.code||'').match(/^[a-zA-Z]+/);return m?m[0].toUpperCase():'';}
+function isGF(d){return modelOf(d)==='GF';}
+
+// 미추홀구
+var miBat=devices.filter(function(d){return d.batteryTicket&&inMi(d);});
+var miRep=devices.filter(function(d){return d.repairTicket&&inMi(d);});
+// 연수구
+var yeBat=devices.filter(function(d){return d.batteryTicket&&inYe(d);});
+var yeRep=devices.filter(function(d){return d.repairTicket&&inYe(d);});
+// 인천 전체
+var batIncheon=devices.filter(function(d){return d.batteryTicket;}).length;
+
+// 모델별 (전체)
+var allBat=miBat.concat(yeBat.filter(function(d){return !inMi(d);}));
+function countModel(arr,m){return arr.filter(function(d){return modelOf(d)===m;}).length;}
+
+function countRep(arr,t){
+  if(t==='FIELD') return arr.filter(function(d){var tp=d.repairTicket.type||'';return tp.indexOf('FIELD')>=0&&tp.indexOf('URGENT')<0&&tp.indexOf('EMERGENCY')<0;}).length;
+  if(t==='URGENT') return arr.filter(function(d){var tp=d.repairTicket.type||'';return tp.indexOf('URGENT')>=0||tp.indexOf('EMERGENCY')>=0;}).length;
+  return arr.filter(function(d){return (d.repairTicket.type||'').indexOf('WAREHOUSE')>=0;}).length;
+}
+
+var miGF=miBat.filter(isGF).length, miOther=miBat.length-miGF;
+var yeGF=yeBat.filter(isGF).length, yeOther=yeBat.length-yeGF;
+var allGF=miGF+yeGF;
+var batHA=countModel(miBat,'HA')+countModel(yeBat,'HA');
+var batIA=countModel(miBat,'IA')+countModel(yeBat,'IA');
+var batJA=countModel(miBat,'JA')+countModel(yeBat,'JA');
+var batKA=countModel(miBat,'KA')+countModel(yeBat,'KA');
+var batMA=countModel(miBat,'MA')+countModel(yeBat,'MA');
+var batDA=countModel(miBat,'DA')+countModel(yeBat,'DA');
+var batTotalAll=miBat.length+yeBat.length;
+var batAreaTotal=miBat.length+yeBat.length;
+
+var miF=countRep(miRep,'FIELD'),miU=countRep(miRep,'URGENT'),miW=countRep(miRep,'WH');
+var yeF=countRep(yeRep,'FIELD'),yeU=countRep(yeRep,'URGENT'),yeW=countRep(yeRep,'WH');
+
+var h='mi_gf='+miGF+'&mi_other='+miOther+'&mi_total='+miBat.length
++'&ye_gf='+yeGF+'&ye_other='+yeOther+'&ye_total='+yeBat.length
++'&gf_all='+allGF+'&ha='+batHA+'&ia='+batIA+'&ja='+batJA+'&ka='+batKA+'&ma='+batMA+'&da='+batDA
++'&bat_total_all='+batTotalAll+'&bat_incheon='+batIncheon+'&bat_area='+batAreaTotal
++'&mi_f='+miF+'&mi_u='+miU+'&mi_w='+miW
++'&ye_f='+yeF+'&ye_u='+yeU+'&ye_w='+yeW
++'&rep_f_all='+(miF+yeF)+'&rep_u_all='+(miU+yeU)+'&rep_w_all='+(miW+yeW)
++'&ts='+Date.now();
+
+b.textContent='✓ 미추홀 배터리:'+miBat.length+' | 연수 배터리:'+yeBat.length+' → 이동...';
+b.style.background='#059669';
+setTimeout(function(){document.body.removeChild(b);window.open(URL+'#'+h,'_blank');},800);
+}catch(e){b.textContent='실패: '+e.message;b.style.background='#DC2626';setTimeout(function(){document.body.removeChild(b);},3000);}
+})();
+})();`;
+
+document.getElementById('bm-link').href = 'javascript:' + encodeURIComponent(bmScript);
+
+function parseHash() {
+  var h = location.hash.replace('#','');
+  if (!h) return null;
+  var p = {};
+  h.split('&').forEach(function(kv){
+    var i=kv.indexOf('='); if(i>0) p[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1));
+  });
+  return p;
+}
+
+function n(v){ return parseInt(v)||0; }
+
+function loadFromHash() {
+  var p = parseHash();
+  if (!p || !p.ts) return;
+
+  // 전체 합계
+  document.getElementById('bat-total-all').textContent  = n(p.bat_total_all);
+  document.getElementById('bat-gf-all').textContent     = n(p.gf_all);
+  document.getElementById('bat-ha-all').textContent     = n(p.ha);
+  document.getElementById('bat-ia-all').textContent     = n(p.ia);
+  document.getElementById('bat-ja-all').textContent     = n(p.ja);
+  document.getElementById('bat-ka-all').textContent     = n(p.ka);
+  document.getElementById('bat-ma-all').textContent     = n(p.ma);
+  document.getElementById('bat-da-all').textContent     = n(p.da);
+
+  // 구역별 배터리
+  document.getElementById('mi-bat-gf').textContent      = n(p.mi_gf);
+  document.getElementById('mi-bat-other').textContent   = n(p.mi_other);
+  document.getElementById('mi-bat-total').textContent   = n(p.mi_total);
+  document.getElementById('ye-bat-gf').textContent      = n(p.ye_gf);
+  document.getElementById('ye-bat-other').textContent   = n(p.ye_other);
+  document.getElementById('ye-bat-total').textContent   = n(p.ye_total);
+
+  // 교체 필요
+  document.getElementById('bat-incheon').textContent    = n(p.bat_incheon).toLocaleString();
+  document.getElementById('bat-area-total').textContent = n(p.bat_area);
+
+  // 수리 전체
+  document.getElementById('rep-field-all').textContent  = n(p.rep_f_all);
+  document.getElementById('rep-urgent-all').textContent = n(p.rep_u_all);
+  document.getElementById('rep-wh-all').textContent     = n(p.rep_w_all);
+  document.getElementById('rep-total-all').textContent  = n(p.rep_f_all)+n(p.rep_u_all)+n(p.rep_w_all)+'대';
+
+  // 구역별 수리
+  document.getElementById('mi-rep-field').textContent   = n(p.mi_f);
+  document.getElementById('mi-rep-urgent').textContent  = n(p.mi_u);
+  document.getElementById('mi-rep-wh').textContent      = n(p.mi_w);
+  document.getElementById('ye-rep-field').textContent   = n(p.ye_f);
+  document.getElementById('ye-rep-urgent').textContent  = n(p.ye_u);
+  document.getElementById('ye-rep-wh').textContent      = n(p.ye_w);
+
+  var d = new Date(parseInt(p.ts));
+  document.getElementById('ts-text').textContent = '마지막 업데이트';
+  document.getElementById('ts-time').textContent = d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  document.getElementById('no-data-area').style.display = 'none';
+  document.getElementById('main-content').style.display = 'block';
+}
+
+loadFromHash();
+window.addEventListener('hashchange', loadFromHash);
+</script>
+</body>
+</html>
