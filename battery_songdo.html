@@ -217,7 +217,7 @@ function parseHash() {
 
 function loadFromHash() {
   var p = parseHash();
-  if (!p || !p.bat_gf) return;
+  if (!p || !p.ts) return;
 
   var batGF = parseInt(p.bat_gf) || 0;
   var batOther = parseInt(p.bat_other) || 0;
