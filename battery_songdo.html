@@ -153,20 +153,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
   </div>
 
-  <!-- ③ 운행중 기기 (인천 전체) -->
-  <div class="section" style="margin-top:13px;">
-    <div class="section-title">🟢 운행중 기기</div>
-    <div class="op-card">
-      <div>
-        <div class="op-label">현재 라이딩 중인 기기</div>
-        <div class="op-sub">인천 전체 기준</div>
-        <span class="op-value" id="op-count">0</span>
-        <span class="op-unit">대</span>
-      </div>
-      <div class="op-note">운행 완료 후<br>배터리 티켓 증가 예상</div>
-    </div>
-  </div>
-
   <!-- ④ 현장 수리 티켓 (송도) -->
   <div class="section" style="margin-top:13px;">
     <div class="section-title">🔧 현장 수리 티켓 <span class="stag stag-songdo">송도</span></div>
@@ -255,42 +241,10 @@ var repField=repDevs.filter(function(d){var t=d.repairTicket.type||'';return t.i
 var repUrgent=repDevs.filter(function(d){var t=d.repairTicket.type||'';return t.indexOf('URGENT')>=0||t.indexOf('EMERGENCY')>=0;}).length;
 var repWH=repDevs.filter(function(d){return (d.repairTicket.type||'').indexOf('WAREHOUSE')>=0;}).length;
 
-// 운행중: Vue Router로 프로필 이동 후 DOM 파싱
-b.textContent='⏳ 인천 운행중 기기 수집 중...';
-var running=0;
-
-function buildHash(){
-return 'bat_gf='+batGF+'&bat_ha='+batHA+'&bat_ia='+batIA+'&bat_ja='+batJA+'&bat_ka='+batKA+'&bat_ma='+batMA+'&bat_da='+batDA+'&bat_songdo='+batSongdo+'&bat_incheon='+batIncheon+'&op='+running+'&rep_field='+repField+'&rep_urgent='+repUrgent+'&rep_wh='+repWH+'&ts='+Date.now()+'&region=송도';
-}
-function openPage(){
-b.textContent='✓ 송도 GF:'+batGF+' HA:'+batHA+' IA:'+batIA+' | 운행중:'+running+'대 → 이동...';
+var hash='bat_gf='+batGF+'&bat_ha='+batHA+'&bat_ia='+batIA+'&bat_ja='+batJA+'&bat_ka='+batKA+'&bat_ma='+batMA+'&bat_da='+batDA+'&bat_songdo='+batSongdo+'&bat_incheon='+batIncheon+'&rep_field='+repField+'&rep_urgent='+repUrgent+'&rep_wh='+repWH+'&ts='+Date.now()+'&region=송도';
+b.textContent='✓ 송도 GF:'+batGF+' HA:'+batHA+' IA:'+batIA+' JA:'+batJA+' → 이동...';
 b.style.background='#059669';
-setTimeout(function(){document.body.removeChild(b);window.open(URL+'#'+buildHash(),'_blank');},800);
-}
-
-// Vue Router로 /profile 이동 → DOM 파싱 → 복귀
-var prevPath=location.pathname;
-var timerDone=false;
-var globalTimer=setTimeout(function(){if(!timerDone){timerDone=true;openPage();}},8000);
-
-router.push('/profile').then(function(){
-setTimeout(function(){
-if(timerDone)return;
-timerDone=true;clearTimeout(globalTimer);
-try{
-var rows=[...document.querySelectorAll('li,tr,div,p,span')];
-rows.forEach(function(el){
-var txt=el.textContent.trim();
-if(txt.startsWith('운행중 기기')&&!running){var m=txt.match(/[\d,]+/);if(m)running=parseInt(m[0].replace(/,/g,''));}
-if(txt.startsWith('배터리 교체 필요 기기')){var m=txt.match(/[\d,]+/);if(m)batIncheon=parseInt(m[0].replace(/,/g,''));}
-});
-}catch(xe){}
-router.push(prevPath).catch(function(){});
-setTimeout(openPage,500);
-},2500);
-}).catch(function(){
-clearTimeout(globalTimer);openPage();
-});
+setTimeout(function(){document.body.removeChild(b);window.open(URL+'#'+hash,'_blank');},800);
 
 }catch(e){b.textContent='실패: '+e.message;b.style.background='#DC2626';setTimeout(function(){document.body.removeChild(b);},3000);}
 })();
@@ -334,7 +288,6 @@ function loadFromHash() {
   document.getElementById('bat-total').textContent      = (gf+otherTotal)+'대';
   document.getElementById('bat-songdo').textContent     = parseInt(p.bat_songdo)||0;
   document.getElementById('bat-incheon').textContent    = (parseInt(p.bat_incheon)||0).toLocaleString();
-  document.getElementById('op-count').textContent       = (parseInt(p.op)||0).toLocaleString();
 
   var rf = parseInt(p.rep_field)||0;
   var ru = parseInt(p.rep_urgent)||0;
