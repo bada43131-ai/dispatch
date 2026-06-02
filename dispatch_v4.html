@@ -185,7 +185,7 @@ const bPoints=[
   {name:'힐스테이트',   zone:'B',opt:12,cur:7, type:'mixed'},
   {name:'이편한세상',   zone:'B',opt:20,cur:17,type:'mixed'},
   {name:'송도국제학교', zone:'B',opt:15,cur:13,type:'mixed'},
-  {name:'더샵마스터뷰', zone:'B',opt:15,cur:13,type:'mixed'},
+  {name:'더샵마스터뷰', zone:'B',opt:15,cur:13,type:'inflow'},
   {name:'지식정보단지', zone:'B',opt:20,cur:17,type:'consume'},
   {name:'라이크홈',     zone:'B',opt:17,cur:16,type:'consume'},
 ];
@@ -193,7 +193,7 @@ const aPoints=[
   {name:'인천대1번',    zone:'A',opt:18,cur:9, type:'mixed'},
   {name:'송도시외버스', zone:'A',opt:15,cur:7, type:'consume'},
   {name:'인천대2번',    zone:'A',opt:15,cur:8, type:'consume'},
-  {name:'테라스정원',   zone:'A',opt:20,cur:12,type:'consume'},  // 분석결과: mixed→consume 재분류
+  {name:'테라스정원',   zone:'A',opt:20,cur:12,type:'consume'},
   {name:'산책정원',     zone:'A',opt:20,cur:12,type:'consume'},
   {name:'센트럴파크',   zone:'A',opt:12,cur:8, type:'consume'},
   {name:'타임스페이스', zone:'A',opt:15,cur:14,type:'consume'},
@@ -330,11 +330,10 @@ function update(){
     p.need110=Math.max(0,Math.floor(p.opt*1.1)-p.cur);
     // 90% 초과면 배차 대상 아님
     p.needsDispatch = p.curPct < 0.9;
-    // A존: 소비량 많을수록 배차 우선순위 높음 → 오후 잔량 부족 방지
-    // ※ 2026-03-26~04-20 실측 데이터 분석 기반으로 보정 (26일치 아침현황)
+    // A존: 회전율 낮은 곳(소비 적은 곳) 먼저 → 오후 5시 잔량 유지에 유리
     const avgConsume = {
-      '힐스테이트':3,'이편한세상':2,'송도국제학교':3,'더샵마스터뷰':5,'지식정보단지':11,'라이크홈':6,
-      '인천대1번':7,'송도시외버스':10,'인천대2번':10,'테라스정원':9,'산책정원':8,'센트럴파크':10,'타임스페이스':12
+      '힐스테이트':3,'이편한세상':2,'송도국제학교':2,'더샵마스터뷰':3,'지식정보단지':11,'라이크홈':8,
+      '인천대1번':9,'송도시외버스':11,'인천대2번':9,'테라스정원':6,'산책정원':10,'센트럴파크':7,'타임스페이스':8
     };
     const consume = avgConsume[p.name] || 5;
     const shortageRatio = p.need100/p.opt;
@@ -530,6 +529,40 @@ async function saveDispatch(){
 
 buildInputs();
 buildExcludes();
+
+// ── 북마크릿 해시 파라미터 읽기 ──────────────────────────────
+(function(){
+  var hash = window.location.hash.substring(1);
+  if(!hash) return;
+  var params = {};
+  hash.split('&').forEach(function(part){
+    var eq = part.indexOf('=');
+    if(eq < 1) return;
+    try{
+      var k = decodeURIComponent(part.substring(0, eq));
+      var v = part.substring(eq + 1);
+      params[k] = v;
+    }catch(e){}
+  });
+  // 각 포인트 현재수량 입력란 채우기
+  all.forEach(function(p){
+    if(params[p.name] !== undefined){
+      var el = document.getElementById('inp-' + p.name);
+      if(el) el.value = parseInt(params[p.name]) || 0;
+    }
+  });
+  updateCurTotal();
+  // 수리 대수 자동 입력
+  if(params.repair){
+    try{
+      var rd = JSON.parse(decodeURIComponent(params.repair));
+      var el = document.getElementById('repair-count');
+      if(el) el.value = rd.length;
+    }catch(e){}
+  }
+})();
+// ─────────────────────────────────────────────────────────────
+
 update();
 checkMorningSaved();
 
