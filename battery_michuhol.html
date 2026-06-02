@@ -14,68 +14,68 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ts-bar{background:#6d28d9;color:rgba(255,255,255,0.8);font-size:11px;padding:6px 16px;display:flex;justify-content:space-between;}
 
 .section{margin:12px 12px 0;}
-.section-title{font-size:11px;font-weight:700;color:#555;letter-spacing:0.03em;margin-bottom:8px;padding:0 2px;display:flex;align-items:center;gap:6px;}
-.stag{font-size:9px;font-weight:800;padding:2px 7px;border-radius:8px;}
-.stag-total{background:#ede9fe;color:#5b21b6;}
-.stag-mi{background:#dbeafe;color:#1e40af;}
-.stag-ye{background:#fef3c7;color:#92400e;}
-.stag-incheon{background:#e0f2fe;color:#0369a1;}
+.section-title{font-size:12px;font-weight:800;color:#111;letter-spacing:0.03em;margin-bottom:8px;padding:0 2px;display:flex;align-items:center;gap:6px;}
+.stag{font-size:10px;font-weight:800;padding:2px 8px;border-radius:8px;}
+.stag-total{background:#ddd6fe;color:#4c1d95;}
+.stag-mi{background:#bfdbfe;color:#1e3a8a;}
+.stag-ye{background:#fde68a;color:#78350f;}
+.stag-incheon{background:#bae6fd;color:#0c4a6e;}
 
 /* 전체 합계 큰 카드 */
 .total-hero{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 6px rgba(0,0,0,0.1);border-left:4px solid #7c3aed;}
 .hero-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;}
-.hero-label{font-size:11px;color:#888;}
-.hero-value{font-size:36px;font-weight:700;color:#7c3aed;line-height:1;}
-.hero-unit{font-size:13px;color:#aaa;margin-left:2px;}
-.hero-models{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px;border-top:1px solid #f0f0f0;padding-top:10px;}
-.model-chip{text-align:center;background:#f8f7ff;border-radius:6px;padding:5px 4px;}
-.model-chip .mk{font-size:9px;color:#7c3aed;font-weight:700;}
-.model-chip .mv{font-size:16px;font-weight:700;color:#333;}
+.hero-label{font-size:12px;color:#444;font-weight:600;}
+.hero-value{font-size:36px;font-weight:700;color:#6d28d9;line-height:1;}
+.hero-unit{font-size:13px;color:#666;margin-left:2px;}
+.hero-models{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px;border-top:2px solid #ede9fe;padding-top:10px;}
+.model-chip{text-align:center;background:#f5f3ff;border-radius:6px;padding:5px 4px;border:1px solid #ddd6fe;}
+.model-chip .mk{font-size:10px;color:#5b21b6;font-weight:800;}
+.model-chip .mv{font-size:18px;font-weight:800;color:#111;}
 
 /* 구역별 비교 */
 .zone-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.zone-card{background:#fff;border-radius:12px;padding:13px;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
-.zone-card.mi{border-top:3px solid #3b82f6;}
-.zone-card.ye{border-top:3px solid #f59e0b;}
-.zone-name{font-size:11px;font-weight:700;margin-bottom:8px;}
-.zone-name.mi{color:#1d4ed8;}
-.zone-name.ye{color:#b45309;}
-.zstat-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
-.zstat-row+.zstat-row{border-top:1px solid #f5f5f5;}
-.zstat-label{font-size:10px;color:#888;}
-.zstat-val{font-size:16px;font-weight:700;}
-.zv-gf{color:#1a56db;}
-.zv-other{color:#d97706;}
-.zv-total{color:#374151;}
-.zv-field{color:#7e3af2;}
-.zv-urgent{color:#e02424;}
-.zv-wh{color:#6b7280;}
+.zone-card{background:#fff;border-radius:12px;padding:13px;box-shadow:0 1px 4px rgba(0,0,0,0.12);}
+.zone-card.mi{border-top:4px solid #2563eb;background:#f0f7ff;}
+.zone-card.ye{border-top:4px solid #d97706;background:#fffbeb;}
+.zone-name{font-size:12px;font-weight:800;margin-bottom:8px;}
+.zone-name.mi{color:#1e40af;}
+.zone-name.ye{color:#92400e;}
+.zstat-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;}
+.zstat-row+.zstat-row{border-top:1px solid #e5e7eb;}
+.zstat-label{font-size:11px;color:#444;font-weight:600;}
+.zstat-val{font-size:18px;font-weight:800;}
+.zv-gf{color:#1d4ed8;}
+.zv-other{color:#b45309;}
+.zv-total{color:#111;}
+.zv-field{color:#6d28d9;}
+.zv-urgent{color:#b91c1c;}
+.zv-wh{color:#374151;}
 
 /* 배터리 교체 비교 */
-.compare-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
-.compare-row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;}
-.compare-row+.compare-row{border-top:1px solid #f3f4f6;}
-.compare-label{font-size:11px;color:#555;}
-.compare-val{font-size:20px;font-weight:700;}
-.cv-incheon{color:#0369a1;}
-.cv-total{color:#7c3aed;}
+.compare-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.12);}
+.compare-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;}
+.compare-row+.compare-row{border-top:1px solid #e5e7eb;}
+.compare-label{font-size:12px;color:#333;font-weight:600;}
+.compare-val{font-size:22px;font-weight:800;}
+.cv-incheon{color:#0c4a6e;}
+.cv-total{color:#5b21b6;}
 
 /* 수리 티켓 전체 */
-.rep-total-card{background:#fff;border-radius:12px;padding:13px;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
-.rep-total-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;}
-.rep-total-row+.rep-total-row{border-top:1px solid #f5f5f5;}
-.rtl{font-size:11px;color:#666;}
-.rtv{font-size:18px;font-weight:700;}
-.rtv-field{color:#7e3af2;}
-.rtv-urgent{color:#e02424;}
-.rtv-wh{color:#6b7280;}
-.rtv-sum{color:#374151;}
+.rep-total-card{background:#fff;border-radius:12px;padding:13px;box-shadow:0 1px 4px rgba(0,0,0,0.12);}
+.rep-total-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;}
+.rep-total-row+.rep-total-row{border-top:1px solid #e5e7eb;}
+.rtl{font-size:12px;color:#333;font-weight:600;}
+.rtv{font-size:20px;font-weight:800;}
+.rtv-field{color:#5b21b6;}
+.rtv-urgent{color:#991b1b;}
+.rtv-wh{color:#1f2937;}
+.rtv-sum{color:#111;}
 
 /* 북마클릿 */
 .bm-box{background:#fff;border-radius:12px;padding:13px;box-shadow:0 1px 3px rgba(0,0,0,0.08);margin:12px 12px 0;}
-.bm-title{font-size:11px;font-weight:700;color:#666;margin-bottom:7px;}
-.bm-link{display:block;background:#f5f3ff;border:1.5px dashed #a78bfa;border-radius:8px;padding:10px 12px;font-size:12px;color:#7c3aed;text-decoration:none;font-weight:600;text-align:center;}
-.bm-desc{font-size:10px;color:#9ca3af;margin-top:6px;line-height:1.6;}
+.bm-title{font-size:12px;font-weight:700;color:#333;margin-bottom:7px;}
+.bm-link{display:block;background:#f5f3ff;border:2px solid #7c3aed;border-radius:8px;padding:10px 12px;font-size:13px;color:#5b21b6;text-decoration:none;font-weight:700;text-align:center;}
+.bm-desc{font-size:11px;color:#555;margin-top:6px;line-height:1.6;}
 
 .no-data{text-align:center;padding:40px 20px;color:#9ca3af;}
 .no-data-icon{font-size:40px;margin-bottom:12px;}
