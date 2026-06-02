@@ -196,93 +196,145 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- 북마클릿 -->
+<!-- 북마클릿 2개 -->
 <div class="bm-box">
-  <div class="bm-title">📌 북마클릿 (즐겨찾기에 드래그하세요)</div>
-  <a id="bm-link" href="#" class="bm-link">🔋 미추홀+연수 배터리 현황 불러오기</a>
+  <div class="bm-title">📌 북마클릿 — 순서대로 실행하세요</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+    <a id="bm-mi" href="#" class="bm-link" style="background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;">① 미추홀구</a>
+    <a id="bm-ye" href="#" class="bm-link" style="background:#fef3c7;border-color:#fcd34d;color:#92400e;">② 연수구</a>
+  </div>
   <div class="bm-desc">
-    1. 이 링크를 북마크바에 드래그해서 저장<br>
-    2. t-bike-operating.kakao.com 접속 후 북마클릿 실행<br>
-    3. 이 페이지가 자동으로 열리며 데이터 표시
+    1. 두 링크를 각각 북마크바에 드래그해서 저장<br>
+    2. 카카오 운영웹에서 ① 미추홀 실행 → 이 페이지로 이동<br>
+    3. 운영웹으로 돌아가서 ② 연수 실행 → 합산 표시 ✅
+  </div>
+  <div id="zone-status" style="margin-top:8px;display:flex;gap:6px;font-size:10px;">
+    <span id="mi-status" style="flex:1;text-align:center;background:#f3f4f6;border-radius:6px;padding:4px;">미추홀 ⏳ 없음</span>
+    <span id="ye-status" style="flex:1;text-align:center;background:#f3f4f6;border-radius:6px;padding:4px;">연수 ⏳ 없음</span>
   </div>
 </div>
 <div class="bottom-pad"></div>
 
 <script>
-var BATTERY_URL = 'https://bada43131-ai.github.io/dispatch/battery_michuhol.html';
+var U='https://bada43131-ai.github.io/dispatch/battery_michuhol.html';
 
-// 소수점 4자리로 줄여 북마클릿 크기 최소화
-var MI_POLY = [[126.6331,37.4627],[126.626,37.4498],[126.6521,37.4375],[126.6629,37.4392],[126.6797,37.4364],[126.688,37.434],[126.7342,37.434],[126.7591,37.4328],[126.7632,37.4439],[126.7546,37.4498],[126.7237,37.4608],[126.7036,37.468],[126.6943,37.4715],[126.6708,37.4676],[126.6648,37.4761]];
-var YE_POLY = [[126.6681,37.3918],[126.6887,37.4053],[126.7012,37.4243],[126.6997,37.4341],[126.6959,37.4338],[126.693,37.4319],[126.6964,37.4243],[126.6586,37.4345],[126.6344,37.4337],[126.6396,37.4152],[126.6471,37.4079],[126.6557,37.4011]];
+// ── 북마클릿 생성 (각각 한 구역만 담당 → 절반 크기) ─────────────────
+// 배너 제거 → 최소 코드로 모바일 2048자 제한 확실히 통과
+// 미추홀 (lng 126.626~126.763, lat 37.435~37.477)
+var BM_MI=`(function(){try{var U='${U}',D=document.querySelector('#app').__vue_app__.config.globalProperties.$store.state.devices||[];function L(d){return d.adjusted_location||d.location}function n(d){var r=(d.code||'').match(/^[a-zA-Z]+/);return r?r[0].toUpperCase():''}function C(a,k){return a.filter(function(d){return n(d)===k}).length}function F(a,t){return a.filter(function(d){var p=(d.repairTicket||{}).type||'';return t=='F'?p.indexOf('FIELD')>=0&&p.indexOf('URGENT')<0:t=='U'?p.indexOf('URGENT')>=0:p.indexOf('WAREHOUSE')>=0}).length}function iM(d){var l=L(d);return l&&l.lng>=126.626&&l.lng<=126.763&&l.lat>=37.435&&l.lat<=37.477}var A=D.filter(function(d){return d.batteryTicket&&iM(d)}),R=D.filter(function(d){return d.repairTicket&&iM(d)}),g=C(A,'GF');location.href=U+'#zone=mi&gf='+g+'&oth='+(A.length-g)+'&tot='+A.length+'&f='+F(R,'F')+'&u='+F(R,'U')+'&w='+F(R,'W')+'&ha='+C(A,'HA')+'&ia='+C(A,'IA')+'&ja='+C(A,'JA')+'&ka='+C(A,'KA')+'&ma='+C(A,'MA')+'&da='+C(A,'DA')+'&bi='+D.filter(function(d){return d.batteryTicket}).length+'&ts='+Date.now()}catch(e){alert('MI ERR:'+e.message)}})();`;
 
-// 제미나이 분석: 1,418자로 압축 (모바일 2,048자 제한 이내)
-// 한글/이모지 완전 제거 — ASCII only로 모바일 인코딩 문제 해결
-var BM_HREF = 'javascript:(function(){var U="https://bada43131-ai.github.io/dispatch/battery_michuhol.html",b=document.createElement("div");b.style="position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#7c3aed;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;font-family:sans-serif";b.textContent="Loading...";document.body.appendChild(b);try{var S=document.querySelector("#app").__vue_app__.config.globalProperties.$store,D=S.state.devices||[],M=[[126.6331,37.4627],[126.626,37.4498],[126.6521,37.4375],[126.6629,37.4392],[126.6797,37.4364],[126.688,37.434],[126.7342,37.434],[126.7591,37.4328],[126.7632,37.4439],[126.7546,37.4498],[126.7237,37.4608],[126.7036,37.468],[126.6943,37.4715],[126.6708,37.4676],[126.6648,37.4761]],Y=[[126.6681,37.3918],[126.6887,37.4053],[126.7012,37.4243],[126.6997,37.4341],[126.6959,37.4338],[126.693,37.4319],[126.6964,37.4243],[126.6586,37.4345],[126.6344,37.4337],[126.6396,37.4152],[126.6471,37.4079],[126.6557,37.4011]];function P(p,x,y){var r=!1;for(var i=0,j=p.length-1;i<p.length;j=i++){var a=p[i][0],b2=p[i][1],c=p[j][0],d=p[j][1];if(((b2>y)!=(d>y))&&(x<(c-a)*(y-b2)/(d-b2)+a))r=!r}return r}function L(d){return d.adjusted_location||d.location}function m(d){var r=(d.code||"").match(/^[a-zA-Z]+/);return r?r[0].toUpperCase():""}function F(a,t){return a.filter(function(d){var tp=(d.repairTicket||{}).type||"";return t=="F"?tp.indexOf("FIELD")>=0&&tp.indexOf("URGENT")<0:t=="U"?tp.indexOf("URGENT")>=0:tp.indexOf("WAREHOUSE")>=0}).length}var MI=D.filter(function(d){var l=L(d);return d.batteryTicket&&l&&P(M,l.lng,l.lat)}),YI=D.filter(function(d){var l=L(d);return d.batteryTicket&&l&&P(Y,l.lng,l.lat)}),MR=D.filter(function(d){var l=L(d);return d.repairTicket&&l&&P(M,l.lng,l.lat)}),YR=D.filter(function(d){var l=L(d);return d.repairTicket&&l&&P(Y,l.lng,l.lat)}),BI=D.filter(function(d){return d.batteryTicket}).length;function C(a,k){return a.filter(function(d){return m(d)===k}).length}var mg=C(MI,"GF"),mo=MI.length-mg,yg=C(YI,"GF"),yo=YI.length-yg,h="mi_gf="+mg+"&mi_other="+mo+"&mi_total="+MI.length+"&ye_gf="+yg+"&ye_other="+yo+"&ye_total="+YI.length+"&gf_all="+(mg+yg)+"&ha="+(C(MI,"HA")+C(YI,"HA"))+"&ia="+(C(MI,"IA")+C(YI,"IA"))+"&ja="+(C(MI,"JA")+C(YI,"JA"))+"&ka="+(C(MI,"KA")+C(YI,"KA"))+"&ma="+(C(MI,"MA")+C(YI,"MA"))+"&da="+(C(MI,"DA")+C(YI,"DA"))+"&bat_total_all="+(MI.length+YI.length)+"&bat_incheon="+BI+"&bat_area="+(MI.length+YI.length)+"&mi_f="+F(MR,"F")+"&mi_u="+F(MR,"U")+"&mi_w="+F(MR,"W")+"&ye_f="+F(YR,"F")+"&ye_u="+F(YR,"U")+"&ye_w="+F(YR,"W")+"&rep_f_all="+(F(MR,"F")+F(YR,"F"))+"&rep_u_all="+(F(MR,"U")+F(YR,"U"))+"&rep_w_all="+(F(MR,"W")+F(YR,"W"))+"&ts="+Date.now();b.textContent="OK MI:"+MI.length+" YE:"+YI.length;b.style.background="#059669";setTimeout(function(){document.body.removeChild(b);location.href=U+"#"+h},800)}catch(e){b.textContent="ERR:"+e.message;b.style.background="#DC2626";setTimeout(function(){document.body.removeChild(b)},3000)}})();';
+// 연수 (lng 126.634~126.701, lat 37.391~37.434)
+var BM_YE=`(function(){try{var U='${U}',D=document.querySelector('#app').__vue_app__.config.globalProperties.$store.state.devices||[];function L(d){return d.adjusted_location||d.location}function n(d){var r=(d.code||'').match(/^[a-zA-Z]+/);return r?r[0].toUpperCase():''}function C(a,k){return a.filter(function(d){return n(d)===k}).length}function F(a,t){return a.filter(function(d){var p=(d.repairTicket||{}).type||'';return t=='F'?p.indexOf('FIELD')>=0&&p.indexOf('URGENT')<0:t=='U'?p.indexOf('URGENT')>=0:p.indexOf('WAREHOUSE')>=0}).length}function iY(d){var l=L(d);return l&&l.lng>=126.634&&l.lng<=126.701&&l.lat>=37.391&&l.lat<=37.434}var A=D.filter(function(d){return d.batteryTicket&&iY(d)}),R=D.filter(function(d){return d.repairTicket&&iY(d)}),g=C(A,'GF');location.href=U+'#zone=ye&gf='+g+'&oth='+(A.length-g)+'&tot='+A.length+'&f='+F(R,'F')+'&u='+F(R,'U')+'&w='+F(R,'W')+'&ha='+C(A,'HA')+'&ia='+C(A,'IA')+'&ja='+C(A,'JA')+'&ka='+C(A,'KA')+'&ma='+C(A,'MA')+'&da='+C(A,'DA')+'&ts='+Date.now()}catch(e){alert('YE ERR:'+e.message)}})();`;
 
-document.getElementById('bm-link').href = BM_HREF;
+document.getElementById('bm-mi').href = 'javascript:' + encodeURIComponent(BM_MI);
+document.getElementById('bm-ye').href = 'javascript:' + encodeURIComponent(BM_YE);
+
+// ── localStorage 키 ───────────────────────────────────────────────────
+var KEY_MI = 'bm_mi_v2';
+var KEY_YE = 'bm_ye_v2';
+
+function n(v){ return parseInt(v)||0; }
+
+function saveZone(p) {
+  try {
+    if (p.zone === 'mi') localStorage.setItem(KEY_MI, JSON.stringify(p));
+    if (p.zone === 'ye') localStorage.setItem(KEY_YE, JSON.stringify(p));
+  } catch(e) {}
+}
+
+function loadZone(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || {}; } catch(e) { return {}; }
+}
 
 function parseHash() {
   var h = location.hash.replace('#','');
   if (!h) return null;
   var p = {};
   h.split('&').forEach(function(kv){
-    var i=kv.indexOf('='); if(i>0) p[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1));
+    var i = kv.indexOf('=');
+    if (i > 0) p[decodeURIComponent(kv.slice(0,i))] = decodeURIComponent(kv.slice(i+1));
   });
-  return p;
+  return (p.zone && p.ts) ? p : null;
 }
 
-function n(v){ return parseInt(v)||0; }
-
-function loadFromHash() {
-  var p = parseHash();
-  if (!p || !p.ts) return;
-
-  // 전체 합계
-  document.getElementById('bat-total-all').textContent  = n(p.bat_total_all);
-  document.getElementById('bat-gf-all').textContent     = n(p.gf_all);
-  document.getElementById('bat-ha-all').textContent     = n(p.ha);
-  document.getElementById('bat-ia-all').textContent     = n(p.ia);
-  document.getElementById('bat-ja-all').textContent     = n(p.ja);
-  document.getElementById('bat-ka-all').textContent     = n(p.ka);
-  document.getElementById('bat-ma-all').textContent     = n(p.ma);
-  document.getElementById('bat-da-all').textContent     = n(p.da);
+function render() {
+  var mi = loadZone(KEY_MI);
+  var ye = loadZone(KEY_YE);
+  var hasMi = !!(mi.zone);
+  var hasYe = !!(ye.zone);
+  if (!hasMi && !hasYe) return;
 
   // 구역별 배터리
-  document.getElementById('mi-bat-gf').textContent      = n(p.mi_gf);
-  document.getElementById('mi-bat-other').textContent   = n(p.mi_other);
-  document.getElementById('mi-bat-total').textContent   = n(p.mi_total);
-  document.getElementById('ye-bat-gf').textContent      = n(p.ye_gf);
-  document.getElementById('ye-bat-other').textContent   = n(p.ye_other);
-  document.getElementById('ye-bat-total').textContent   = n(p.ye_total);
+  document.getElementById('mi-bat-gf').textContent    = n(mi.gf);
+  document.getElementById('mi-bat-other').textContent = n(mi.oth);
+  document.getElementById('mi-bat-total').textContent  = n(mi.tot);
+  document.getElementById('ye-bat-gf').textContent    = n(ye.gf);
+  document.getElementById('ye-bat-other').textContent = n(ye.oth);
+  document.getElementById('ye-bat-total').textContent  = n(ye.tot);
 
-  // 교체 필요
-  document.getElementById('bat-incheon').textContent    = n(p.bat_incheon).toLocaleString();
-  document.getElementById('bat-area-total').textContent = n(p.bat_area);
+  // 전체 합산
+  var totAll = n(mi.tot) + n(ye.tot);
+  var gfAll  = n(mi.gf)  + n(ye.gf);
+  document.getElementById('bat-total-all').textContent = totAll;
+  document.getElementById('bat-gf-all').textContent    = gfAll;
+  document.getElementById('bat-ha-all').textContent    = n(mi.ha) + n(ye.ha);
+  document.getElementById('bat-ia-all').textContent    = n(mi.ia) + n(ye.ia);
+  document.getElementById('bat-ja-all').textContent    = n(mi.ja) + n(ye.ja);
+  document.getElementById('bat-ka-all').textContent    = n(mi.ka) + n(ye.ka);
+  document.getElementById('bat-ma-all').textContent    = n(mi.ma) + n(ye.ma);
+  document.getElementById('bat-da-all').textContent    = n(mi.da) + n(ye.da);
 
-  // 수리 전체
-  document.getElementById('rep-field-all').textContent  = n(p.rep_f_all);
-  document.getElementById('rep-urgent-all').textContent = n(p.rep_u_all);
-  document.getElementById('rep-wh-all').textContent     = n(p.rep_w_all);
-  document.getElementById('rep-total-all').textContent  = n(p.rep_f_all)+n(p.rep_u_all)+n(p.rep_w_all)+'대';
+  // 배터리 교체 필요 (인천 전체는 mi에서 가져옴, 담당구역=합산)
+  var bi = n(mi.bi) || n(ye.bi);
+  document.getElementById('bat-incheon').textContent    = bi.toLocaleString();
+  document.getElementById('bat-area-total').textContent = totAll;
 
   // 구역별 수리
-  document.getElementById('mi-rep-field').textContent   = n(p.mi_f);
-  document.getElementById('mi-rep-urgent').textContent  = n(p.mi_u);
-  document.getElementById('mi-rep-wh').textContent      = n(p.mi_w);
-  document.getElementById('ye-rep-field').textContent   = n(p.ye_f);
-  document.getElementById('ye-rep-urgent').textContent  = n(p.ye_u);
-  document.getElementById('ye-rep-wh').textContent      = n(p.ye_w);
+  document.getElementById('mi-rep-field').textContent  = n(mi.f);
+  document.getElementById('mi-rep-urgent').textContent = n(mi.u);
+  document.getElementById('mi-rep-wh').textContent     = n(mi.w);
+  document.getElementById('ye-rep-field').textContent  = n(ye.f);
+  document.getElementById('ye-rep-urgent').textContent = n(ye.u);
+  document.getElementById('ye-rep-wh').textContent     = n(ye.w);
 
-  var d = new Date(parseInt(p.ts));
-  document.getElementById('ts-text').textContent = '마지막 업데이트';
-  document.getElementById('ts-time').textContent = d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  // 수리 합산
+  var rf = n(mi.f)+n(ye.f), ru = n(mi.u)+n(ye.u), rw = n(mi.w)+n(ye.w);
+  document.getElementById('rep-field-all').textContent  = rf;
+  document.getElementById('rep-urgent-all').textContent = ru;
+  document.getElementById('rep-wh-all').textContent     = rw;
+  document.getElementById('rep-total-all').textContent  = (rf+ru+rw)+'대';
 
-  document.getElementById('no-data-area').style.display = 'none';
-  document.getElementById('main-content').style.display = 'block';
+  // 타임스탬프 — 가장 최근 것
+  var ts = Math.max(n(mi.ts), n(ye.ts));
+  if (ts) {
+    var d = new Date(ts);
+    document.getElementById('ts-text').textContent = '마지막 업데이트';
+    document.getElementById('ts-time').textContent = d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
+
+  // 상태 표시
+  var fmt = function(z) {
+    if (!z.ts) return '⏳ 없음';
+    var d = new Date(n(z.ts));
+    return '✅ '+d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  };
+  document.getElementById('mi-status').textContent = '미추홀 '+fmt(mi);
+  document.getElementById('ye-status').textContent = '연수 '+fmt(ye);
+  document.getElementById('mi-status').style.background = hasMi ? '#d1fae5' : '#f3f4f6';
+  document.getElementById('ye-status').style.background = hasYe ? '#fef3c7' : '#f3f4f6';
+
+  document.getElementById('no-data-area').style.display  = 'none';
+  document.getElementById('main-content').style.display  = 'block';
 }
 
-loadFromHash();
-window.addEventListener('hashchange', loadFromHash);
+// 해시에 새 데이터 있으면 저장 후 URL 정리
+var p = parseHash();
+if (p) {
+  saveZone(p);
+  history.replaceState(null, '', location.pathname);
+}
+
+render();
 </script>
 </body>
 </html>
