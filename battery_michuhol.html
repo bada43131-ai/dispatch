@@ -129,13 +129,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="section-title">⚡ 구역별 배터리 티켓</div>
     <div class="zone-grid">
       <div class="zone-card mi">
-        <div class="zone-name mi">① 미추홀구</div>
+        <div class="zone-name mi" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>① 미추홀구</span><span id="mi-bat-ts" style="font-size:9px;font-weight:500;color:#93c5fd;"></span>
+        </div>
         <div class="zstat-row"><span class="zstat-label">GF</span><span class="zstat-val zv-gf" id="mi-bat-gf">0</span></div>
         <div class="zstat-row"><span class="zstat-label">기타</span><span class="zstat-val zv-other" id="mi-bat-other">0</span></div>
         <div class="zstat-row"><span class="zstat-label" style="font-weight:700;">합계</span><span class="zstat-val zv-total" id="mi-bat-total">0</span></div>
       </div>
       <div class="zone-card ye">
-        <div class="zone-name ye">② 연수구</div>
+        <div class="zone-name ye" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>② 연수구</span><span id="ye-bat-ts" style="font-size:9px;font-weight:500;color:#fcd34d;"></span>
+        </div>
         <div class="zstat-row"><span class="zstat-label">GF</span><span class="zstat-val zv-gf" id="ye-bat-gf">0</span></div>
         <div class="zstat-row"><span class="zstat-label">기타</span><span class="zstat-val zv-other" id="ye-bat-other">0</span></div>
         <div class="zstat-row"><span class="zstat-label" style="font-weight:700;">합계</span><span class="zstat-val zv-total" id="ye-bat-total">0</span></div>
@@ -271,6 +275,14 @@ function render() {
   document.getElementById('ye-bat-gf').textContent    = n(ye.gf);
   document.getElementById('ye-bat-other').textContent = n(ye.oth);
   document.getElementById('ye-bat-total').textContent  = n(ye.tot);
+
+  // 가져온 시간 표시
+  var fmt2 = function(ts) {
+    if (!ts) return '';
+    return new Date(n(ts)).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  };
+  document.getElementById('mi-bat-ts').textContent = mi.ts ? fmt2(mi.ts) : '⏳';
+  document.getElementById('ye-bat-ts').textContent = ye.ts ? fmt2(ye.ts) : '⏳';
 
   // 전체 합산
   var totAll = n(mi.tot) + n(ye.tot);
