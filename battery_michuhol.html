@@ -200,17 +200,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- 북마클릿 2개 -->
+<!-- 북마클릿 -->
 <div class="bm-box">
-  <div class="bm-title">📌 북마클릿 — 순서대로 실행하세요</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-    <a id="bm-mi" href="#" class="bm-link" style="background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;">① 미추홀구</a>
-    <a id="bm-ye" href="#" class="bm-link" style="background:#fef3c7;border-color:#fcd34d;color:#92400e;">② 연수구</a>
-  </div>
-  <div class="bm-desc">
-    1. 두 링크를 각각 북마크바에 드래그해서 저장<br>
-    2. 카카오 운영웹에서 ① 미추홀 실행 → 이 페이지로 이동<br>
-    3. 운영웹으로 돌아가서 ② 연수 실행 → 합산 표시 ✅
+  <div class="bm-title">📌 북마클릿</div>
+  <!-- PC용 통합 북마클릿 -->
+  <a id="bm-all" href="#" class="bm-link" style="margin-bottom:8px;display:block;background:#1e1040;border-color:#a78bfa;color:#e9d5ff;font-size:13px;">🖥 PC용 — 미추홀+연수 한번에</a>
+  <div class="bm-desc" style="margin-bottom:10px;">PC 북마크바에 드래그 → 카카오 운영웹에서 한 번만 실행</div>
+  <div style="border-top:1px solid #2d1f5e;padding-top:10px;margin-bottom:8px;">
+    <div class="bm-title" style="margin-bottom:6px;">📱 모바일용 — 순서대로 실행</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <a id="bm-mi" href="#" class="bm-link" style="background:#0d1f3c;border-color:#60a5fa;color:#93c5fd;">① 미추홀구</a>
+      <a id="bm-ye" href="#" class="bm-link" style="background:#2d1a00;border-color:#fbbf24;color:#fcd34d;">② 연수구</a>
+    </div>
+    <div class="bm-desc">① 실행 → 페이지 이동 → 뒤로가기 → ② 실행 → 합산 표시</div>
   </div>
   <div id="zone-status" style="margin-top:8px;display:flex;gap:6px;font-size:10px;">
     <span id="mi-status" style="flex:1;text-align:center;background:#f3f4f6;border-radius:6px;padding:4px;">미추홀 ⏳ 없음</span>
@@ -233,6 +235,46 @@ var BM_YE=`(function(){try{var U='${U}',D=document.querySelector('#app').__vue_a
 document.getElementById('bm-mi').href = 'javascript:' + encodeURIComponent(BM_MI);
 document.getElementById('bm-ye').href = 'javascript:' + encodeURIComponent(BM_YE);
 
+// ── PC용 통합 북마클릿 (크기 제한 없음) ─────────────────────────────────
+var BM_ALL = `(function(){
+var U='${U}';
+var b=document.createElement('div');
+b.style='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#4c1d95;color:#fff;padding:13px 24px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.4);font-family:sans-serif;white-space:nowrap';
+b.textContent='⏳ 미추홀+연수 통합 수집 중...';
+document.body.appendChild(b);
+(async function(){
+try{
+var store=document.querySelector('#app').__vue_app__.config.globalProperties.$store;
+var devices=store.state.devices||[];
+var MP=${JSON.stringify([[126.633053,37.462732],[126.626015,37.449787],[126.652107,37.437521],[126.662922,37.439156],[126.679745,37.43643],[126.687984,37.433977],[126.734161,37.433977],[126.759052,37.43275],[126.763172,37.443927],[126.754589,37.449787],[126.72369,37.460825],[126.703606,37.468046],[126.694336,37.471452],[126.670818,37.467637],[126.66481,37.476084]])};
+var YP=${JSON.stringify([[126.668072,37.391846],[126.688671,37.405346],[126.701202,37.424298],[126.699657,37.434113],[126.695881,37.43384],[126.692963,37.431932],[126.696396,37.424298],[126.65863,37.434522],[126.634426,37.433704],[126.639576,37.415164],[126.647129,37.407937],[126.655712,37.401119]])};
+function ip(poly,x,y){var r=false;for(var i=0,j=poly.length-1;i<poly.length;j=i++){var a=poly[i][0],bb=poly[i][1],c=poly[j][0],d=poly[j][1];if(((bb>y)!=(d>y))&&(x<(c-a)*(y-bb)/(d-bb)+a))r=!r;}return r;}
+function gl(d){return d.adjusted_location||d.location;}
+function mo(d){var m=(d.code||'').match(/^[a-zA-Z]+/);return m?m[0].toUpperCase():'';}
+function C(a,k){return a.filter(function(d){return mo(d)===k;}).length;}
+function F(a,t){return a.filter(function(d){var tp=(d.repairTicket||{}).type||'';return t==='F'?tp.indexOf('FIELD')>=0&&tp.indexOf('URGENT')<0:t==='U'?tp.indexOf('URGENT')>=0:tp.indexOf('WAREHOUSE')>=0;}).length;}
+var MB=devices.filter(function(d){var l=gl(d);return d.batteryTicket&&l&&ip(MP,l.lng,l.lat);});
+var YB=devices.filter(function(d){var l=gl(d);return d.batteryTicket&&l&&ip(YP,l.lng,l.lat);});
+var MR=devices.filter(function(d){var l=gl(d);return d.repairTicket&&l&&ip(MP,l.lng,l.lat);});
+var YR=devices.filter(function(d){var l=gl(d);return d.repairTicket&&l&&ip(YP,l.lng,l.lat);});
+var BI=devices.filter(function(d){return d.batteryTicket;}).length;
+var mg=C(MB,'GF'), yg=C(YB,'GF'), ts=Date.now();
+var h='zone=both'
+  +'&mgf='+mg+'&mot='+(MB.length-mg)+'&mt='+MB.length
+  +'&mha='+C(MB,'HA')+'&mia='+C(MB,'IA')+'&mja='+C(MB,'JA')+'&mka='+C(MB,'KA')+'&mma='+C(MB,'MA')+'&mda='+C(MB,'DA')
+  +'&mf='+F(MR,'F')+'&mu='+F(MR,'U')+'&mw='+F(MR,'W')
+  +'&ygf='+yg+'&yot='+(YB.length-yg)+'&yt='+YB.length
+  +'&yha='+C(YB,'HA')+'&yia='+C(YB,'IA')+'&yja='+C(YB,'JA')+'&yka='+C(YB,'KA')+'&yma='+C(YB,'MA')+'&yda='+C(YB,'DA')
+  +'&yf='+F(YR,'F')+'&yu='+F(YR,'U')+'&yw='+F(YR,'W')
+  +'&bi='+BI+'&ts='+ts;
+b.textContent='✓ 미추홀 '+MB.length+'대 | 연수 '+YB.length+'대 → 이동...';
+b.style.background='#059669';
+setTimeout(function(){document.body.removeChild(b);location.href=U+'#'+h;},800);
+}catch(e){b.textContent='실패: '+e.message;b.style.background='#DC2626';setTimeout(function(){document.body.removeChild(b);},3000);}
+})();
+})();`;
+document.getElementById('bm-all').href = 'javascript:' + encodeURIComponent(BM_ALL);
+
 // ── localStorage 키 ───────────────────────────────────────────────────
 var KEY_MI = 'bm_mi_v2';
 var KEY_YE = 'bm_ye_v2';
@@ -243,6 +285,20 @@ function saveZone(p) {
   try {
     if (p.zone === 'mi') localStorage.setItem(KEY_MI, JSON.stringify(p));
     if (p.zone === 'ye') localStorage.setItem(KEY_YE, JSON.stringify(p));
+    if (p.zone === 'both') {
+      // 미추홀 데이터 분리 저장
+      localStorage.setItem(KEY_MI, JSON.stringify({
+        zone:'mi', gf:p.mgf, oth:p.mot, tot:p.mt,
+        ha:p.mha, ia:p.mia, ja:p.mja, ka:p.mka, ma:p.mma, da:p.mda,
+        f:p.mf, u:p.mu, w:p.mw, bi:p.bi, ts:p.ts
+      }));
+      // 연수 데이터 분리 저장
+      localStorage.setItem(KEY_YE, JSON.stringify({
+        zone:'ye', gf:p.ygf, oth:p.yot, tot:p.yt,
+        ha:p.yha, ia:p.yia, ja:p.yja, ka:p.yka, ma:p.yma, da:p.yda,
+        f:p.yf, u:p.yu, w:p.yw, ts:p.ts
+      }));
+    }
   } catch(e) {}
 }
 
@@ -258,7 +314,7 @@ function parseHash() {
     var i = kv.indexOf('=');
     if (i > 0) p[decodeURIComponent(kv.slice(0,i))] = decodeURIComponent(kv.slice(i+1));
   });
-  return (p.zone && p.ts) ? p : null;
+  return (p.zone && p.ts) ? p : null; // zone=mi, zone=ye, zone=both 모두 처리
 }
 
 function render() {
