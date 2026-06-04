@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관교창고 배터리 보고</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0f1419; --card:#1a212b; --line:#2a3340; --txt:#e8edf2; --dim:#8a97a6;
+  --alton:#4f9eff; --gf:#ffb347; --bad:#ff6b6b; --good:#3ddc97; --accent:#4f9eff;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);padding:14px;max-width:640px;margin:0 auto;font-size:14px;line-height:1.4;}
+header{margin-bottom:16px;}
+h1{font-size:18px;font-weight:800;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px;}
+h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good);}
+.datebar{display:flex;align-items:center;gap:8px;margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
+.datebar label{font-size:12px;color:var(--dim);font-weight:600;}
+.datebar input{flex:1;background:transparent;border:none;color:var(--txt);font-size:15px;font-weight:700;outline:none;}
+.datebar input::-webkit-calendar-picker-indicator{filter:invert(0.7);}
+
+.sec{margin-top:18px;}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-left:2px;}
+.sec-title{font-size:13px;font-weight:800;letter-spacing:0.3px;}
+.sec-sum{font-size:11px;color:var(--dim);font-weight:600;}
+.bad-title{color:var(--bad);}
+.good-title{color:var(--good);}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+.row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);}
+.row:last-child{border-bottom:none;}
+.row .name{font-size:13px;font-weight:600;color:var(--txt);}
+.row .name small{display:block;font-size:10px;color:var(--dim);font-weight:500;margin-top:1px;}
+.colhd{display:grid;grid-template-columns:1fr 64px 64px;gap:8px;padding:7px 12px 6px;font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px;}
+.colhd .a{text-align:center;color:var(--alton);}
+.colhd .g{text-align:center;color:var(--gf);}
+.row{grid-template-columns:1fr 64px 64px;}
+.cell input{width:64px;height:36px;background:#0d1117;border:1px solid var(--line);border-radius:8px;color:var(--txt);text-align:center;font-size:15px;font-weight:700;outline:none;transition:border 0.15s;}
+.cell input:focus{border-color:var(--accent);background:#11161d;}
+.cell input::placeholder{color:#3a4450;}
+/* 충전완료는 칸이 여러개 */
+.multi{grid-template-columns:1fr 1fr;gap:6px;}
+.multi input{width:100%;}
+.wide-row{display:block;padding:10px 12px;border-bottom:1px solid var(--line);}
+.wide-row .name{margin-bottom:6px;}
+.wide-grid{display:grid;gap:6px;}
+/* 충전 그룹 박스 */
+.grp{margin:8px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#11171f;}
+.grp+.grp{margin-top:0;}
+.grp .row:last-child{border-bottom:none;}
+.grp-tag{font-size:10px;font-weight:800;letter-spacing:1px;padding:6px 12px;background:#0d1117;border-bottom:1px solid var(--line);}
+.a-tag{color:var(--alton);}
+.g-tag{color:var(--gf);}
+
+.totbar{margin-top:20px;background:linear-gradient(135deg,#1e2733,#16202b);border:1px solid var(--line);border-radius:16px;padding:16px;}
+.totbar .lbl{font-size:11px;color:var(--dim);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.tot-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;}
+.tot-grid .v{font-size:26px;font-weight:800;line-height:1;}
+.tot-grid .k{font-size:11px;color:var(--dim);margin-top:4px;font-weight:600;}
+.tot-grid .alton .v{color:var(--alton);}
+.tot-grid .gf .v{color:var(--gf);}
+.tot-grid .all .v{color:var(--good);}
+.subnote{margin-top:12px;font-size:11px;color:var(--dim);line-height:1.7;border-top:1px solid var(--line);padding-top:10px;}
+.lastweek{margin-top:12px;border-top:1px solid var(--line);padding-top:12px;}
+.lastweek .lw-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.lastweek .lw-lbl{color:var(--txt);font-weight:700;font-size:13px;}
+.lastweek .delta{font-weight:800;padding:3px 10px;border-radius:7px;font-size:13px;}
+.lw-table{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:0;font-size:12px;background:#11171f;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
+.lw-table>div{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;}
+.lw-table>div:nth-child(-n+4){background:#0d1117;font-weight:700;color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;}
+.lw-table>div:nth-child(4n+1){text-align:left;color:var(--dim);font-weight:600;}
+.lw-table>div:nth-last-child(-n+4){border-bottom:none;}
+.lw-table .v-txt{color:var(--txt);font-weight:700;}
+.lw-table .up{color:var(--good);font-weight:800;}
+.lw-table .down{color:var(--bad);font-weight:800;}
+.lw-table .same{color:var(--dim);font-weight:700;}
+.lw-table .c-a{color:var(--alton);}
+.lw-table .c-g{color:var(--gf);}
+.lw-table .lw-edit{padding:3px 4px;}
+.lw-table .lw-edit input{width:100%;height:28px;background:#0d1117;border:1px solid var(--accent);border-radius:6px;color:var(--txt);text-align:right;font-size:13px;font-weight:700;outline:none;padding:0 6px;}
+.lw-table .lw-edit input:focus{background:#11161d;}
+.lw-hint{margin-top:6px;font-size:10px;color:var(--dim);text-align:right;}
+.delta.up{color:var(--good);background:rgba(61,220,151,0.12);}
+.delta.down{color:var(--bad);background:rgba(255,107,107,0.12);}
+.delta.same{color:var(--dim);background:rgba(138,151,166,0.12);}
+
+/* 인쇄(PDF) 리포트 */
+#print-report{display:none;}
+@media print{
+  @page{size:A4 portrait;margin:14mm;}
+  body{background:#fff !important;color:#000 !important;padding:0;max-width:none;}
+  body>*{display:none !important;}
+  #print-report{display:block !important;}
+  .pr-title{font-size:20px;font-weight:800;text-align:center;margin-bottom:4px;color:#000;}
+  .pr-date{font-size:12px;text-align:center;color:#555;margin-bottom:18px;}
+  .pr-tot{display:flex;justify-content:center;gap:0;border:2px solid #000;border-radius:8px;overflow:hidden;margin-bottom:18px;}
+  .pr-tot div{flex:1;text-align:center;padding:12px 6px;border-right:1px solid #ccc;}
+  .pr-tot div:last-child{border-right:none;}
+  .pr-tot .v{font-size:24px;font-weight:800;}
+  .pr-tot .k{font-size:11px;color:#666;margin-top:3px;}
+  .pr-sec{margin-bottom:14px;}
+  .pr-sec h3{font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:6px;}
+  table.pr{width:100%;border-collapse:collapse;font-size:12px;}
+  table.pr th{background:#f0f0f0;font-size:11px;padding:5px 8px;border:1px solid #ccc;text-align:center;}
+  table.pr td{padding:4px 8px;border:1px solid #ddd;}
+  table.pr td.r{text-align:right;}
+  table.pr tr.sub td{font-weight:700;background:#f7f7f7;}
+  table.pr tr.gt td{font-weight:800;background:#eaeaea;border-top:2px solid #000;}
+  .pr-foot{margin-top:20px;font-size:11px;color:#555;text-align:right;border-top:1px solid #ccc;padding-top:6px;}
+}
+
+.actions{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:8px;margin-top:16px;}
+.btn{padding:14px 10px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;transition:transform 0.1s,opacity 0.15s;}
+.btn:active{transform:scale(0.97);}
+.btn-xl{background:var(--good);color:#06281c;}
+.btn-rs{background:var(--card);color:var(--dim);border:1px solid var(--line);}
+.hint{font-size:11px;color:var(--dim);text-align:center;margin-top:10px;line-height:1.6;}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="dot"></span>관교창고 배터리 보고</h1>
+  <div class="datebar">
+    <label>보고일</label>
+    <input type="date" id="repDate">
+  </div>
+</header>
+
+<!-- 총계 (맨 위) -->
+<div class="totbar">
+  <div class="lbl">전체 합계</div>
+  <div class="tot-grid">
+    <div class="alton"><div class="v" id="tot-alton">0</div><div class="k">Alton</div></div>
+    <div class="gf"><div class="v" id="tot-gf">0</div><div class="k">GF</div></div>
+    <div class="all"><div class="v" id="tot-all">0</div><div class="k">Total</div></div>
+  </div>
+  <div class="lastweek" id="lastweek"></div>
+  <div class="subnote" id="subnote"></div>
+</div>
+
+<!-- 불량 -->
+<div class="sec">
+  <div class="sec-hd">
+    <span class="sec-title bad-title">⚠ 불량 배터리</span>
+    <span class="sec-sum" id="sum-bad">Alton 0 · GF 0</span>
+  </div>
+  <div class="card">
+    <div class="colhd"><span>위치</span><span class="a">Alton</span><span class="g">GF</span></div>
+    <div id="bad-rows"></div>
+  </div>
+</div>
+
+<!-- 정품 충전 -->
+<div class="sec">
+  <div class="sec-hd">
+    <span class="sec-title good-title">🔋 정품 — 충전 보관</span>
+    <span class="sec-sum" id="sum-charge">Alton 0 · GF 0</span>
+  </div>
+  <div class="card" id="charge-card"></div>
+</div>
+
+<!-- 정품 외부 -->
+<div class="sec">
+  <div class="sec-hd">
+    <span class="sec-title good-title">🚚 정품 — 외부 보관</span>
+    <span class="sec-sum" id="sum-ext">Alton 0 · GF 0</span>
+  </div>
+  <div class="card">
+    <div class="colhd"><span>담당</span><span class="a">Alton</span><span class="g">GF</span></div>
+    <div id="ext-rows"></div>
+  </div>
+</div>
+
+<!-- 입고기기 -->
+<div class="sec">
+  <div class="sec-hd">
+    <span class="sec-title">📦 입고기기</span>
+  </div>
+  <div class="card">
+    <div class="colhd" style="grid-template-columns:1fr 64px 64px 64px;"><span></span><span class="a">Alton</span><span class="g">GF</span><span style="text-align:center;color:var(--dim);">FA</span></div>
+    <div class="row" style="grid-template-columns:1fr 64px 64px 64px;">
+      <span class="name">입고 수량</span>
+      <span class="cell"><input type="number" inputmode="numeric" id="in-alton" placeholder="0"></span>
+      <span class="cell"><input type="number" inputmode="numeric" id="in-gf" placeholder="0"></span>
+      <span class="cell"><input type="number" inputmode="numeric" id="in-fa" placeholder="0"></span>
+    </div>
+  </div>
+</div>
+
+<!-- 총계 -->
+<div class="actions">
+  <button class="btn btn-rs" onclick="resetAll()">전체<br>비우기</button>
+  <button class="btn btn-rs" onclick="exportXlsx()">엑셀</button>
+  <button class="btn btn-xl" onclick="exportPdf()">📄 PDF 리포트</button>
+</div>
+<div class="hint">PDF 리포트는 카톡 공유용 한 장 보고서입니다. 인쇄 화면에서 "PDF로 저장"을 선택하세요.<br>입력값은 이 기기 브라우저에 자동 저장됩니다.</div>
+
+<!-- 인쇄(PDF)용 리포트 — 화면에서는 숨김 -->
+<div id="print-report"></div>
+
+<script>
+// 데이터 정의
+const badRows=[
+  {key:'door',name:'출입문 우측'},
+  {key:'fire',name:'소화기 아래'},
+  {key:'steel',name:'입구 스텐통'},
+];
+const extNames=['김우열','정한섭','형님','안민우','서윤석','김민석','서구','강호엽','경미/김동우','박광일','Box(new)'];
+
+const state=JSON.parse(localStorage.getItem('battery_state')||'{}');
+// 지난주 기록 초기 고정값 (한 번도 저장된 적 없을 때만)
+if(!localStorage.getItem('battery_lastweek')){
+  localStorage.setItem('battery_lastweek',JSON.stringify({date:'지난주',a:587,g:71,all:587+71}));
+}
+function g(k,d=''){return state[k]!==undefined?state[k]:d;}
+function setV(k,v){state[k]=v;localStorage.setItem('battery_state',JSON.stringify(state));}
+function num(k){const v=parseInt(state[k]);return isNaN(v)?0:v;}
+
+// 날짜 기본값: 오늘
+const today=new Date(new Date().getTime()+9*3600*1000).toISOString().slice(0,10);
+document.getElementById('repDate').value=g('date',today);
+document.getElementById('repDate').oninput=e=>{setV('date',e.target.value);};
+
+// 불량 렌더
+let h='';
+badRows.forEach(r=>{
+  h+=`<div class="row">
+    <span class="name">${r.name}</span>
+    <span class="cell"><input type="number" inputmode="numeric" data-k="bad_${r.key}_a" placeholder="0" value="${g('bad_'+r.key+'_a')}"></span>
+    <span class="cell"><input type="number" inputmode="numeric" data-k="bad_${r.key}_g" placeholder="0" value="${g('bad_'+r.key+'_g')}"></span>
+  </div>`;
+});
+document.getElementById('bad-rows').innerHTML=h;
+
+// 충전 보관 렌더 — 모든 항목 동일 행 형식, Alton/GF 박스로 그룹 구분
+const chargeCard=document.getElementById('charge-card');
+chargeCard.innerHTML=`
+  <div class="colhd"><span>구분</span><span class="a">Alton</span><span class="g">GF</span></div>
+  <div class="grp">
+    <div class="grp-tag a-tag">ALTON</div>
+    <div class="row"><span class="name">충전 1)</span>
+      <span class="cell"><input type="number" inputmode="numeric" data-k="ch_1_a" placeholder="0" value="${g('ch_1_a')}"></span>
+      <span></span></div>
+    <div class="row"><span class="name">충전 2)</span>
+      <span class="cell"><input type="number" inputmode="numeric" data-k="ch_2_a" placeholder="0" value="${g('ch_2_a')}"></span>
+      <span></span></div>
+    <div class="row"><span class="name">충전완료 1)</span>
+      <span class="cell"><input type="number" inputmode="numeric" data-k="ch_done_a1" placeholder="0" value="${g('ch_done_a1')}"></span>
+      <span></span></div>
+    <div class="row"><span class="name">충전완료 2)</span>
+      <span class="cell"><input type="number" inputmode="numeric" data-k="ch_done_a2" placeholder="0" value="${g('ch_done_a2')}"></span>
+      <span></span></div>
+  </div>
+  <div class="grp">
+    <div class="grp-tag g-tag">GF</div>
+    <div class="row"><span class="name">충전 3)</span><span></span>
+      <span class="cell"><input type="number" inputmode="numeric" data-k="ch_3_g" placeholder="0" value="${g('ch_3_g')}"></span></div>
+    <div class="row"><span class="name">충전완료</span><span></span>
+      <span class="cell"><input type="number" inputmode="numeric" data-k="ch_done_g" placeholder="0" value="${g('ch_done_g')}"></span></div>
+  </div>
+`;
+
+// 외부 보관 렌더
+let e='';
+extNames.forEach((n,i)=>{
+  e+=`<div class="row">
+    <span class="name">${n}</span>
+    <span class="cell"><input type="number" inputmode="numeric" data-k="ext_${i}_a" placeholder="0" value="${g('ext_'+i+'_a')}"></span>
+    <span class="cell"><input type="number" inputmode="numeric" data-k="ext_${i}_g" placeholder="0" value="${g('ext_'+i+'_g')}"></span>
+  </div>`;
+});
+document.getElementById('ext-rows').innerHTML=e;
+
+// 입고
+['in-alton','in-gf','in-fa'].forEach(id=>{document.getElementById(id).value=g(id);});
+
+// 입력 바인딩
+document.querySelectorAll('input[data-k]').forEach(inp=>{
+  inp.addEventListener('input',()=>{setV(inp.dataset.k,inp.value);recalc();});
+});
+['in-alton','in-gf','in-fa'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',e=>{setV(id,e.target.value);recalc();});
+});
+
+function recalc(){
+  // 불량
+  let badA=0,badG=0;
+  badRows.forEach(r=>{badA+=num('bad_'+r.key+'_a');badG+=num('bad_'+r.key+'_g');});
+  // 충전
+  const chA=num('ch_1_a')+num('ch_2_a')+num('ch_done_a1')+num('ch_done_a2');
+  const chG=num('ch_3_g')+num('ch_done_g');
+  // 외부
+  let extA=0,extG=0;
+  extNames.forEach((n,i)=>{extA+=num('ext_'+i+'_a');extG+=num('ext_'+i+'_g');});
+  // 정품 = 충전 + 외부
+  const goodA=chA+extA, goodG=chG+extG;
+  // 전체
+  const totA=badA+goodA, totG=badG+goodG, totAll=totA+totG;
+
+  document.getElementById('sum-bad').textContent=`Alton ${badA} · GF ${badG}`;
+  document.getElementById('sum-charge').textContent=`Alton ${chA} · GF ${chG}`;
+  document.getElementById('sum-ext').textContent=`Alton ${extA} · GF ${extG}`;
+  document.getElementById('tot-alton').textContent=totA;
+  document.getElementById('tot-gf').textContent=totG;
+  document.getElementById('tot-all').textContent=totAll;
+  document.getElementById('subnote').innerHTML=
+    `정품 ${goodA+goodG}개 (Alton ${goodA} · GF ${goodG}) · 불량 ${badA+badG}개<br>`+
+    `충전보관 ${chA+chG} · 외부보관 ${extA+extG}`;
+
+  // 현재 합계 보관 (엑셀 내보낼 때 지난주로 저장하기 위함)
+  window._curTotal={a:totA,g:totG,all:totAll};
+
+  // 지난주 대비
+  const lw=JSON.parse(localStorage.getItem('battery_lastweek')||'null');
+  const lwEl=document.getElementById('lastweek');
+  // 지난주 값 (저장된 게 없으면 0)
+  const lwA=lw?(lw.a||0):0, lwG=lw?(lw.g||0):0;
+  const lwAll=lwA+lwG;
+  const dAll=totAll-lwAll, dA=totA-lwA, dG=totG-lwG;
+  const cls=dAll>0?'up':dAll<0?'down':'same';
+  const sign=dAll>0?'▲ +'+dAll:dAll<0?'▼ '+dAll:'─ 0';
+  const dcl=(d)=>d>0?'up':d<0?'down':'same';
+  const fmt=(d)=>d>0?'+'+d:d<0?''+d:'±0';
+  lwEl.innerHTML=
+    `<div class="lw-head"><span class="lw-lbl">지난주 밧데리 수량</span>`+
+    `<span class="delta ${cls}">${sign}</span></div>`+
+    `<div class="lw-table">`+
+      `<div></div><div class="c-a">Alton</div><div class="c-g">GF</div><div>전체</div>`+
+      `<div>지난주</div>`+
+        `<div class="lw-edit"><input type="number" inputmode="numeric" id="lw-in-a" value="${lwA}"></div>`+
+        `<div class="lw-edit"><input type="number" inputmode="numeric" id="lw-in-g" value="${lwG}"></div>`+
+        `<div class="v-txt">${lwAll}</div>`+
+      `<div>이번주</div><div class="v-txt">${totA}</div><div class="v-txt">${totG}</div><div class="v-txt">${totAll}</div>`+
+      `<div>증감</div><div class="${dcl(dA)}">${fmt(dA)}</div><div class="${dcl(dG)}">${fmt(dG)}</div><div class="${dcl(dAll)}">${fmt(dAll)}</div>`+
+    `</div>`+
+    `<div class="lw-hint">지난주 칸을 눌러 직접 수정할 수 있어요</div>`;
+  lwEl.style.display='block';
+  // 지난주 입력 바인딩
+  const bindLw=(id,key)=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.addEventListener('input',()=>{
+      const cur=JSON.parse(localStorage.getItem('battery_lastweek')||'{}');
+      cur.date=cur.date||'지난주';
+      cur[key]=parseInt(el.value)||0;
+      cur.all=(cur.a||0)+(cur.g||0);
+      localStorage.setItem('battery_lastweek',JSON.stringify(cur));
+    });
+    // 포커스 잃을 때 표 다시 그리기(증감 갱신)
+    el.addEventListener('blur',()=>recalc());
+    el.addEventListener('keydown',(e)=>{if(e.key==='Enter'){e.preventDefault();el.blur();}});
+  };
+  bindLw('lw-in-a','a');
+  bindLw('lw-in-g','g');
+}
+recalc();
+
+function resetAll(){
+  if(!confirm('모든 입력값을 비울까요? (날짜 제외)'))return;
+  const d=state.date;
+  for(const k in state)delete state[k];
+  if(d)state.date=d;
+  localStorage.setItem('battery_state',JSON.stringify(state));
+  location.reload();
+}
+
+function exportXlsx(){
+  const wb=XLSX.utils.book_new();
+  const dateStr=(state.date||today);
+  const md=dateStr.slice(5).replace('-','월 ').replace(/^0/,'')+'일';
+  const aoa=[];
+  aoa.push([`관교창고 ${parseInt(dateStr.slice(5,7))}월 ${parseInt(dateStr.slice(8,10))}일자 배터리 보고서`]);
+  aoa.push([]);
+  // 요약
+  let badA=0,badG=0;
+  badRows.forEach(r=>{badA+=num('bad_'+r.key+'_a');badG+=num('bad_'+r.key+'_g');});
+  const chA=num('ch_1_a')+num('ch_2_a')+num('ch_done_a1')+num('ch_done_a2');
+  const chG=num('ch_3_g')+num('ch_done_g');
+  let extA=0,extG=0;
+  extNames.forEach((n,i)=>{extA+=num('ext_'+i+'_a');extG+=num('ext_'+i+'_g');});
+  const goodA=chA+extA,goodG=chG+extG;
+  aoa.push(['','Alton','GF','Total']);
+  aoa.push(['불량',badA,badG,badA+badG]);
+  aoa.push(['정품',goodA,goodG,goodA+goodG]);
+  aoa.push(['Total',badA+goodA,badG+goodG,badA+badG+goodA+goodG]);
+  aoa.push([]);
+  aoa.push(['불량','','Alton','GF']);
+  badRows.forEach(r=>aoa.push(['',r.name,num('bad_'+r.key+'_a'),num('bad_'+r.key+'_g')]));
+  aoa.push(['불량 Grand Total','',badA,badG]);
+  aoa.push([]);
+  aoa.push(['정품 (충전 보관)','','Alton','GF']);
+  aoa.push(['','충전 1)',num('ch_1_a'),'']);
+  aoa.push(['','충전 2)',num('ch_2_a'),'']);
+  aoa.push(['','충전완료 1)',num('ch_done_a1'),'']);
+  aoa.push(['','충전완료 2)',num('ch_done_a2'),'']);
+  aoa.push(['','GF 충전 3)','',num('ch_3_g')]);
+  aoa.push(['','GF 충전완료','',num('ch_done_g')]);
+  aoa.push(['충전 Sub Total','',chA,chG]);
+  aoa.push([]);
+  aoa.push(['정품 (외부 보관)','','Alton','GF']);
+  extNames.forEach((n,i)=>aoa.push(['',n,num('ext_'+i+'_a'),num('ext_'+i+'_g')]));
+  aoa.push(['외부 Sub Total','',extA,extG]);
+  aoa.push([]);
+  aoa.push(['입고기기','','Alton','GF','FA']);
+  aoa.push(['','',num('in-alton'),num('in-gf'),num('in-fa')]);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:16},{wch:14},{wch:8},{wch:8},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,ws,'배터리보고');
+  const fn=`카카오_배터리_보고_${dateStr.replace(/-/g,'').slice(2)}.xlsx`;
+  XLSX.writeFile(wb,fn);
+
+  // 이번 주 총 수량을 "지난주"로 기억
+  if(window._curTotal){
+    localStorage.setItem('battery_lastweek',JSON.stringify({
+      date:dateStr,a:window._curTotal.a,g:window._curTotal.g,all:window._curTotal.all
+    }));
+    recalc();
+  }
+}
+
+function exportPdf(){
+  recalc();
+  const dateStr=(state.date||today);
+  const dLabel=`${parseInt(dateStr.slice(5,7))}월 ${parseInt(dateStr.slice(8,10))}일`;
+  // 집계
+  let badA=0,badG=0; badRows.forEach(r=>{badA+=num('bad_'+r.key+'_a');badG+=num('bad_'+r.key+'_g');});
+  const chA=num('ch_1_a')+num('ch_2_a')+num('ch_done_a1')+num('ch_done_a2');
+  const chG=num('ch_3_g')+num('ch_done_g');
+  let extA=0,extG=0; extNames.forEach((n,i)=>{extA+=num('ext_'+i+'_a');extG+=num('ext_'+i+'_g');});
+  const goodA=chA+extA,goodG=chG+extG;
+  const totA=badA+goodA,totG=badG+goodG,totAll=totA+totG;
+
+  const td=(v)=>`<td class="r">${v}</td>`;
+  // 불량 행
+  let badHtml=badRows.map(r=>`<tr><td>${r.name}</td>${td(num('bad_'+r.key+'_a'))}${td(num('bad_'+r.key+'_g'))}</tr>`).join('');
+  // 외부 행 (값 있는 사람만)
+  let extHtml=extNames.map((n,i)=>{const a=num('ext_'+i+'_a'),gg=num('ext_'+i+'_g');return (a||gg)?`<tr><td>${n}</td>${td(a)}${td(gg)}</tr>`:'';}).join('');
+
+  const lw=JSON.parse(localStorage.getItem('battery_lastweek')||'null');
+  let lwLine='';
+  if(lw){const lwAll=(lw.a||0)+(lw.g||0);const diff=totAll-lwAll;const s=diff>0?'+'+diff:diff<0?''+diff:'±0';
+    lwLine=`지난주 ${lwAll}개 대비 ${s}`;}
+
+  document.getElementById('print-report').innerHTML=`
+    <div class="pr-title">관교창고 ${dLabel}자 배터리 보고서</div>
+    <div class="pr-date">${dateStr}${lwLine?' · '+lwLine:''}</div>
+    <div class="pr-tot">
+      <div><div class="v">${totA}</div><div class="k">Alton</div></div>
+      <div><div class="v">${totG}</div><div class="k">GF</div></div>
+      <div><div class="v">${totAll}</div><div class="k">전체 합계</div></div>
+    </div>
+    <div class="pr-sec">
+      <h3>요약</h3>
+      <table class="pr">
+        <tr><th>구분</th><th>Alton</th><th>GF</th><th>Total</th></tr>
+        <tr><td>불량</td>${td(badA)}${td(badG)}${td(badA+badG)}</tr>
+        <tr><td>정품</td>${td(goodA)}${td(goodG)}${td(goodA+goodG)}</tr>
+        <tr class="gt"><td>Total</td>${td(totA)}${td(totG)}${td(totAll)}</tr>
+      </table>
+    </div>
+    <div class="pr-sec">
+      <h3>불량 배터리</h3>
+      <table class="pr">
+        <tr><th>위치</th><th>Alton</th><th>GF</th></tr>
+        ${badHtml}
+        <tr class="sub"><td>소계</td>${td(badA)}${td(badG)}</tr>
+      </table>
+    </div>
+    <div class="pr-sec">
+      <h3>정품 — 충전 보관</h3>
+      <table class="pr">
+        <tr><th>구분</th><th>Alton</th><th>GF</th></tr>
+        <tr><td>충전 1)</td>${td(num('ch_1_a'))}${td(0)}</tr>
+        <tr><td>충전 2)</td>${td(num('ch_2_a'))}${td(0)}</tr>
+        <tr><td>충전완료 1)</td>${td(num('ch_done_a1'))}${td(0)}</tr>
+        <tr><td>충전완료 2)</td>${td(num('ch_done_a2'))}${td(0)}</tr>
+        <tr><td>GF 충전 3)</td>${td(0)}${td(num('ch_3_g'))}</tr>
+        <tr><td>GF 충전완료</td>${td(0)}${td(num('ch_done_g'))}</tr>
+        <tr class="sub"><td>소계</td>${td(chA)}${td(chG)}</tr>
+      </table>
+    </div>
+    <div class="pr-sec">
+      <h3>정품 — 외부 보관</h3>
+      <table class="pr">
+        <tr><th>담당</th><th>Alton</th><th>GF</th></tr>
+        ${extHtml||'<tr><td colspan="3" style="text-align:center;color:#999;">해당 없음</td></tr>'}
+        <tr class="sub"><td>소계</td>${td(extA)}${td(extG)}</tr>
+      </table>
+    </div>
+    <div class="pr-sec">
+      <h3>입고기기</h3>
+      <table class="pr">
+        <tr><th>Alton</th><th>GF</th><th>FA</th></tr>
+        <tr>${td(num('in-alton'))}${td(num('in-gf'))}${td(num('in-fa'))}</tr>
+      </table>
+    </div>
+    <div class="pr-foot">작성일 ${dateStr} · 관교창고 배터리 보고</div>
+  `;
+  window.print();
+}
+</script>
+</body>
+</html>
