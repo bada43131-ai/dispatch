@@ -88,26 +88,28 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow
 /* 인쇄(PDF) 리포트 */
 #print-report{display:none;}
 @media print{
-  @page{size:A4 portrait;margin:14mm;}
+  @page{size:A4 portrait;margin:10mm 12mm;}
   body{background:#fff !important;color:#000 !important;padding:0;max-width:none;}
   body>*{display:none !important;}
   #print-report{display:block !important;}
-  .pr-title{font-size:20px;font-weight:800;text-align:center;margin-bottom:4px;color:#000;}
-  .pr-date{font-size:12px;text-align:center;color:#555;margin-bottom:18px;}
-  .pr-tot{display:flex;justify-content:center;gap:0;border:2px solid #000;border-radius:8px;overflow:hidden;margin-bottom:18px;}
-  .pr-tot div{flex:1;text-align:center;padding:12px 6px;border-right:1px solid #ccc;}
+  .pr-title{font-size:17px;font-weight:800;text-align:center;margin-bottom:3px;color:#000;}
+  .pr-date{font-size:11px;text-align:center;color:#555;margin-bottom:10px;}
+  .pr-tot{display:flex;justify-content:center;gap:0;border:2px solid #000;border-radius:6px;overflow:hidden;margin-bottom:10px;}
+  .pr-tot div{flex:1;text-align:center;padding:8px 6px;border-right:1px solid #ccc;}
   .pr-tot div:last-child{border-right:none;}
-  .pr-tot .v{font-size:24px;font-weight:800;}
-  .pr-tot .k{font-size:11px;color:#666;margin-top:3px;}
-  .pr-sec{margin-bottom:14px;}
-  .pr-sec h3{font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:6px;}
-  table.pr{width:100%;border-collapse:collapse;font-size:12px;}
-  table.pr th{background:#f0f0f0;font-size:11px;padding:5px 8px;border:1px solid #ccc;text-align:center;}
-  table.pr td{padding:4px 8px;border:1px solid #ddd;}
+  .pr-tot .v{font-size:22px;font-weight:800;}
+  .pr-tot .k{font-size:10px;color:#666;margin-top:2px;}
+  /* 2단 레이아웃 */
+  .pr-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .pr-sec{margin-bottom:8px;}
+  .pr-sec h3{font-size:12px;font-weight:800;border-bottom:2px solid #000;padding-bottom:2px;margin-bottom:4px;}
+  table.pr{width:100%;border-collapse:collapse;font-size:11px;}
+  table.pr th{background:#f0f0f0;font-size:10px;padding:3px 6px;border:1px solid #ccc;text-align:center;}
+  table.pr td{padding:3px 6px;border:1px solid #ddd;}
   table.pr td.r{text-align:right;}
   table.pr tr.sub td{font-weight:700;background:#f7f7f7;}
   table.pr tr.gt td{font-weight:800;background:#eaeaea;border-top:2px solid #000;}
-  .pr-foot{margin-top:20px;font-size:11px;color:#555;text-align:right;border-top:1px solid #ccc;padding-top:6px;}
+  .pr-foot{margin-top:8px;font-size:10px;color:#555;text-align:right;border-top:1px solid #ccc;padding-top:4px;}
 }
 
 .actions{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:8px;margin-top:16px;}
@@ -450,50 +452,56 @@ function exportPdf(){
       <div><div class="v">${totG}</div><div class="k">GF</div></div>
       <div><div class="v">${totAll}</div><div class="k">전체 합계</div></div>
     </div>
-    <div class="pr-sec">
-      <h3>요약</h3>
-      <table class="pr">
-        <tr><th>구분</th><th>Alton</th><th>GF</th><th>Total</th></tr>
-        <tr><td>불량</td>${td(badA)}${td(badG)}${td(badA+badG)}</tr>
-        <tr><td>정품</td>${td(goodA)}${td(goodG)}${td(goodA+goodG)}</tr>
-        <tr class="gt"><td>Total</td>${td(totA)}${td(totG)}${td(totAll)}</tr>
-      </table>
-    </div>
-    <div class="pr-sec">
-      <h3>불량 배터리</h3>
-      <table class="pr">
-        <tr><th>위치</th><th>Alton</th><th>GF</th></tr>
-        ${badHtml}
-        <tr class="sub"><td>소계</td>${td(badA)}${td(badG)}</tr>
-      </table>
-    </div>
-    <div class="pr-sec">
-      <h3>정품 — 충전 보관</h3>
-      <table class="pr">
-        <tr><th>구분</th><th>Alton</th><th>GF</th></tr>
-        <tr><td>충전 1)</td>${td(num('ch_1_a'))}${td(0)}</tr>
-        <tr><td>충전 2)</td>${td(num('ch_2_a'))}${td(0)}</tr>
-        <tr><td>충전완료 1)</td>${td(num('ch_done_a1'))}${td(0)}</tr>
-        <tr><td>충전완료 2)</td>${td(num('ch_done_a2'))}${td(0)}</tr>
-        <tr><td>GF 충전 3)</td>${td(0)}${td(num('ch_3_g'))}</tr>
-        <tr><td>GF 충전완료</td>${td(0)}${td(num('ch_done_g'))}</tr>
-        <tr class="sub"><td>소계</td>${td(chA)}${td(chG)}</tr>
-      </table>
-    </div>
-    <div class="pr-sec">
-      <h3>정품 — 외부 보관</h3>
-      <table class="pr">
-        <tr><th>담당</th><th>Alton</th><th>GF</th></tr>
-        ${extHtml||'<tr><td colspan="3" style="text-align:center;color:#999;">해당 없음</td></tr>'}
-        <tr class="sub"><td>소계</td>${td(extA)}${td(extG)}</tr>
-      </table>
-    </div>
-    <div class="pr-sec">
-      <h3>입고기기</h3>
-      <table class="pr">
-        <tr><th>Alton</th><th>GF</th><th>FA</th></tr>
-        <tr>${td(num('in-alton'))}${td(num('in-gf'))}${td(num('in-fa'))}</tr>
-      </table>
+    <div class="pr-cols">
+      <div>
+        <div class="pr-sec">
+          <h3>요약</h3>
+          <table class="pr">
+            <tr><th>구분</th><th>Alton</th><th>GF</th><th>Total</th></tr>
+            <tr><td>불량</td>${td(badA)}${td(badG)}${td(badA+badG)}</tr>
+            <tr><td>정품</td>${td(goodA)}${td(goodG)}${td(goodA+goodG)}</tr>
+            <tr class="gt"><td>Total</td>${td(totA)}${td(totG)}${td(totAll)}</tr>
+          </table>
+        </div>
+        <div class="pr-sec">
+          <h3>불량 배터리</h3>
+          <table class="pr">
+            <tr><th>위치</th><th>Alton</th><th>GF</th></tr>
+            ${badHtml}
+            <tr class="sub"><td>소계</td>${td(badA)}${td(badG)}</tr>
+          </table>
+        </div>
+        <div class="pr-sec">
+          <h3>정품 — 충전 보관</h3>
+          <table class="pr">
+            <tr><th>구분</th><th>Alton</th><th>GF</th></tr>
+            <tr><td>충전 1)</td>${td(num('ch_1_a'))}${td('')}</tr>
+            <tr><td>충전 2)</td>${td(num('ch_2_a'))}${td('')}</tr>
+            <tr><td>충전완료 1)</td>${td(num('ch_done_a1'))}${td('')}</tr>
+            <tr><td>충전완료 2)</td>${td(num('ch_done_a2'))}${td('')}</tr>
+            <tr><td>GF 충전 3)</td>${td('')}${td(num('ch_3_g'))}</tr>
+            <tr><td>GF 충전완료</td>${td('')}${td(num('ch_done_g'))}</tr>
+            <tr class="sub"><td>소계</td>${td(chA)}${td(chG)}</tr>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="pr-sec">
+          <h3>정품 — 외부 보관</h3>
+          <table class="pr">
+            <tr><th>담당</th><th>Alton</th><th>GF</th></tr>
+            ${extHtml||'<tr><td colspan="3" style="text-align:center;color:#999;">해당 없음</td></tr>'}
+            <tr class="sub"><td>소계</td>${td(extA)}${td(extG)}</tr>
+          </table>
+        </div>
+        <div class="pr-sec">
+          <h3>입고기기</h3>
+          <table class="pr">
+            <tr><th>Alton</th><th>GF</th><th>FA</th></tr>
+            <tr>${td(num('in-alton'))}${td(num('in-gf'))}${td(num('in-fa'))}</tr>
+          </table>
+        </div>
+      </div>
     </div>
     <div class="pr-foot">작성일 ${dateStr} · 관교창고 배터리 보고</div>
   `;
