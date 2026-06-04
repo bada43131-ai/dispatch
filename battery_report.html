@@ -143,7 +143,7 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow
 </div>
 
 <!-- 불량 -->
-<div class="sec">
+<div class="sec" id="sec-bad">
   <div class="sec-hd">
     <span class="sec-title bad-title">⚠ 불량 배터리</span>
     <span class="sec-sum" id="sum-bad">Alton 0 · GF 0</span>
@@ -155,7 +155,7 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow
 </div>
 
 <!-- 정품 충전 -->
-<div class="sec">
+<div class="sec" id="sec-charge">
   <div class="sec-hd">
     <span class="sec-title good-title">🔋 정품 — 충전 보관</span>
     <span class="sec-sum" id="sum-charge">Alton 0 · GF 0</span>
@@ -164,7 +164,7 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow
 </div>
 
 <!-- 정품 외부 -->
-<div class="sec">
+<div class="sec" id="sec-ext">
   <div class="sec-hd">
     <span class="sec-title good-title">🚚 정품 — 외부 보관</span>
     <span class="sec-sum" id="sum-ext">Alton 0 · GF 0</span>
@@ -175,7 +175,7 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow
 </div>
 
 <!-- 입고기기 -->
-<div class="sec">
+<div class="sec" id="sec-in">
   <div class="sec-hd">
     <span class="sec-title">📦 입고기기</span>
   </div>
@@ -487,35 +487,63 @@ async function exportImg(){
   recalc();
   const dateStr=(state.date||today);
 
-  // 버튼/힌트 잠깐 숨기기
   const hideEls=document.querySelectorAll('.actions,.hint');
   hideEls.forEach(el=>el.style.display='none');
-
-  // 맨 위로 스크롤
   const prevScroll=window.scrollY;
   window.scrollTo(0,0);
+  await new Promise(r=>setTimeout(r,150));
 
-  // 한 프레임 대기 (렌더링 안정화)
-  await new Promise(r=>setTimeout(r,100));
+  // 전체 캔버스 한 번만 찍기
+  const fullW=document.documentElement.scrollWidth;
+  const fullH=document.documentElement.scrollHeight;
 
   try{
-    const fullH=document.documentElement.scrollHeight;
-    const fullW=document.documentElement.scrollWidth;
     const canvas=await html2canvas(document.body,{
-      scale:2,
-      backgroundColor:'#0f1419',
-      useCORS:true,
-      scrollX:0,
-      scrollY:0,
-      width:fullW,
-      height:fullH,
-      windowWidth:fullW,
-      windowHeight:fullH,
+      scale:2, backgroundColor:'#0f1419', useCORS:true,
+      scrollX:0, scrollY:0, width:fullW, height:fullH,
+      windowWidth:fullW, windowHeight:fullH,
     });
-    const a=document.createElement('a');
-    a.download=`배터리보고_${dateStr.replace(/-/g,'')}.png`;
-    a.href=canvas.toDataURL('image/png');
-    a.click();
+
+    // 3구간 경계 계산 (px, scale 적용 전 기준)
+    const header=document.querySelector('header');
+    const totbar=document.querySelector('.totbar');
+    const secBad=document.getElementById('sec-bad');
+    const secCharge=document.getElementById('sec-charge');
+    const secExt=document.getElementById('sec-ext');
+    const secIn=document.getElementById('sec-in');
+
+    const top=(el)=>el.getBoundingClientRect().top+window.scrollY;
+    const bot=(el)=>el.getBoundingClientRect().bottom+window.scrollY;
+
+    const zones=[
+      // 1장: header ~ 불량배터리 끝
+      {y1:top(header),      y2:bot(secBad),    name:'1_합계및불량'},
+      // 2장: 충전보관
+      {y1:top(secCharge),   y2:bot(secCharge), name:'2_충전보관'},
+      // 3장: 외부보관 ~ 입고기기
+      {y1:top(secExt),      y2:bot(secIn),     name:'3_외부및입고'},
+    ];
+
+    const pad=16; // 상하 여백 px
+    const sc=2;   // html2canvas scale
+
+    for(let i=0;i<zones.length;i++){
+      const {y1,y2,name}=zones[i];
+      const sy=Math.max(0,Math.round((y1-pad)*sc));
+      const sh=Math.min(canvas.height-sy, Math.round((y2-y1+pad*2)*sc));
+
+      const slice=document.createElement('canvas');
+      slice.width=canvas.width;
+      slice.height=sh;
+      const ctx=slice.getContext('2d');
+      ctx.drawImage(canvas, 0,sy, canvas.width,sh, 0,0, canvas.width,sh);
+
+      const a=document.createElement('a');
+      a.download=`배터리보고_${dateStr.replace(/-/g,'')}_${name}.png`;
+      a.href=slice.toDataURL('image/png');
+      a.click();
+      await new Promise(r=>setTimeout(r,300)); // 다운로드 간격
+    }
   }finally{
     hideEls.forEach(el=>el.style.display='');
     window.scrollTo(0,prevScroll);
