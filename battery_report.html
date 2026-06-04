@@ -113,7 +113,7 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow
   .pr-foot{margin-top:8px;font-size:10px;color:#555;text-align:right;border-top:1px solid #ccc;padding-top:4px;}
 }
 
-.actions{display:grid;grid-template-columns:1fr 1fr 1fr 1.6fr;gap:8px;margin-top:16px;}
+.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:16px;}
 .btn{padding:14px 10px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;transition:transform 0.1s,opacity 0.15s;}
 .btn:active{transform:scale(0.97);}
 .btn-xl{background:var(--good);color:#06281c;}
@@ -169,9 +169,8 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow
     <span class="sec-title good-title">🚚 정품 — 외부 보관</span>
     <span class="sec-sum" id="sum-ext">Alton 0 · GF 0</span>
   </div>
-  <div class="card">
-    <div class="colhd"><span>담당</span><span class="a">Alton</span><span class="g">GF</span></div>
-    <div id="ext-rows"></div>
+  <div class="card" style="padding:8px;">
+    <div id="ext-rows" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
   </div>
 </div>
 
@@ -209,7 +208,7 @@ const badRows=[
   {key:'fire',name:'소화기 아래'},
   {key:'steel',name:'입구 스텐통'},
 ];
-const extNames=['김우열','정한섭','형님','안민우','서윤석','김민석','서구','강호엽','경미/김동우','박광일','Box(new)'];
+const extNames=['김우열','형님','안민우','서윤석','김민석','서구','강호엽','박광일','',''];
 
 const state=JSON.parse(localStorage.getItem('battery_state')||'{}');
 // 지난주 기록 초기 고정값 (한 번도 저장된 적 없을 때만)
@@ -264,13 +263,28 @@ chargeCard.innerHTML=`
   </div>
 `;
 
-// 외부 보관 렌더
+// 외부 보관 렌더 — 2열 그리드
 let e='';
 extNames.forEach((n,i)=>{
-  e+=`<div class="row">
-    <span class="name">${n}</span>
-    <span class="cell"><input type="number" inputmode="numeric" data-k="ext_${i}_a" placeholder="0" value="${g('ext_'+i+'_a')}"></span>
-    <span class="cell"><input type="number" inputmode="numeric" data-k="ext_${i}_g" placeholder="0" value="${g('ext_'+i+'_g')}"></span>
+  const nameEl = n
+    ? `<div style="font-size:11px;font-weight:700;color:var(--dim);margin-bottom:6px;">${n}</div>`
+    : `<input type="text" placeholder="담당자명" value="${g('ext_'+i+'_name')}"
+        data-k="ext_${i}_name"
+        style="width:100%;height:22px;background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--dim);font-size:11px;font-weight:700;outline:none;margin-bottom:6px;padding:0 2px;">`;
+  e+=`<div style="background:#11171f;border:1px solid var(--line);border-radius:10px;padding:8px 10px;">
+    ${nameEl}
+    <div style="display:flex;gap:6px;align-items:center;">
+      <div style="flex:1;text-align:center;">
+        <div style="font-size:9px;color:var(--alton);font-weight:700;margin-bottom:3px;">Alton</div>
+        <input type="number" inputmode="numeric" data-k="ext_${i}_a" placeholder="0" value="${g('ext_'+i+'_a')}"
+          style="width:100%;height:32px;background:#0d1117;border:1px solid var(--line);border-radius:7px;color:var(--txt);text-align:center;font-size:14px;font-weight:700;outline:none;">
+      </div>
+      <div style="flex:1;text-align:center;">
+        <div style="font-size:9px;color:var(--gf);font-weight:700;margin-bottom:3px;">GF</div>
+        <input type="number" inputmode="numeric" data-k="ext_${i}_g" placeholder="0" value="${g('ext_'+i+'_g')}"
+          style="width:100%;height:32px;background:#0d1117;border:1px solid var(--line);border-radius:7px;color:var(--txt);text-align:center;font-size:14px;font-weight:700;outline:none;">
+      </div>
+    </div>
   </div>`;
 });
 document.getElementById('ext-rows').innerHTML=e;
@@ -371,44 +385,91 @@ function resetAll(){
 function exportXlsx(){
   const wb=XLSX.utils.book_new();
   const dateStr=(state.date||today);
-  const md=dateStr.slice(5).replace('-','월 ').replace(/^0/,'')+'일';
-  const aoa=[];
-  aoa.push([`관교창고 ${parseInt(dateStr.slice(5,7))}월 ${parseInt(dateStr.slice(8,10))}일자 배터리 보고서`]);
-  aoa.push([]);
-  // 요약
+  const M=parseInt(dateStr.slice(5,7)), D=parseInt(dateStr.slice(8,10));
+
+  // 집계
   let badA=0,badG=0;
   badRows.forEach(r=>{badA+=num('bad_'+r.key+'_a');badG+=num('bad_'+r.key+'_g');});
   const chA=num('ch_1_a')+num('ch_2_a')+num('ch_done_a1')+num('ch_done_a2');
   const chG=num('ch_3_g')+num('ch_done_g');
   let extA=0,extG=0;
   extNames.forEach((n,i)=>{extA+=num('ext_'+i+'_a');extG+=num('ext_'+i+'_g');});
-  const goodA=chA+extA,goodG=chG+extG;
-  aoa.push(['','Alton','GF','Total']);
-  aoa.push(['불량',badA,badG,badA+badG]);
-  aoa.push(['정품',goodA,goodG,goodA+goodG]);
-  aoa.push(['Total',badA+goodA,badG+goodG,badA+badG+goodA+goodG]);
-  aoa.push([]);
-  aoa.push(['불량','','Alton','GF']);
-  badRows.forEach(r=>aoa.push(['',r.name,num('bad_'+r.key+'_a'),num('bad_'+r.key+'_g')]));
-  aoa.push(['불량 Grand Total','',badA,badG]);
-  aoa.push([]);
-  aoa.push(['정품 (충전 보관)','','Alton','GF']);
-  aoa.push(['','충전 1)',num('ch_1_a'),'']);
-  aoa.push(['','충전 2)',num('ch_2_a'),'']);
-  aoa.push(['','충전완료 1)',num('ch_done_a1'),'']);
-  aoa.push(['','충전완료 2)',num('ch_done_a2'),'']);
-  aoa.push(['','GF 충전 3)','',num('ch_3_g')]);
-  aoa.push(['','GF 충전완료','',num('ch_done_g')]);
-  aoa.push(['충전 Sub Total','',chA,chG]);
-  aoa.push([]);
-  aoa.push(['정품 (외부 보관)','','Alton','GF']);
-  extNames.forEach((n,i)=>aoa.push(['',n,num('ext_'+i+'_a'),num('ext_'+i+'_g')]));
-  aoa.push(['외부 Sub Total','',extA,extG]);
-  aoa.push([]);
-  aoa.push(['입고기기','','Alton','GF','FA']);
-  aoa.push(['','',num('in-alton'),num('in-gf'),num('in-fa')]);
+  const goodA=chA+extA, goodG=chG+extG;
+  const totA=badA+goodA, totG=badG+goodG, totAll=totA+totG;
+
+  // 스타일 헬퍼
+  const C=(rgb)=>({patternType:'solid',fgColor:{rgb}});
+  const border=(style='thin')=>({top:{style},bottom:{style},left:{style},right:{style}});
+  const borderM=(style='medium')=>border(style);
+  const cell=(v,bold,bgRgb,align='center',numFmt)=>{
+    const s={font:{bold:!!bold,sz:10},alignment:{horizontal:align,vertical:'center'},border:border()};
+    if(bgRgb)s.fill=C(bgRgb);
+    if(numFmt)s.numFmt=numFmt;
+    return {v,t:typeof v==='number'?'n':'s',s};
+  };
+  const hdr=(v,bg='1F3864')=>cell(v,true,bg,'center');
+  const lbl=(v)=>cell(v,true,null,'left');
+  const num2=(v)=>cell(v,false,null,'center');
+  const sub=(v,bold=true)=>cell(v,bold,'D9E1F2','center');
+  const tot=(v)=>({v,t:typeof v==='number'?'n':'s',s:{font:{bold:true,sz:11,color:{rgb:'FFFFFF'}},fill:C('1F3864'),alignment:{horizontal:'center',vertical:'center'},border:borderM()}});
+  const empty=()=>({v:'',t:'s',s:{border:border()}});
+
+  const aoa=[];
+  // 제목
+  aoa.push([{v:`관교창고 ${M}월 ${D}일자 배터리 보고서`,t:'s',s:{font:{bold:true,sz:14},alignment:{horizontal:'center',vertical:'center'}}},'','','','']);
+  aoa.push([{v:dateStr,t:'s',s:{font:{sz:10,color:{rgb:'888888'}},alignment:{horizontal:'center'}}},'','','','']);
+  aoa.push(['','','','','']);
+
+  // 전체 합계 박스
+  aoa.push([hdr('구분'),hdr('Alton','2E75B6'),hdr('GF','ED7D31'),hdr('Total','375623'),'']);
+  aoa.push([lbl('불량'),num2(badA),num2(badG),num2(badA+badG),'']);
+  aoa.push([lbl('정품'),num2(goodA),num2(goodG),num2(goodA+goodG),'']);
+  aoa.push([tot('Total'),tot(totA),tot(totG),tot(totAll),'']);
+  aoa.push(['','','','','']);
+
+  // 불량 배터리
+  aoa.push([hdr('불량 배터리'),hdr('Alton','2E75B6'),hdr('GF','ED7D31'),'','']);
+  badRows.forEach(r=>{
+    aoa.push([cell(r.name,false,'FFF2CC','left'),num2(num('bad_'+r.key+'_a')),num2(num('bad_'+r.key+'_g')),empty(),empty()]);
+  });
+  aoa.push([sub('소계'),sub(badA),sub(badG),empty(),empty()]);
+  aoa.push(['','','','','']);
+
+  // 충전 보관
+  aoa.push([hdr('정품 — 충전 보관'),hdr('Alton','2E75B6'),hdr('GF','ED7D31'),'','']);
+  [['충전 1)',num('ch_1_a'),''],[' 충전 2)',num('ch_2_a'),''],[' 충전완료 1)',num('ch_done_a1'),''],[' 충전완료 2)',num('ch_done_a2'),''],[' GF 충전 3)','',num('ch_3_g')],[' GF 충전완료','',num('ch_done_g')]].forEach(([n,a,g])=>{
+    aoa.push([cell(n,false,'F2F2F2','left'),num2(a===''?'':a),num2(g===''?'':g),empty(),empty()]);
+  });
+  aoa.push([sub('소계'),sub(chA),sub(chG),empty(),empty()]);
+  aoa.push(['','','','','']);
+
+  // 외부 보관
+  aoa.push([hdr('정품 — 외부 보관'),hdr('Alton','2E75B6'),hdr('GF','ED7D31'),'','']);
+  extNames.forEach((n,i)=>{
+    const dispName = n || g('ext_'+i+'_name') || '';
+    aoa.push([cell(dispName,false,'F2F2F2','left'),num2(num('ext_'+i+'_a')),num2(num('ext_'+i+'_g')),empty(),empty()]);
+  });
+  aoa.push([sub('소계'),sub(extA),sub(extG),empty(),empty()]);
+  aoa.push(['','','','','']);
+
+  // 입고기기
+  aoa.push([hdr('입고기기'),hdr('Alton','2E75B6'),hdr('GF','ED7D31'),hdr('FA','70AD47'),'']);
+  aoa.push([empty(),num2(num('in-alton')),num2(num('in-gf')),num2(num('in-fa')),empty()]);
+
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[{wch:16},{wch:14},{wch:8},{wch:8},{wch:8}];
+
+  // 열 너비
+  ws['!cols']=[{wch:18},{wch:10},{wch:10},{wch:10},{wch:6}];
+
+  // 행 높이
+  ws['!rows']=[{hpt:24},{hpt:14},{hpt:6},{hpt:20}];
+
+  // 셀 병합: 제목, 섹션 헤더 나머지 열
+  ws['!merges']=[
+    {s:{r:0,c:0},e:{r:0,c:4}}, // 제목
+    {s:{r:1,c:0},e:{r:1,c:4}}, // 날짜
+  ];
+
   XLSX.utils.book_append_sheet(wb,ws,'배터리보고');
   const fn=`카카오_배터리_보고_${dateStr.replace(/-/g,'').slice(2)}.xlsx`;
   XLSX.writeFile(wb,fn);
@@ -426,25 +487,38 @@ async function exportImg(){
   recalc();
   const dateStr=(state.date||today);
 
-  // 버튼/힌트/입고기기 아래 섹션 잠깐 숨기기
+  // 버튼/힌트 잠깐 숨기기
   const hideEls=document.querySelectorAll('.actions,.hint');
-  hideEls.forEach(el=>el.style.visibility='hidden');
+  hideEls.forEach(el=>el.style.display='none');
+
+  // 맨 위로 스크롤
+  const prevScroll=window.scrollY;
+  window.scrollTo(0,0);
+
+  // 한 프레임 대기 (렌더링 안정화)
+  await new Promise(r=>setTimeout(r,100));
 
   try{
+    const fullH=document.documentElement.scrollHeight;
+    const fullW=document.documentElement.scrollWidth;
     const canvas=await html2canvas(document.body,{
       scale:2,
       backgroundColor:'#0f1419',
       useCORS:true,
-      scrollY:-window.scrollY,
-      windowWidth:document.documentElement.scrollWidth,
-      windowHeight:document.documentElement.scrollHeight,
+      scrollX:0,
+      scrollY:0,
+      width:fullW,
+      height:fullH,
+      windowWidth:fullW,
+      windowHeight:fullH,
     });
     const a=document.createElement('a');
     a.download=`배터리보고_${dateStr.replace(/-/g,'')}.png`;
     a.href=canvas.toDataURL('image/png');
     a.click();
   }finally{
-    hideEls.forEach(el=>el.style.visibility='');
+    hideEls.forEach(el=>el.style.display='');
+    window.scrollTo(0,prevScroll);
   }
 }
 
