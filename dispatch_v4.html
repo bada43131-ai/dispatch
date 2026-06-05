@@ -530,7 +530,7 @@ async function saveDispatch(){
 buildInputs();
 buildExcludes();
 
-// ── 북마크릿 해시 파라미터 읽기 ──────────────────────────────
+// ── 북마크릿 해시 파라미터 읽기 + 수리/배터리 표시 ──────────
 (function(){
   var hash = window.location.hash.substring(1);
   if(!hash) return;
@@ -544,7 +544,8 @@ buildExcludes();
       params[k] = v;
     }catch(e){}
   });
-  // 각 포인트 현재수량 입력란 채우기
+
+  // ① 각 포인트 현재수량 입력란 채우기
   all.forEach(function(p){
     if(params[p.name] !== undefined){
       var el = document.getElementById('inp-' + p.name);
@@ -552,16 +553,78 @@ buildExcludes();
     }
   });
   updateCurTotal();
-  // 수리 대수 자동 입력
+
+  // ② 수리 바이크 파싱
+  var repairData = [];
   if(params.repair){
-    try{
-      var rd = JSON.parse(decodeURIComponent(params.repair));
-      var el = document.getElementById('repair-count');
-      if(el) el.value = rd.length;
-    }catch(e){}
+    try{ repairData = JSON.parse(decodeURIComponent(params.repair)); }catch(e){}
+    var rc = document.getElementById('repair-count');
+    if(rc) rc.value = repairData.length;
+  }
+
+  // ③ 배터리 바이크 파싱
+  var batteryData = [];
+  if(params.battery){
+    try{ batteryData = JSON.parse(decodeURIComponent(params.battery)); }catch(e){}
+  }
+
+  // ④ 수리/배터리 정보 패널 표시
+  if(repairData.length === 0 && batteryData.length === 0) return;
+  var panel = document.createElement('div');
+  panel.id = 'live-info-panel';
+  panel.style.cssText = 'margin:8px 0 12px;';
+  var html = '';
+
+  // 수리 섹션
+  if(repairData.length > 0){
+    var field = repairData.filter(function(d){return d.repairType==='FIELD';});
+    var wh    = repairData.filter(function(d){return d.repairType!=='FIELD';});
+    html += '<div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #eee;">🔧 수리 바이크 '+repairData.length+'대</div>';
+    if(field.length > 0){
+      html += '<div style="margin-bottom:6px;">';
+      html += '<span style="font-size:10px;font-weight:700;background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:10px;">현장 '+field.length+'대</span>';
+      field.forEach(function(d){
+        html += '<div style="display:flex;align-items:center;gap:5px;padding:5px 8px;margin-top:3px;background:#FFF5F5;border-radius:7px;">';
+        html += '<span style="font-size:12px;font-weight:700;color:#333;">'+d.code+'</span>';
+        html += '<span style="font-size:10px;background:#FECACA;color:#991B1B;padding:1px 5px;border-radius:3px;">'+d.model+'</span>';
+        if(d.comments && d.comments.length){
+          html += '<span style="font-size:10px;color:#888;">'+d.comments.join(' · ')+'</span>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    if(wh.length > 0){
+      html += '<div style="font-size:11px;color:#888;background:#f7f7f7;border-radius:6px;padding:5px 8px;margin-bottom:4px;">';
+      html += '창고 수리 '+wh.length+'대: '+wh.map(function(d){return d.code+'('+d.model+')';}).join(', ');
+      html += '</div>';
+    }
+  }
+
+  // 배터리 섹션
+  if(batteryData.length > 0){
+    var gfCnt    = batteryData.filter(function(d){return d.model==='GF';}).length;
+    var otherCnt = batteryData.length - gfCnt;
+    html += '<div style="font-size:12px;font-weight:700;color:#555;margin:10px 0 6px;padding-bottom:3px;border-bottom:1px solid #eee;">🔋 배터리 교체 '+batteryData.length+'대 <span style="font-size:10px;font-weight:400;color:#888;">(GF:'+gfCnt+' / 기타:'+otherCnt+')</span></div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+    batteryData.forEach(function(d){
+      html += '<div style="display:inline-flex;align-items:center;gap:3px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:3px 7px;">';
+      html += '<span style="font-size:11px;font-weight:700;color:#333;">'+d.code+'</span>';
+      html += '<span style="font-size:9px;color:#92400E;background:#FEF3C7;padding:1px 3px;border-radius:2px;">'+d.model+'</span>';
+      html += '<span style="font-size:10px;color:#D97706;font-weight:700;">'+d.battery+'%</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  panel.innerHTML = html;
+  // ② 배차 설정 섹션 바로 앞에 삽입
+  var titles = document.querySelectorAll('.section-title');
+  if(titles.length >= 2){
+    titles[1].parentNode.insertBefore(panel, titles[1]);
   }
 })();
-// ─────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────
 
 update();
 checkMorningSaved();
