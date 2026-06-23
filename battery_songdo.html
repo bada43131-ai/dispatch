@@ -196,7 +196,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="bm-desc">
     1. 이 링크를 북마크바에 드래그해서 저장<br>
     2. t-bike-operating.kakao.com 접속 후 북마클릿 실행<br>
-    3. 이 페이지가 자동으로 열리며 데이터 표시
+    3. 이 페이지가 자동으로 열리며 데이터 표시<br>
+    ※ 배터리 15% 초과 기기(이미 교체·충전됨)는 집계에서 자동 제외
   </div>
 </div>
 <div class="bottom-pad"></div>
@@ -223,8 +224,9 @@ function inPoly(x,y){var inside=false;for(var i=0,j=poly.length-1;i<poly.length;
 function isSongdo(d){var loc=d.adjusted_location||d.location;return loc&&inPoly(loc.lng,loc.lat);}
 function modelOf(d){var m=(d.code||'').match(/^[a-zA-Z]+/);return m?m[0].toUpperCase():'';}
 
-// 송도 배터리 티켓
-var batDevs=devices.filter(function(d){return d.batteryTicket&&isSongdo(d);});
+// 송도 배터리 티켓 (배터리 15% 초과 = 이미 교체/충전된 유령 티켓 → 집계 제외)
+var SWAP_TH=15;
+var batDevs=devices.filter(function(d){return d.batteryTicket&&isSongdo(d)&&d.battery<=SWAP_TH;});
 var batGF=batDevs.filter(function(d){return modelOf(d)==='GF';}).length;
 var batHA=batDevs.filter(function(d){return modelOf(d)==='HA';}).length;
 var batIA=batDevs.filter(function(d){return modelOf(d)==='IA';}).length;
@@ -244,7 +246,7 @@ var repWH=repDevs.filter(function(d){return (d.repairTicket.type||'').indexOf('W
 var hash='bat_gf='+batGF+'&bat_ha='+batHA+'&bat_ia='+batIA+'&bat_ja='+batJA+'&bat_ka='+batKA+'&bat_ma='+batMA+'&bat_da='+batDA+'&bat_songdo='+batSongdo+'&bat_incheon='+batIncheon+'&rep_field='+repField+'&rep_urgent='+repUrgent+'&rep_wh='+repWH+'&ts='+Date.now()+'&region=송도';
 b.textContent='✓ 송도 GF:'+batGF+' HA:'+batHA+' IA:'+batIA+' JA:'+batJA+' → 이동...';
 b.style.background='#059669';
-setTimeout(function(){document.body.removeChild(b);window.open(URL+'#'+hash,'_blank');},800);
+setTimeout(function(){document.body.removeChild(b);location.href=URL+'#'+hash;},800);
 
 }catch(e){b.textContent='실패: '+e.message;b.style.background='#DC2626';setTimeout(function(){document.body.removeChild(b);},3000);}
 })();
