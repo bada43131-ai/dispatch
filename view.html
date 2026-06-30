@@ -2,130 +2,22 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=6, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
 <title>이미지 보기</title>
-<style>
-  html,body{margin:0;height:100%;background:#0b1320;overflow:hidden;
-    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;}
-  #stage{position:fixed;inset:0;touch-action:none;overflow:hidden;}
-  #img{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;
-    user-select:none;-webkit-user-drag:none;}
-  #hint{position:fixed;left:0;right:0;bottom:14px;text-align:center;color:#8fb3e0;font-size:14px;
-    opacity:.85;pointer-events:none;text-shadow:0 1px 2px #000;}
-  #err{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-    color:#cfe0f5;font-size:16px;padding:24px;text-align:center;}
-</style>
 </head>
-<body>
-<div id="stage"><img id="img" alt="image"></div>
-<div id="hint">두 손가락으로 확대 · 더블탭 줌 · 끌어서 이동</div>
-<div id="err">이미지 주소가 없습니다. (?img=... 파라미터 필요)</div>
+<body style="margin:0;background:#0b1320;color:#cfe0f5;font-family:sans-serif;">
 <script>
-(function(){
-  var p=new URLSearchParams(location.search);
-  var src=p.get('img');
-  var img=document.getElementById('img');
-  var errEl=document.getElementById('err');
-  function showErr(m){errEl.textContent=m;errEl.style.display='flex';img.style.display='none';}
-  if(!src){showErr('이미지 주소가 없습니다. (?img=... 파라미터 필요)');return;}
-  if(!/^https?:\/\//i.test(src)){showErr('잘못된 이미지 주소입니다.');return;}
-
-  var scale=1,minScale=1,maxScale=6,tx=0,ty=0;
-  var iw=0,ih=0,vw=window.innerWidth,vh=window.innerHeight;
-
-  function apply(){ img.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')'; }
-  function clamp(){
-    if(scale<minScale)scale=minScale;
-    if(scale>maxScale)scale=maxScale;
-    var sw=iw*scale, sh=ih*scale;
-    if(sw<=vw){ tx=(vw-sw)/2; } else { if(tx>0)tx=0; if(tx<vw-sw)tx=vw-sw; }
-    if(sh<=vh){ ty=(vh-sh)/2; } else { if(ty>0)ty=0; if(ty<vh-sh)ty=vh-sh; }
-  }
-  function fit(){
-    vw=window.innerWidth; vh=window.innerHeight;
-    if(!iw||!ih) return;
-    minScale=Math.min(vw/iw, vh/ih);
-    maxScale=Math.max(minScale*6, 6);
-    scale=minScale;
-    clamp(); apply();
-  }
-
-  img.onload=function(){
-    iw=img.naturalWidth; ih=img.naturalHeight;
-    img.style.width=iw+'px'; img.style.height=ih+'px';
-    fit();
-  };
-  img.onerror=function(){showErr('이미지를 불러오지 못했습니다.');};
-  img.src=src;
-  window.addEventListener('resize',fit);
-
-  var stage=document.getElementById('stage');
-  var pts={}, startDist=0, startScale=1, startMid=null, startTx=0, startTy=0, panStart=null;
-  function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
-  function mid(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
-
-  // 한 점(화면좌표) 기준으로 scale을 newScale로 바꾸되 그 점이 제자리에 있도록 tx,ty 보정
-  function zoomAt(cx,cy,newScale){
-    if(newScale<minScale)newScale=minScale;
-    if(newScale>maxScale)newScale=maxScale;
-    var ix=(cx-tx)/scale, iy=(cy-ty)/scale;   // 이미지 내부 좌표
-    scale=newScale;
-    tx=cx-ix*scale; ty=cy-iy*scale;
-    clamp(); apply();
-  }
-
-  stage.addEventListener('touchstart',function(e){
-    e.preventDefault();
-    for(var i=0;i<e.changedTouches.length;i++){var t=e.changedTouches[i];pts[t.identifier]={x:t.clientX,y:t.clientY};}
-    var ids=Object.keys(pts);
-    if(ids.length===2){startDist=dist(pts[ids[0]],pts[ids[1]]);startScale=scale;startMid=mid(pts[ids[0]],pts[ids[1]]);startTx=tx;startTy=ty;}
-    else if(ids.length===1){panStart={x:pts[ids[0]].x,y:pts[ids[0]].y,tx:tx,ty:ty};}
-  },{passive:false});
-
-  stage.addEventListener('touchmove',function(e){
-    e.preventDefault();
-    for(var i=0;i<e.changedTouches.length;i++){var t=e.changedTouches[i];if(pts[t.identifier])pts[t.identifier]={x:t.clientX,y:t.clientY};}
-    var ids=Object.keys(pts);
-    if(ids.length>=2){
-      var a=pts[ids[0]],b=pts[ids[1]];
-      var d=dist(a,b);
-      if(startDist>0){
-        var ns=startScale*(d/startDist);
-        if(ns<minScale)ns=minScale; if(ns>maxScale)ns=maxScale;
-        var ix=(startMid.x-startTx)/startScale, iy=(startMid.y-startTy)/startScale;
-        scale=ns; tx=startMid.x-ix*scale; ty=startMid.y-iy*scale;
-        clamp(); apply();
-      }
-    } else if(ids.length===1 && panStart){
-      var t=pts[ids[0]];
-      tx=panStart.tx+(t.x-panStart.x); ty=panStart.ty+(t.y-panStart.y);
-      clamp(); apply();
+  // 카드의 '크게 보기' 링크로 들어오면, 원본 이미지 파일로 바로 넘긴다.
+  // 이미지 파일을 직접 열면 브라우저 기본(네이티브) 핀치줌이 그대로 동작한다.
+  (function(){
+    var s = new URLSearchParams(location.search).get('img');
+    if (s && /^https?:\/\//i.test(s)) {
+      location.replace(s);
+    } else {
+      document.body.innerHTML =
+        '<div style="display:flex;height:100vh;align-items:center;justify-content:center;padding:24px;text-align:center;">이미지 주소가 없습니다. (?img=... 필요)</div>';
     }
-  },{passive:false});
-
-  function endTouch(e){for(var i=0;i<e.changedTouches.length;i++){delete pts[e.changedTouches[i].identifier];}panStart=null;}
-  stage.addEventListener('touchend',endTouch);
-  stage.addEventListener('touchcancel',endTouch);
-
-  // 더블탭 줌
-  var lastTap=0,lastX=0,lastY=0;
-  stage.addEventListener('touchend',function(e){
-    var now=Date.now();
-    var t=e.changedTouches[0];
-    if(now-lastTap<300){
-      var target=(scale>minScale*1.3)?minScale:Math.min(minScale*3,maxScale);
-      zoomAt(t?t.clientX:vw/2, t?t.clientY:vh/2, target);
-    }
-    lastTap=now;
-  });
-
-  // 데스크톱: 휠 줌, 더블클릭 줌
-  stage.addEventListener('wheel',function(e){e.preventDefault();zoomAt(e.clientX,e.clientY,scale*(e.deltaY<0?1.15:0.87));},{passive:false});
-  stage.addEventListener('dblclick',function(e){
-    var target=(scale>minScale*1.3)?minScale:Math.min(minScale*3,maxScale);
-    zoomAt(e.clientX,e.clientY,target);
-  });
-})();
+  })();
 </script>
 </body>
 </html>
