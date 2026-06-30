@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=6, user-scalable=yes">
+<title>이미지 보기</title>
+<style>
+  html,body{margin:0;height:100%;background:#0b1320;overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;}
+  #stage{position:fixed;inset:0;touch-action:none;display:flex;align-items:center;justify-content:center;}
+  #img{position:absolute;left:50%;top:50%;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-drag:none;}
+  #hint{position:fixed;left:0;right:0;bottom:14px;text-align:center;color:#8fb3e0;font-size:14px;opacity:.85;
+    pointer-events:none;text-shadow:0 1px 2px #000;}
+  #err{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#cfe0f5;font-size:16px;padding:24px;text-align:center;}
+</style>
+</head>
+<body>
+<div id="stage"><img id="img" alt="image"></div>
+<div id="hint">두 손가락으로 확대 · 더블탭 줌 · 끌어서 이동</div>
+<div id="err">이미지 주소가 없습니다. (?img=... 파라미터 필요)</div>
+<script>
+(function(){
+  var p=new URLSearchParams(location.search);
+  var src=p.get('img');
+  var img=document.getElementById('img');
+  if(!src){document.getElementById('err').style.display='flex';img.style.display='none';return;}
+  if(!/^https?:\/\//i.test(src)){document.getElementById('err').style.display='flex';img.style.display='none';return;}
+
+  var scale=1,minScale=1,maxScale=6,tx=0,ty=0;
+  var iw=0,ih=0,vw=window.innerWidth,vh=window.innerHeight;
+
+  function apply(){
+    img.style.transform='translate(-50%,-50%) translate('+tx+'px,'+ty+'px) scale('+scale+')';
+  }
+  function fit(){
+    vw=window.innerWidth;vh=window.innerHeight;
+    if(!iw||!ih)return;
+    minScale=Math.min(vw/iw,vh/ih);
+    scale=minScale;maxScale=Math.max(minScale*6,6);
+    tx=0;ty=0;apply();
+  }
+  function clamp(){
+    if(scale<minScale)scale=minScale;
+    if(scale>maxScale)scale=maxScale;
+    var halfW=iw*scale/2,halfH=ih*scale/2;
+    var limX=Math.max(0,halfW-vw/2),limY=Math.max(0,halfH-vh/2);
+    if(tx>limX)tx=limX;if(tx<-limX)tx=-limX;
+    if(ty>limY)ty=limY;if(ty<-limY)ty=-limY;
+  }
+
+  img.onload=function(){iw=img.naturalWidth;ih=img.naturalHeight;img.style.width=iw+'px';img.style.height=ih+'px';fit();};
+  img.onerror=function(){document.getElementById('err').textContent='이미지를 불러오지 못했습니다.';document.getElementById('err').style.display='flex';};
+  img.src=src;
+  window.addEventListener('resize',fit);
+
+  var pts={},startDist=0,startScale=1,startMid=null,startTx=0,startTy=0,panStart=null;
+  var stage=document.getElementById('stage');
+  function dist(a,b){var dx=a.x-b.x,dy=a.y-b.y;return Math.hypot(dx,dy);}
+  function mid(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
+  stage.addEventListener('touchstart',function(e){
+    e.preventDefault();
+    for(var i=0;i<e.changedTouches.length;i++){var t=e.changedTouches[i];pts[t.identifier]={x:t.clientX,y:t.clientY};}
+    var ids=Object.keys(pts);
+    if(ids.length===2){startDist=dist(pts[ids[0]],pts[ids[1]]);startScale=scale;startMid=mid(pts[ids[0]],pts[ids[1]]);startTx=tx;startTy=ty;}
+    else if(ids.length===1){panStart={x:pts[ids[0]].x,y:pts[ids[0]].y,tx:tx,ty:ty};}
+  },{passive:false});
+  stage.addEventListener('touchmove',function(e){
+    e.preventDefault();
+    for(var i=0;i<e.changedTouches.length;i++){var t=e.changedTouches[i];if(pts[t.identifier])pts[t.identifier]={x:t.clientX,y:t.clientY};}
+    var ids=Object.keys(pts);
+    if(ids.length>=2){
+      var a=pts[ids[0]],b=pts[ids[1]];
+      var d=dist(a,b);if(startDist>0){scale=startScale*(d/startDist);}
+      tx=startTx;ty=startTy;clamp();apply();
+    }else if(ids.length===1&&panStart){
+      var t=pts[ids[0]];tx=panStart.tx+(t.x-panStart.x);ty=panStart.ty+(t.y-panStart.y);clamp();apply();
+    }
+  },{passive:false});
+  function endTouch(e){for(var i=0;i<e.changedTouches.length;i++){delete pts[e.changedTouches[i].identifier];}panStart=null;}
+  stage.addEventListener('touchend',endTouch);
+  stage.addEventListener('touchcancel',endTouch);
+
+  var lastTap=0;
+  stage.addEventListener('touchend',function(e){
+    var now=Date.now();
+    if(now-lastTap<300){scale=(scale>minScale*1.5)?minScale:Math.min(minScale*3,maxScale);tx=0;ty=0;clamp();apply();}
+    lastTap=now;
+  });
+  stage.addEventListener('wheel',function(e){e.preventDefault();scale*=(e.deltaY<0?1.15:0.87);clamp();apply();},{passive:false});
+  stage.addEventListener('dblclick',function(){scale=(scale>minScale*1.5)?minScale:Math.min(minScale*3,maxScale);tx=0;ty=0;clamp();apply();});
+})();
+</script>
+</body>
+</html>
