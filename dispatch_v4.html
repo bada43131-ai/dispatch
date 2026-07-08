@@ -282,7 +282,7 @@ const aPoints=[
   {name:'산책정원',     zone:'A',opt:20,cur:12,type:'consume'},
   {name:'센트럴파크',   zone:'A',opt:12,cur:8, type:'consume'},
   {name:'타임스페이스', zone:'A',opt:15,cur:14,type:'consume'},
-];
+];;(function(){/*HASH_OPT_OVERRIDE*/try{var h=(location.hash||'').slice(1);if(!h)return;var v=new URLSearchParams(h).get('opt');if(!v)return;var om=JSON.parse(v);[].concat(bPoints,aPoints).forEach(function(p){if(om[p.name]!=null)p.opt=+om[p.name];});}catch(e){}})();
 const all=[...bPoints,...aPoints];
 const optSum=all.reduce((s,p)=>s+p.opt,0);
 
