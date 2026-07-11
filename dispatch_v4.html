@@ -378,7 +378,21 @@ function parseHash(){
     }catch(e){ hashDiag('zones JSON 파싱 실패', true); }
   }
 
-  // 형식3: data=[{name,cur,opt}, ...]
+  // 형식3-압축: d=15,13,5,...  (all[] 순서, 콤마 구분) / o=적정 (선택)
+  //   → 카카오톡 본문에 넣을 짧은 URL용. 약 90자.
+  const dRawC = params.get('d');
+  if(dRawC){
+    const oRawC = params.get('o');
+    if(oRawC){
+      const ov = oRawC.split(',');
+      all.forEach((p,i)=>{ const n=parseInt(ov[i]); if(!isNaN(n)&&n>0) p.opt=n; });
+      optSum = all.reduce((s,p)=>s+p.opt,0);
+    }
+    const dv = dRawC.split(',');
+    all.forEach((p,i)=>{ if(dv[i]!==undefined) setCur(p.name, dv[i]); });
+  }
+
+  // 형식4: data=[{name,cur,opt}, ...]
   const dRaw = params.get('data');
   if(dRaw){
     try{
