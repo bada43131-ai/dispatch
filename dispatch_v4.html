@@ -86,12 +86,20 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
 .refresh-btn{padding:6px 12px;background:#f0f0f0;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;color:#555;}
 .refresh-btn:active{background:#ddd;}
 .no-data{text-align:center;color:#aaa;font-size:12px;padding:20px 0;}
+.round-tabs{display:flex;gap:6px;margin-bottom:8px;}
+.round-tab{flex:1;padding:9px 0;border:1px solid #ddd;background:#fff;border-radius:8px;font-size:12px;font-weight:700;color:#888;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.round-tab.active{background:#185FA5;border-color:#185FA5;color:#fff;}
+.mini-badge{display:inline-block;padding:1px 4px;border-radius:3px;font-size:9px;font-weight:700;}
+.commit-btn{width:100%;padding:12px;background:#0F6E56;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;-webkit-tap-highlight-color:transparent;}
+.commit-btn:active{background:#0a5341;}
+.reset-btn{width:100%;padding:9px;background:#fff;color:#999;border:1px solid #ddd;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;margin-top:6px;}
 </style>
 </head>
 <body>
 
 <h2>송도 배차 플래너</h2>
-<div class="sub">현재수량 입력 → 배차수량 조절 → 현재수량 반영</div>
+<div class="sub">한계이용 기준 배차 · 15대 × 3회차 · 2026-07 룰</div>
+<div id="hash-diag" style="display:none;font-size:11px;border-radius:8px;padding:8px 11px;margin-bottom:10px;line-height:1.5;"></div>
 
 <!-- ① 현재수량 입력 -->
 <div onclick="toggleInputPanel()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin:14px 0 0;">
@@ -109,38 +117,47 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
 </div>
 
 <!-- ② 배차 설정 -->
-<div class="section-title">② 배차 설정</div>
-<div class="ctrl-row">
-  <div class="ctrl-label">배차 포인트 수</div>
-  <div class="ctrl-right">
-    <button class="btn btn-minus" onclick="adj('spot',-1)">−</button>
-    <div class="ctrl-val" id="spot-val">6곳</div>
-    <button class="btn btn-plus" onclick="adj('spot',1)">+</button>
-  </div>
+<div class="section-title">② 배차 설정 (회차별 15대 상차)</div>
+<div class="round-tabs">
+  <button class="round-tab active" id="rt-1" onclick="setRound(1)">1회차</button>
+  <button class="round-tab" id="rt-2" onclick="setRound(2)">2회차</button>
+  <button class="round-tab" id="rt-3" onclick="setRound(3)">3회차</button>
 </div>
 <div class="ctrl-row">
-  <div class="ctrl-label">총 배차수량</div>
+  <div class="ctrl-label">이번 회차 배차량</div>
   <div class="ctrl-right">
     <button class="btn btn-minus" onclick="adj('total',-1)">−</button>
-    <div class="ctrl-val" id="total-val">50대</div>
+    <div class="ctrl-val" id="total-val">15대</div>
     <button class="btn btn-plus" onclick="adj('total',1)">+</button>
   </div>
 </div>
+<div class="ctrl-row" style="padding:8px 12px;">
+  <div class="ctrl-label" style="display:flex;align-items:center;gap:6px;">
+    <span id="mg-toggle" class="excl-toggle on" onclick="toggleMinGuard()" style="cursor:pointer;"><div class="knob"></div></span>
+    <span>존별 최소 보장</span>
+  </div>
+  <div class="ctrl-right">
+    <button class="btn btn-minus" onclick="adjMinGuard(-1)">−</button>
+    <div class="ctrl-val" id="mg-val">2대</div>
+    <button class="btn btn-plus" onclick="adjMinGuard(1)">+</button>
+  </div>
+</div>
+<div id="round-summary" style="font-size:11px;color:#666;background:#F5F7FA;border-radius:8px;padding:7px 11px;margin-bottom:8px;"></div>
 <button class="apply-btn" onclick="applyInputs()">현재수량 반영하기</button>
 
 <!-- 요약 -->
 <div class="metric-grid" style="margin-top:10px;">
-  <div class="metric"><div class="metric-label">선택포인트</div><div class="metric-value" id="m-spot">-</div></div>
-  <div class="metric"><div class="metric-label">B존</div><div class="metric-value" style="color:#0F6E56" id="m-b">-</div></div>
-  <div class="metric"><div class="metric-label">A존</div><div class="metric-value" style="color:#185FA5" id="m-a">-</div></div>
+  <div class="metric"><div class="metric-label">배차 포인트</div><div class="metric-value" id="m-spot">-</div></div>
+  <div class="metric"><div class="metric-label">이번 회차</div><div class="metric-value" style="color:#185FA5" id="m-b">-</div></div>
+  <div class="metric"><div class="metric-label">예상 추가이용</div><div class="metric-value" style="color:#0F6E56" id="m-a">-</div></div>
   <div class="metric"><div class="metric-label">달성율</div><div class="metric-value" id="m-pct">-</div></div>
 </div>
 
 <div class="legend">
-  <span><span class="legend-dot" style="background:#1D9E75;"></span>B존 ~100%</span>
-  <span><span class="legend-dot" style="background:#378ADD;"></span>A존 ~100%</span>
-  <span><span class="legend-dot" style="background:#F59E0B;"></span>100~110%</span>
-  <span><span class="legend-dot" style="background:#eee;"></span>90%↑ 배차제외</span>
+  <span><span class="legend-dot" style="background:#DC2626;"></span>한계이용 0.5↑ 최우선</span>
+  <span><span class="legend-dot" style="background:#D97706;"></span>0.3~0.5</span>
+  <span><span class="legend-dot" style="background:#9CA3AF;"></span>0.3↓ 포화(후순위)</span>
+  <span><span class="legend-dot" style="background:#DBEAFE;"></span>최소보장</span>
 </div>
 
 <table>
@@ -160,6 +177,8 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
   <tbody id="table-body"></tbody>
 </table>
 <div class="comment" id="comment"></div>
+<button class="commit-btn" onclick="commitRound()">✓ 이번 회차 확정 · 다음 회차로</button>
+<button class="reset-btn" onclick="resetRounds()">오늘 회차 기록 초기화</button>
 
 <!-- DB 저장 섹션 -->
 <div style="margin-top:14px;">
@@ -259,7 +278,9 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyz1jsjXBxDpU01opnhX1W447B5pDHtE3ZmyYpwcmRt5UKXfoLKadjeEGkUZKPbwW3B/exec';
 
-let spots=6, budget=50;
+let round=1, budget=15;
+let minGuard=2, minGuardOn=true;   // 존별 최소 보장 재고
+let roundLog={};   // {1:{존:대수}, 2:{...}, 3:{...}}
 const excluded=new Set();
 
 // 수리 / 배터리 데이터 저장소
@@ -267,73 +288,136 @@ let repairData = [];
 let batData = [];
 
 const bPoints=[
-  {name:'힐스테이트',   zone:'B',opt:12,cur:7, type:'mixed'},
-  {name:'이편한세상',   zone:'B',opt:20,cur:17,type:'mixed'},
-  {name:'송도국제학교', zone:'B',opt:15,cur:13,type:'mixed'},
-  {name:'더샵마스터뷰', zone:'B',opt:15,cur:13,type:'mixed'},   // Jun-1 수정: inflow→mixed
-  {name:'지식정보단지', zone:'B',opt:20,cur:17,type:'consume'},
-  {name:'라이크홈',     zone:'B',opt:17,cur:16,type:'consume'},
+  {name:'힐스테이트',   zone:'B',opt:5, cur:0,marg:0.32,sat:15},
+  {name:'이편한세상',   zone:'B',opt:8, cur:0,marg:0.27,sat:20},
+  {name:'송도국제학교', zone:'B',opt:8, cur:0,marg:0.14,sat:16},
+  {name:'더샵마스터뷰', zone:'B',opt:8, cur:0,marg:0.20,sat:17},
+  {name:'지식정보단지', zone:'B',opt:10,cur:0,marg:0.43,sat:20},
+  {name:'라이크홈',     zone:'B',opt:10,cur:0,marg:0.25,sat:18},
 ];
 const aPoints=[
-  {name:'인천대1번',    zone:'A',opt:18,cur:9, type:'mixed'},
-  {name:'송도시외버스', zone:'A',opt:15,cur:7, type:'consume'},
-  {name:'인천대2번',    zone:'A',opt:15,cur:8, type:'consume'},
-  {name:'테라스정원',   zone:'A',opt:20,cur:12,type:'consume'},
-  {name:'산책정원',     zone:'A',opt:20,cur:12,type:'consume'},
-  {name:'센트럴파크',   zone:'A',opt:12,cur:8, type:'consume'},
-  {name:'타임스페이스', zone:'A',opt:15,cur:14,type:'consume'},
-];;(function(){/*HASH_OPT_OVERRIDE*/try{var h=(location.hash||'').slice(1);if(!h)return;var v=new URLSearchParams(h).get('opt');if(!v)return;var om=JSON.parse(v);[].concat(bPoints,aPoints).forEach(function(p){if(om[p.name]!=null)p.opt=+om[p.name];});}catch(e){}})();
+  {name:'인천대1번',    zone:'A',opt:20,cur:0,marg:0.80,sat:18},
+  {name:'송도시외버스', zone:'A',opt:15,cur:0,marg:0.33,sat:16},
+  {name:'인천대2번',    zone:'A',opt:20,cur:0,marg:0.71,sat:22},
+  {name:'테라스정원',   zone:'A',opt:15,cur:0,marg:0.17,sat:18},
+  {name:'산책정원',     zone:'A',opt:15,cur:0,marg:0.35,sat:19},
+  {name:'센트럴파크',   zone:'A',opt:10,cur:0,marg:0.55,sat:10},
+  {name:'타임스페이스', zone:'A',opt:10,cur:0,marg:0.81,sat:14},
+];
 const all=[...bPoints,...aPoints];
-const optSum=all.reduce((s,p)=>s+p.opt,0);
+let optSum=all.reduce((s,p)=>s+p.opt,0);
 
 // ─── URL 해시에서 배차 + 수리 데이터 파싱 ───────────────────────
 function parseHash(){
-  const hash = location.hash.slice(1);
-  if(!hash) return;
-  const params = new URLSearchParams(hash);
+  const raw = location.hash.slice(1);
+  if(!raw){ hashDiag('해시 없음 — 수동 입력 모드'); return; }
 
-  // 배차 존 데이터
+  let params;
+  try{ params = new URLSearchParams(raw); }
+  catch(e){ hashDiag('해시 파싱 실패: '+e.message, true); return; }
+
+  const seen=[], missed=[];
+
+  // ── (A) 적정수량 override: opt / opts / required 아무거나 허용 ──
+  const optRaw = params.get('opt') || params.get('opts') || params.get('required');
+  if(optRaw){
+    try{
+      const om = JSON.parse(optRaw);
+      all.forEach(p=>{ if(om[p.name]!=null && !isNaN(+om[p.name])) p.opt = +om[p.name]; });
+      optSum = all.reduce((s,p)=>s+p.opt,0);
+    }catch(e){ hashDiag('opt JSON 파싱 실패', true); }
+  }
+
+  // ── (B) 현재수량: 3가지 형식 모두 허용 ──
   let anyZone = false;
-  all.forEach(p=>{
-    const v = params.get(p.name);
-    if(v !== null){
-      const n = parseInt(v);
-      if(!isNaN(n) && n >= 0){
-        p.cur = n;
-        const el = document.getElementById('inp-'+p.name);
-        if(el) el.value = n;
-        anyZone = true;
-      }
-    }
-  });
+  const setCur = (name, v)=>{
+    const p = all.find(x=>x.name===name);
+    if(!p) { missed.push(name); return; }
+    const n = parseInt(v);
+    if(isNaN(n) || n<0) return;
+    p.cur = n;
+    const el = document.getElementById('inp-'+p.name);
+    if(el) el.value = n;
+    seen.push(name);
+    anyZone = true;
+  };
 
-  // 수리 데이터
+  // 형식1: 존이름=수량  (기존)
+  all.forEach(p=>{ const v=params.get(p.name); if(v!==null) setCur(p.name, v); });
+
+  // 형식2: zones={"힐스테이트":5,...}  또는 cur={...}
+  const zRaw = params.get('zones') || params.get('cur') || params.get('current');
+  if(zRaw){
+    try{
+      const zm = JSON.parse(zRaw);
+      Object.keys(zm).forEach(k=>{
+        const v = (zm[k] && typeof zm[k]==='object')
+          ? (zm[k].cur ?? zm[k].current ?? zm[k].available ?? zm[k].available_device_count)
+          : zm[k];
+        setCur(k, v);
+      });
+    }catch(e){ hashDiag('zones JSON 파싱 실패', true); }
+  }
+
+  // 형식3: data=[{name,cur,opt}, ...]
+  const dRaw = params.get('data');
+  if(dRaw){
+    try{
+      JSON.parse(dRaw).forEach(o=>{
+        const nm = o.name || o.zone || o.zoneName;
+        if(o.opt!=null){ const p=all.find(x=>x.name===nm); if(p) p.opt=+o.opt; }
+        setCur(nm, o.cur ?? o.current ?? o.available ?? o.available_device_count);
+      });
+      optSum = all.reduce((s,p)=>s+p.opt,0);
+    }catch(e){ hashDiag('data JSON 파싱 실패', true); }
+  }
+
+  // ── (C) 수리 / 배터리 ──
   const repairJson = params.get('repair');
   if(repairJson){
     try{ repairData = JSON.parse(repairJson); }catch(e){}
     const rc = document.getElementById('repair-count');
     if(rc) rc.value = repairData.length;
   }
-
-  // 배터리 데이터
   const batJson = params.get('battery');
-  if(batJson){
-    try{ batData = JSON.parse(batJson); }catch(e){}
-  }
-
+  if(batJson){ try{ batData = JSON.parse(batJson); }catch(e){} }
   if(repairJson || batJson) renderRepair();
 
+  // ── (D) 회차 복원 ──
+  const r = parseInt(params.get('round'));
+  if(!isNaN(r) && r>=1 && r<=3) round = r;
+
+  // ── (E) 진단 배너 ──
   if(anyZone){
-    update(); updateCurTotal();
-    // 북마크릿으로 데이터 받으면 입력 패널 자동 접기
+    const total = all.reduce((s,p)=>s+p.cur,0);
+    let msg = `✓ ${seen.length}/13개 존 수신 · 현재수량 합계 ${total}대 · 적정 ${optSum}대`;
+    const notSeen = all.filter(p=>!seen.includes(p.name)).map(p=>p.name);
+    if(notSeen.length) msg += `<br><span style="color:#DC2626;">⚠ 미수신: ${notSeen.join(', ')}</span>`;
+    if(missed.length)  msg += `<br><span style="color:#DC2626;">⚠ 이름 불일치: ${[...new Set(missed)].join(', ')}</span>`;
+    hashDiag(msg, notSeen.length>0 || missed.length>0);
+
+    setRound(round);
+    updateCurTotal();
     const panel=document.getElementById('input-panel');
     const arrow=document.getElementById('input-arrow');
     if(panel){ panel.style.display='none'; arrow.style.transform='rotate(180deg)'; }
     const badge=document.getElementById('cur-total-badge');
     if(badge) badge.style.display='';
+  } else {
+    hashDiag('⚠ 존 수신 0건 — 북마클릿 형식 확인 필요<br><span style="font-size:10px;color:#888;">받은 키: '+[...params.keys()].join(', ')+'</span>', true);
   }
 
   history.replaceState(null,'',location.pathname);
+}
+
+// 수신 진단 배너
+function hashDiag(msg, warn){
+  const el=document.getElementById('hash-diag');
+  if(!el) return;
+  el.style.display='block';
+  el.style.background = warn ? '#FEF2F2' : '#ECFDF5';
+  el.style.color      = warn ? '#991B1B' : '#065F46';
+  el.innerHTML = msg;
 }
 
 // ─── 수리현황 렌더링 ─────────────────────────────────────────────
@@ -517,8 +601,8 @@ function applyInputs(){
 }
 
 function adj(type,delta){
-  if(type==='spot'){spots=Math.min(11,Math.max(1,spots+delta));document.getElementById('spot-val').textContent=spots+'곳';}
-  else{budget=Math.min(100,Math.max(0,budget+delta));document.getElementById('total-val').textContent=budget+'대';}
+  budget=Math.min(60,Math.max(0,budget+delta));
+  document.getElementById('total-val').textContent=budget+'대';
   update();
 }
 
@@ -527,124 +611,201 @@ function getToday(){
   return d.toISOString().substring(0,10);
 }
 
+function toggleMinGuard(){
+  minGuardOn = !minGuardOn;
+  document.getElementById('mg-toggle').className = 'excl-toggle ' + (minGuardOn?'on':'off');
+  update();
+}
+
+function adjMinGuard(d){
+  minGuard = Math.min(6, Math.max(0, minGuard+d));
+  document.getElementById('mg-val').textContent = minGuard+'대';
+  update();
+}
+
+function setRound(r){
+  round=r;
+  for(let i=1;i<=3;i++){
+    document.getElementById('rt-'+i).className = (i===r)?'round-tab active':'round-tab';
+  }
+  update();
+}
+
+function loadRoundLog(){
+  try{ roundLog = JSON.parse(localStorage.getItem('rounds_'+getToday())||'{}'); }
+  catch(e){ roundLog = {}; }
+}
+
+// 이번 회차 배차안을 확정 저장 (누적)
+function commitRound(){
+  const plan={};
+  all.forEach(p=>{ if(p.dispatch>0) plan[p.name]=p.dispatch; });
+  roundLog[round]=plan;
+  localStorage.setItem('rounds_'+getToday(), JSON.stringify(roundLog));
+  // 배차분을 현재수량에 반영 → 다음 회차 계산 준비
+  all.forEach(p=>{
+    p.cur += p.dispatch;
+    const el=document.getElementById('inp-'+p.name);
+    if(el) el.value = p.cur;
+  });
+  if(round<3) setRound(round+1); else update();
+  updateCurTotal();
+}
+
+function resetRounds(){
+  if(!confirm('오늘 회차 기록을 모두 지웁니다. 진행할까요?')) return;
+  roundLog={}; localStorage.removeItem('rounds_'+getToday());
+  setRound(1);
+}
+
 function update(){
   all.forEach(p=>{
     const el=document.getElementById('inp-'+p.name);
     if(el){const v=parseInt(el.value);if(!isNaN(v)&&v>=0)p.cur=v;}
-    p.curPct=p.cur/p.opt;
-    p.need100=Math.max(0,p.opt-p.cur);
-    p.need110=Math.max(0,Math.floor(p.opt*1.1)-p.cur);
-    p.needsDispatch = p.curPct < 0.9;
-    // Jun-1 실측 26일 데이터 기반 avgConsume
-    const avgConsume = {
-      '힐스테이트':3,'이편한세상':2,'송도국제학교':3,'더샵마스터뷰':5,'지식정보단지':11,'라이크홈':6,
-      '인천대1번':7,'송도시외버스':10,'인천대2번':10,'테라스정원':9,'산책정원':8,'센트럴파크':10,'타임스페이스':12
-    };
-    const consume = avgConsume[p.name] || 5;
-    const shortageRatio = p.need100/p.opt;
-    if(p.zone==='B'){
-      p.score = p.needsDispatch ? shortageRatio*100 : -1;
-    } else {
-      p.score = p.needsDispatch ? (shortageRatio*50 + (20-consume)*3) : -1;
-    }
+    p.curPct = p.opt>0 ? p.cur/p.opt : 0;
+    // 상한: 포화재고와 적정×1.1 중 작은 값 (카카오 적정 신호 존중 + 과잉 방지)
+    p.cap = Math.min(p.sat, Math.round(p.opt*1.1));
+    p.room = Math.max(0, p.cap - p.cur);
+    p.dispatch = 0;
+    p.guarded = false;
   });
-  const curSum=all.reduce((s,p)=>s+p.cur,0);
 
-  const bMust = bPoints.filter(p=>!excluded.has(p.name) && p.needsDispatch);
-  const bSel  = new Set(bMust.map(p=>p.name));
+  // ── 핵심 알고리즘: 대당 한계이용(marg) 최대 우선 그리디 배분 ──
+  // 1대씩 배분하며, 한계이용이 가장 높은 존부터 채운다.
+  // 동점이면 달성율 낮은 곳 우선.
+  let rem = budget;
+  const pool = all.filter(p=>!excluded.has(p.name));
 
-  const aDispatchable = aPoints
-    .filter(p=>!excluded.has(p.name) && p.needsDispatch)
-    .sort((a,b)=>b.score-a.score);
-  const aSlots = Math.min(spots, aDispatchable.length);
-  const aSel   = new Set(aDispatchable.slice(0,aSlots).map(p=>p.name));
+  // 0단계: 최소 보장 — 재고가 minGuard 미만인 존을 우선 채운다.
+  //         (한계이용 낮은 존이 완전 방치되는 것을 방지)
+  if(minGuardOn && minGuard>0){
+    // 부족분이 적은 존부터 = 적은 비용으로 보장 달성
+    const needy = pool
+      .filter(p=>p.cur < Math.min(minGuard, p.cap))
+      .sort((a,b)=>(a.cap>0?(Math.min(minGuard,a.cap)-a.cur):0)-(b.cap>0?(Math.min(minGuard,b.cap)-b.cur):0));
+    needy.forEach(p=>{
+      const want = Math.min(minGuard, p.cap) - p.cur;
+      const give = Math.min(want, rem);
+      if(give>0){ p.dispatch += give; rem -= give; p.guarded = true; }
+    });
+  }
 
-  all.forEach(p=>p.dispatch=0);
-  let rem=budget;
+  // 1단계: 한계이용 최대 우선 그리디
+  while(rem > 0){
+    let best=null, bv=-1, bfill=99;
+    pool.forEach(p=>{
+      if(p.cur + p.dispatch >= p.cap) return;
+      const fill = (p.cur+p.dispatch)/(p.opt||1);
+      if(p.marg > bv || (p.marg===bv && fill < bfill)){
+        bv=p.marg; bfill=fill; best=p;
+      }
+    });
+    if(!best) break;
+    best.dispatch += 1;
+    rem -= 1;
+  }
 
-  bPoints.filter(p=>bSel.has(p.name)).forEach(p=>{const g=Math.min(p.need100,rem);p.dispatch=g;rem-=g;});
-  if(rem>0) bPoints.filter(p=>bSel.has(p.name)).forEach(p=>{const e=Math.min(p.need110-p.dispatch,rem);if(e>0){p.dispatch+=e;rem-=e;}});
-  if(rem>0) aPoints.filter(p=>aSel.has(p.name)).forEach(p=>{const g=Math.min(p.need100,rem);p.dispatch=g;rem-=g;});
-  if(rem>0) aPoints.filter(p=>aSel.has(p.name)).forEach(p=>{const e=Math.min(p.need110-p.dispatch,rem);if(e>0){p.dispatch+=e;rem-=e;}});
+  const sel = new Set(all.filter(p=>p.dispatch>0).map(p=>p.name));
+  const curSum   = all.reduce((s,p)=>s+p.cur,0);
+  const tD       = all.reduce((s,p)=>s+p.dispatch,0);
+  const tB       = bPoints.reduce((s,p)=>s+p.dispatch,0);
+  const tA       = aPoints.reduce((s,p)=>s+p.dispatch,0);
+  const gain     = all.reduce((s,p)=>s+p.dispatch*p.marg,0);
+  const afterSum = curSum + tD;
+  const aPct     = Math.round(afterSum/optSum*100);
+  const pCol     = aPct>=100?'#059669':aPct>=85?'#D97706':'#DC2626';
 
-  const tB=bPoints.reduce((s,p)=>s+p.dispatch,0);
-  const tA=aPoints.reduce((s,p)=>s+p.dispatch,0);
-  const tD=tB+tA;
-  const afterSum=all.reduce((s,p)=>s+p.cur+p.dispatch,0);
-  const aPct=Math.round(afterSum/optSum*100);
-  const pCol=aPct>=100?'#059669':aPct>=85?'#D97706':'#DC2626';
+  document.getElementById('m-spot').textContent = sel.size+'곳';
+  document.getElementById('m-b').textContent    = tD+'대';
+  document.getElementById('m-a').textContent    = '+'+gain.toFixed(1);
+  document.getElementById('m-pct').textContent  = aPct+'%';
+  document.getElementById('m-pct').style.color  = pCol;
 
-  document.getElementById('m-spot').textContent=bSel.size+'B+'+aSel.size+'A';
-  document.getElementById('m-b').textContent=tB+'대';
-  document.getElementById('m-a').textContent=tA+'대';
-  document.getElementById('m-pct').textContent=aPct+'%';
-  document.getElementById('m-pct').style.color=pCol;
+  // 회차 누적 요약
+  let done=0, doneTxt=[];
+  for(let i=1;i<=3;i++){
+    if(roundLog[i]){
+      const n=Object.values(roundLog[i]).reduce((s,v)=>s+v,0);
+      done+=n; doneTxt.push(i+'회차 '+n+'대');
+    }
+  }
+  document.getElementById('round-summary').innerHTML =
+    `<b>${round}회차</b> 계획 · 오늘 누적 <b>${done}대</b>`
+    + (doneTxt.length?' ('+doneTxt.join(' / ')+')':' (아직 확정된 회차 없음)')
+    + ` · <span style="color:#0F6E56;font-weight:700;">예상 추가이용 +${gain.toFixed(1)}대</span>`;
 
+  // ── 표: 한계이용 순 단일 랭킹 ──
   const tb=document.getElementById('table-body');
   tb.innerHTML='';
 
-  [['B',bPoints,bSel,'#0F6E56','#1D9E75'],['A',aPoints,aSel,'#185FA5','#378ADD']].forEach(([z,pts,sel,zC,bC])=>{
-    const allZonePts=z==='B'?bPoints:aPoints;
-    const zOpt=allZonePts.reduce((s,p)=>s+p.opt,0);
-    const zCur=allZonePts.reduce((s,p)=>s+p.cur,0);
-    const zD=allZonePts.reduce((s,p)=>s+p.dispatch,0);
-    const zAfter=allZonePts.reduce((s,p)=>s+p.cur+p.dispatch,0);
-    const zPct=Math.round(zAfter/zOpt*100);
-    const zPC=zPct>=100?'#059669':zPct>=85?'#D97706':'#DC2626';
-    const zoneNote=z==='B'?'90%↓ 전체 무조건 배차':'포인트 수 설정 기준';
-    tb.innerHTML+=`<tr class="zone-hd"><td colspan="6">${z}존 — ${sel.size}곳 (${zoneNote})</td></tr>`;
+  const sorted=[
+    ...all.filter(p=>sel.has(p.name)).sort((a,b)=>b.marg-a.marg),
+    ...all.filter(p=>!sel.has(p.name)&&!excluded.has(p.name)).sort((a,b)=>b.marg-a.marg),
+    ...all.filter(p=>excluded.has(p.name)),
+  ];
 
-    const sorted=[
-      ...pts.filter(p=>sel.has(p.name)).sort((a,b)=>b.score-a.score),
-      ...pts.filter(p=>!sel.has(p.name)&&!excluded.has(p.name)&&!p.needsDispatch),
-      ...pts.filter(p=>!sel.has(p.name)&&!excluded.has(p.name)&&p.needsDispatch),
-      ...pts.filter(p=>excluded.has(p.name)),
-    ];
+  let html='', rank=1;
+  html+=`<tr class="zone-hd"><td colspan="6">배차 순위 — 대당 한계이용 기준 (${budget}대 배분)</td></tr>`;
+  sorted.forEach(p=>{
+    const isExcl = excluded.has(p.name);
+    const isSel  = sel.has(p.name);
+    const isFull = !isExcl && !isSel && p.room<=0;
+    const ac = p.cur+p.dispatch;
+    const ap = p.opt>0?Math.round(ac/p.opt*100):0;
+    const nW = Math.round(Math.min(100,ap)/110*100);
+    const oW = ap>100?Math.round(Math.min(10,ap-100)/110*100):0;
+    const zC = p.zone==='B'?'#0F6E56':'#185FA5';
+    const bC = p.zone==='B'?'#1D9E75':'#378ADD';
+    const pC = ap>=100?'#059669':ap>=85?'#D97706':'#DC2626';
+    // 한계이용 등급
+    const mC = p.marg>=0.5?'#DC2626':p.marg>=0.3?'#D97706':'#9CA3AF';
+    const rowClass = isExcl?'excluded-row':(isSel?'':'unselected');
+    const exclBadge = isExcl?'<span class="mini-badge" style="background:#FEE2E2;color:#991B1B;">제외</span> ':'';
+    const fullBadge = isFull?'<span class="mini-badge" style="background:#E5E7EB;color:#4B5563;">포화</span> ':'';
+    const gBadge = p.guarded?'<span class="mini-badge" style="background:#DBEAFE;color:#1E40AF;">보장</span> ':'';
+    const rk = isSel
+      ? `<span class="rank" style="background:${p.zone==='A'?'#DBEAFE':'#D1FAE5'};color:${zC};">${rank++}</span>`
+      : `<span style="display:inline-block;width:20px;"></span>`;
 
-    let rank=1;
-    sorted.forEach(p=>{
-      const isExcl=excluded.has(p.name);
-      const isSel=sel.has(p.name);
-      const isSkip=!p.needsDispatch&&!isExcl;
-      const ac=p.cur+p.dispatch;
-      const ap=Math.round(ac/p.opt*100);
-      const nW=Math.round(Math.min(100,ap)/110*100);
-      const oW=ap>100?Math.round(Math.min(10,ap-100)/110*100):0;
-      const dC=p.dispatch>0?zC:'#bbb';
-      const pC=ap>=100?'#059669':ap>=85?'#D97706':'#DC2626';
-      const tl=p.type==='inflow'?'유입':p.type==='mixed'?'혼합':'소비';
-      const tc=p.type==='inflow'?'inflow':p.type==='mixed'?'mixed':'consume';
-      const rowClass=isExcl?'excluded-row':isSkip?'skip-row':isSel?'':'unselected';
-      const skipBadge=isSkip?'<span style="font-size:9px;background:#E0F2E9;color:#0F6E56;padding:1px 4px;border-radius:3px;font-weight:700;">90%↑</span> ':'';
-      const exclBadge=isExcl?'<span style="font-size:9px;background:#FEE2E2;color:#991B1B;padding:1px 4px;border-radius:3px;font-weight:700;">제외</span> ':'';
-      const rk=isSel
-        ?`<span class="rank" style="background:${z==='A'?'#DBEAFE':'#D1FAE5'};color:${zC};">${rank++}</span>`
-        :`<span style="display:inline-block;width:20px;"></span>`;
-
-      tb.innerHTML+=`<tr class="${rowClass}">
-        <td>${rk}${skipBadge}${exclBadge}<span style="font-weight:${isSel?'700':'400'}">${p.name}</span> <span class="badge ${tc}">${tl}</span></td>
-        <td style="text-align:center;color:#888;">${p.opt}</td>
-        <td style="text-align:center;">${p.cur}</td>
-        <td style="text-align:center;font-weight:700;color:${dC}">${p.dispatch>0?'+'+p.dispatch:isSkip?'✓':'-'}</td>
-        <td style="text-align:center;font-weight:${isSel?'700':'400'}">${ac}${ap>=110?'▲':''}</td>
-        <td><div style="display:flex;align-items:center;gap:3px;">
-          <div class="bar-wrap">
-            <div style="position:absolute;top:0;left:0;width:${nW}%;height:5px;background:${bC};opacity:${isSel?1:0.3};"></div>
-            ${oW>0?`<div style="position:absolute;top:0;left:${nW}%;width:${oW}%;height:5px;background:#F59E0B;"></div>`:''}
-          </div>
-          <span style="font-size:11px;font-weight:700;color:${pC};min-width:28px;">${ap}%</span>
-        </div></td>
-      </tr>`;
-    });
-    tb.innerHTML+=`<tr class="subtotal"><td>소계</td><td style="text-align:center;color:#888;">${zOpt}</td><td style="text-align:center;">${zCur}</td><td style="text-align:center;color:${zC}">+${zD}</td><td style="text-align:center;">${zAfter}</td><td style="color:${zPC};font-weight:700;">${zPct}%</td></tr>`;
+    html+=`<tr class="${rowClass}">
+      <td>${rk}${exclBadge}${fullBadge}${gBadge}<span style="color:${zC};font-weight:700;font-size:10px;">[${p.zone}]</span><span style="font-weight:${isSel?'700':'400'}">${p.name}</span>
+        <span class="badge" style="background:${mC}1A;color:${mC};">${p.marg.toFixed(2)}</span></td>
+      <td style="text-align:center;color:#888;">${p.opt}</td>
+      <td style="text-align:center;">${p.cur}</td>
+      <td style="text-align:center;font-weight:700;color:${p.dispatch>0?zC:'#bbb'}">${p.dispatch>0?'+'+p.dispatch:'-'}</td>
+      <td style="text-align:center;font-weight:${isSel?'700':'400'}">${ac}${ap>=110?'▲':''}</td>
+      <td><div style="display:flex;align-items:center;gap:3px;">
+        <div class="bar-wrap">
+          <div style="position:absolute;top:0;left:0;width:${nW}%;height:5px;background:${bC};opacity:${isSel?1:0.3};"></div>
+          ${oW>0?`<div style="position:absolute;top:0;left:${nW}%;width:${oW}%;height:5px;background:#F59E0B;"></div>`:''}
+        </div>
+        <span style="font-size:11px;font-weight:700;color:${pC};min-width:28px;">${ap}%</span>
+      </div></td>
+    </tr>`;
   });
 
+  // 존별 소계
+  [['B',bPoints,'#0F6E56'],['A',aPoints,'#185FA5']].forEach(([z,pts,zC])=>{
+    const zOpt=pts.reduce((s,p)=>s+p.opt,0);
+    const zCur=pts.reduce((s,p)=>s+p.cur,0);
+    const zD  =pts.reduce((s,p)=>s+p.dispatch,0);
+    const zAf =zCur+zD;
+    const zPct=Math.round(zAf/zOpt*100);
+    const zPC=zPct>=100?'#059669':zPct>=85?'#D97706':'#DC2626';
+    html+=`<tr class="subtotal"><td>${z}존 소계</td><td style="text-align:center;color:#888;">${zOpt}</td><td style="text-align:center;">${zCur}</td><td style="text-align:center;color:${zC}">+${zD}</td><td style="text-align:center;">${zAf}</td><td style="color:${zPC};font-weight:700;">${zPct}%</td></tr>`;
+  });
+
+  const gUsed = all.reduce((s,p)=>s+(p.guarded?p.dispatch:0),0);
   const lo=budget-tD;
-  tb.innerHTML+=`<tr class="grandtotal"><td>전체</td><td style="text-align:center;color:#888;">${optSum}</td><td style="text-align:center;">${curSum}</td><td style="text-align:center;">+${tD}</td><td style="text-align:center;">${curSum+tD}</td><td style="color:${pCol}">${aPct}%</td></tr>`;
-  document.getElementById('comment').textContent=
-    `B존 ${bSel.size}곳(무조건) + A존 ${aSel.size}곳 · B ${tB}대 · A ${tA}대 · 달성율 ${aPct}%`
-    +(lo>0?` · 미배분 ${lo}대`:'')
-    +(excluded.size>0?` · 제외 ${excluded.size}곳`:'');
+  html+=`<tr class="grandtotal"><td>전체</td><td style="text-align:center;color:#888;">${optSum}</td><td style="text-align:center;">${curSum}</td><td style="text-align:center;">+${tD}</td><td style="text-align:center;">${curSum+tD}</td><td style="color:${pCol}">${aPct}%</td></tr>`;
+  tb.innerHTML=html;
+
+  document.getElementById('comment').innerHTML=
+    `<b>${round}회차 ${tD}대</b> → ${sel.size}곳 · B ${tB}대 / A ${tA}대 · 예상 추가이용 <b>+${gain.toFixed(1)}대</b> · 달성율 ${aPct}%`
+    +(gUsed>0?` · 최소보장 ${gUsed}대`:'')
+    +(lo>0?` · 미배분 ${lo}대(전 존 포화)`:'')
+    +(excluded.size>0?` · 제외 ${excluded.size}곳`:'')
+    +`<br><span style="color:#888;">숫자 배지 = 대당 한계이용(1대 넣으면 몇 대가 더 이용되는가) · 3~5월 실측 회귀</span>`;
 }
 
 // ─── 저장 함수들 ─────────────────────────────────────────────────
@@ -714,11 +875,19 @@ async function checkMorningSaved(){
   }
 }
 
+loadRoundLog();
 buildInputs();
 buildExcludes();
 update();
 checkMorningSaved();
 parseHash();
 </script>
+<div style="margin-top:20px;padding:10px;background:#F5F7FA;border-radius:8px;font-size:10px;color:#999;line-height:1.6;">
+  <b>파일 위치</b><br>
+  배포: https://bada43131-ai.github.io/dispatch/dispatch_v4.html<br>
+  저장소: github.com/bada43131-ai/dispatch<br>
+  생성본: /mnt/user-data/outputs/dispatch_v4.html<br>
+  <b>룰 버전</b> 2026-07-12 · 한계이용(marginal use) 기준 · 3~5월 실측 26일 회귀
+</div>
 </body>
 </html>
