@@ -142,6 +142,20 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
     <button class="btn btn-plus" onclick="adjMinGuard(1)">+</button>
   </div>
 </div>
+<div class="ctrl-row" style="padding:8px 12px;">
+  <div class="ctrl-label" style="display:flex;align-items:center;gap:6px;">
+    <span id="rp-toggle" class="excl-toggle on" onclick="toggleRoundPolicy()" style="cursor:pointer;"><div class="knob"></div></span>
+    <span>회차별 정책 <span style="color:#888;font-weight:400;">(1·2회차 거점 → 3회차 소형)</span></span>
+  </div>
+</div>
+<div class="ctrl-row" style="padding:8px 12px;" id="mgcap-row">
+  <div class="ctrl-label" style="padding-left:34px;color:#888;">└ 보장 상한 <span style="font-size:10px;">(3회차엔 무제한)</span></div>
+  <div class="ctrl-right">
+    <button class="btn btn-minus" onclick="adjMgCap(-1)">−</button>
+    <div class="ctrl-val" id="mgcap-val">5대</div>
+    <button class="btn btn-plus" onclick="adjMgCap(1)">+</button>
+  </div>
+</div>
 <div id="round-summary" style="font-size:11px;color:#666;background:#F5F7FA;border-radius:8px;padding:7px 11px;margin-bottom:8px;"></div>
 <button class="apply-btn" onclick="applyInputs()">현재수량 반영하기</button>
 
@@ -158,6 +172,7 @@ td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle;overflo
   <span><span class="legend-dot" style="background:#D97706;"></span>0.3~0.5</span>
   <span><span class="legend-dot" style="background:#9CA3AF;"></span>0.3↓ 포화(후순위)</span>
   <span><span class="legend-dot" style="background:#DBEAFE;"></span>최소보장</span>
+  <span><span class="legend-dot" style="background:#FEF3C7;"></span>거점(적정15↑)</span>
 </div>
 
 <table>
@@ -280,6 +295,9 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyz1jsjXBxDpU01opnhX
 
 let round=1, budget=15;
 let minGuard=2, minGuardOn=true;   // 존별 최소 보장 재고
+let mgCap=5;                       // 보장에 쓸 수 있는 최대 대수 (회차당)
+let roundPolicy=true;              // 회차별 정책: 1·2회차=거점 우선, 3회차=작은 곳 채우기
+const MAJOR_OPT=15;                // 거점 기준: 적정수량 15대 이상
 let roundLog={};   // {1:{존:대수}, 2:{...}, 3:{...}}
 const excluded=new Set();
 
@@ -614,12 +632,25 @@ function getToday(){
 function toggleMinGuard(){
   minGuardOn = !minGuardOn;
   document.getElementById('mg-toggle').className = 'excl-toggle ' + (minGuardOn?'on':'off');
+  document.getElementById('mgcap-row').style.display = minGuardOn ? '' : 'none';
   update();
 }
 
 function adjMinGuard(d){
   minGuard = Math.min(6, Math.max(0, minGuard+d));
   document.getElementById('mg-val').textContent = minGuard+'대';
+  update();
+}
+
+function toggleRoundPolicy(){
+  roundPolicy = !roundPolicy;
+  document.getElementById('rp-toggle').className = 'excl-toggle ' + (roundPolicy?'on':'off');
+  update();
+}
+
+function adjMgCap(d){
+  mgCap = Math.min(30, Math.max(0, mgCap+d));
+  document.getElementById('mgcap-val').textContent = mgCap+'대';
   update();
 }
 
@@ -670,39 +701,57 @@ function update(){
     p.guarded = false;
   });
 
-  // ── 핵심 알고리즘: 대당 한계이용(marg) 최대 우선 그리디 배분 ──
-  // 1대씩 배분하며, 한계이용이 가장 높은 존부터 채운다.
-  // 동점이면 달성율 낮은 곳 우선.
+  // ── 핵심 알고리즘 ──
+  // 회차별 정책 ON:
+  //   1·2회차 → 주요 거점(적정 15대↑ 5곳)에 한계이용 순 집중. 남으면 전체로 흘림.
+  //   3회차   → 최소보장(작은 곳)부터 채우고, 남으면 전체 한계이용 순.
+  // 회차별 정책 OFF: 항상 최소보장 → 전체 한계이용 순.
   let rem = budget;
-  const pool = all.filter(p=>!excluded.has(p.name));
+  const pool   = all.filter(p=>!excluded.has(p.name));
+  const majors = pool.filter(p=>p.opt >= MAJOR_OPT);
 
-  // 0단계: 최소 보장 — 재고가 minGuard 미만인 존을 우선 채운다.
-  //         (한계이용 낮은 존이 완전 방치되는 것을 방지)
-  if(minGuardOn && minGuard>0){
-    // 부족분이 적은 존부터 = 적은 비용으로 보장 달성
+  // 최소보장 실행 (예산 상한 mgCap, 한계이용 낮은 존부터)
+  const runGuarantee = ()=>{
+    if(!(minGuardOn && minGuard>0)) return;
+    // 회차 정책 ON의 3회차 = 소형 존 채우기가 목적이므로 상한 해제
+    let gBudget = (roundPolicy && round===3) ? rem : Math.min(mgCap, rem);
     const needy = pool
       .filter(p=>p.cur < Math.min(minGuard, p.cap))
-      .sort((a,b)=>(a.cap>0?(Math.min(minGuard,a.cap)-a.cur):0)-(b.cap>0?(Math.min(minGuard,b.cap)-b.cur):0));
+      .sort((a,b)=> (a.marg-b.marg) || ((Math.min(minGuard,a.cap)-a.cur)-(Math.min(minGuard,b.cap)-b.cur)) );
     needy.forEach(p=>{
+      if(gBudget<=0) return;
       const want = Math.min(minGuard, p.cap) - p.cur;
-      const give = Math.min(want, rem);
-      if(give>0){ p.dispatch += give; rem -= give; p.guarded = true; }
+      const give = Math.min(want, gBudget, rem);
+      if(give>0){ p.dispatch += give; rem -= give; gBudget -= give; p.guarded = true; }
     });
-  }
+  };
 
-  // 1단계: 한계이용 최대 우선 그리디
-  while(rem > 0){
-    let best=null, bv=-1, bfill=99;
-    pool.forEach(p=>{
-      if(p.cur + p.dispatch >= p.cap) return;
-      const fill = (p.cur+p.dispatch)/(p.opt||1);
-      if(p.marg > bv || (p.marg===bv && fill < bfill)){
-        bv=p.marg; bfill=fill; best=p;
-      }
-    });
-    if(!best) break;
-    best.dispatch += 1;
-    rem -= 1;
+  // 한계이용 최대 우선 그리디 (주어진 후보군 안에서)
+  const runGreedy = (cands)=>{
+    while(rem > 0){
+      let best=null, bv=-1, bfill=99;
+      cands.forEach(p=>{
+        if(p.cur + p.dispatch >= p.cap) return;
+        const fill = (p.cur+p.dispatch)/(p.opt||1);
+        if(p.marg > bv || (p.marg===bv && fill < bfill)){ bv=p.marg; bfill=fill; best=p; }
+      });
+      if(!best) break;
+      best.dispatch += 1;
+      rem -= 1;
+    }
+  };
+
+  if(roundPolicy){
+    if(round <= 2){
+      runGreedy(majors);   // 거점 먼저
+      runGreedy(pool);     // 거점이 다 차면 나머지로
+    } else {
+      runGuarantee();      // 3회차: 작은 곳부터 채우기
+      runGreedy(pool);
+    }
+  } else {
+    runGuarantee();
+    runGreedy(pool);
   }
 
   const sel = new Set(all.filter(p=>p.dispatch>0).map(p=>p.name));
@@ -729,8 +778,11 @@ function update(){
       done+=n; doneTxt.push(i+'회차 '+n+'대');
     }
   }
+  const polTxt = roundPolicy
+    ? (round<=2 ? '거점 집중 (적정 15대↑ 5곳)' : '소형 존 채우기 (최소보장)')
+    : '전체 한계이용 순';
   document.getElementById('round-summary').innerHTML =
-    `<b>${round}회차</b> 계획 · 오늘 누적 <b>${done}대</b>`
+    `<b>${round}회차</b> · <span style="color:#185FA5;font-weight:700;">${polTxt}</span> · 오늘 누적 <b>${done}대</b>`
     + (doneTxt.length?' ('+doneTxt.join(' / ')+')':' (아직 확정된 회차 없음)')
     + ` · <span style="color:#0F6E56;font-weight:700;">예상 추가이용 +${gain.toFixed(1)}대</span>`;
 
@@ -763,12 +815,13 @@ function update(){
     const exclBadge = isExcl?'<span class="mini-badge" style="background:#FEE2E2;color:#991B1B;">제외</span> ':'';
     const fullBadge = isFull?'<span class="mini-badge" style="background:#E5E7EB;color:#4B5563;">포화</span> ':'';
     const gBadge = p.guarded?'<span class="mini-badge" style="background:#DBEAFE;color:#1E40AF;">보장</span> ':'';
+    const mBadge = (p.opt>=MAJOR_OPT)?'<span class="mini-badge" style="background:#FEF3C7;color:#92400E;">거점</span> ':'';
     const rk = isSel
       ? `<span class="rank" style="background:${p.zone==='A'?'#DBEAFE':'#D1FAE5'};color:${zC};">${rank++}</span>`
       : `<span style="display:inline-block;width:20px;"></span>`;
 
     html+=`<tr class="${rowClass}">
-      <td>${rk}${exclBadge}${fullBadge}${gBadge}<span style="color:${zC};font-weight:700;font-size:10px;">[${p.zone}]</span><span style="font-weight:${isSel?'700':'400'}">${p.name}</span>
+      <td>${rk}${exclBadge}${fullBadge}${gBadge}${mBadge}<span style="color:${zC};font-weight:700;font-size:10px;">[${p.zone}]</span><span style="font-weight:${isSel?'700':'400'}">${p.name}</span>
         <span class="badge" style="background:${mC}1A;color:${mC};">${p.marg.toFixed(2)}</span></td>
       <td style="text-align:center;color:#888;">${p.opt}</td>
       <td style="text-align:center;">${p.cur}</td>
@@ -795,7 +848,10 @@ function update(){
     html+=`<tr class="subtotal"><td>${z}존 소계</td><td style="text-align:center;color:#888;">${zOpt}</td><td style="text-align:center;">${zCur}</td><td style="text-align:center;color:${zC}">+${zD}</td><td style="text-align:center;">${zAf}</td><td style="color:${zPC};font-weight:700;">${zPct}%</td></tr>`;
   });
 
-  const gUsed = all.reduce((s,p)=>s+(p.guarded?p.dispatch:0),0);
+  const gUsed  = all.reduce((s,p)=>s+(p.guarded?p.dispatch:0),0);
+  const gShort = (minGuardOn&&minGuard>0)
+    ? all.filter(p=>!excluded.has(p.name) && (p.cur+p.dispatch) < Math.min(minGuard,p.cap)).map(p=>p.name)
+    : [];
   const lo=budget-tD;
   html+=`<tr class="grandtotal"><td>전체</td><td style="text-align:center;color:#888;">${optSum}</td><td style="text-align:center;">${curSum}</td><td style="text-align:center;">+${tD}</td><td style="text-align:center;">${curSum+tD}</td><td style="color:${pCol}">${aPct}%</td></tr>`;
   tb.innerHTML=html;
@@ -803,6 +859,7 @@ function update(){
   document.getElementById('comment').innerHTML=
     `<b>${round}회차 ${tD}대</b> → ${sel.size}곳 · B ${tB}대 / A ${tA}대 · 예상 추가이용 <b>+${gain.toFixed(1)}대</b> · 달성율 ${aPct}%`
     +(gUsed>0?` · 최소보장 ${gUsed}대`:'')
+    +(gShort.length?` · <span style="color:#DC2626;">보장 미달 ${gShort.length}곳(다음 회차)</span>`:'')
     +(lo>0?` · 미배분 ${lo}대(전 존 포화)`:'')
     +(excluded.size>0?` · 제외 ${excluded.size}곳`:'')
     +`<br><span style="color:#888;">숫자 배지 = 대당 한계이용(1대 넣으면 몇 대가 더 이용되는가) · 3~5월 실측 회귀</span>`;
