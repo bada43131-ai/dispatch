@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>송도 배차 히트맵</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0E1116;color:#E7ECF3;padding:10px;max-width:680px;margin:0 auto;}
+.top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;}
+.title{font-size:15px;font-weight:800;letter-spacing:-.3px;}
+.clock{font-size:13px;font-weight:700;color:#7DD3FC;font-variant-numeric:tabular-nums;}
+.date{font-size:10px;color:#7A8699;margin-left:6px;font-weight:600;}
+
+.kpi{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px;}
+.k{background:#171C24;border:1px solid #232A35;border-radius:9px;padding:6px 3px;text-align:center;}
+.k-l{font-size:9px;color:#7A8699;margin-bottom:2px;}
+.k-v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;}
+
+.truck{display:flex;align-items:center;gap:8px;background:#171C24;border:1px solid #232A35;border-radius:10px;padding:7px 10px;margin-bottom:8px;}
+.truck-l{font-size:11px;color:#9AA7B8;font-weight:700;flex:1;}
+.tbtn{width:34px;height:32px;border:none;border-radius:7px;background:#2A3341;color:#E7ECF3;font-size:19px;font-weight:800;}
+.tbtn:active{background:#3B4757;}
+.tval{min-width:52px;text-align:center;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;}
+.left-pill{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;background:#1E3A2B;color:#6EE7A8;}
+
+#stale{font-size:11px;font-weight:700;color:#C4CEDB;background:#171C24;border:1px solid #232A35;border-radius:9px;padding:7px 10px;margin-bottom:8px;line-height:1.7;}
+#map{position:relative;width:100%;background:#0E1116;border-radius:12px;overflow:hidden;}
+.tile{position:absolute;border-radius:8px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;}
+.t-top{display:flex;align-items:center;gap:3px;min-width:0;}
+.lamp{border-radius:50%;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.45);}
+.lamp.crit{animation:blink 1.1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.t-name{font-weight:800;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t-num{font-weight:800;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-1px;}
+.t-den{font-weight:700;opacity:.62;}
+.t-sub{font-weight:700;opacity:.75;white-space:nowrap;}
+.t-last{display:flex;align-items:center;gap:3px;overflow:hidden;white-space:nowrap;opacity:.85;}
+.t-row{display:flex;align-items:center;gap:3px;}
+.rankb{font-weight:800;flex-shrink:0;opacity:.9;}
+.elb{flex-shrink:0;padding:1px 4px;border-radius:5px;font-weight:800;white-space:nowrap;}
+.dbtn{border:none;border-radius:5px;background:rgba(255,255,255,.66);font-weight:800;line-height:1;color:#111;flex-shrink:0;padding:0;}
+.dbtn:active{background:#fff;}
+.dchip{flex:1;text-align:center;font-weight:800;border-radius:5px;background:rgba(17,24,39,.82);color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;}
+.dchip.zero{background:rgba(17,24,39,.20);color:rgba(17,24,39,.55);}
+
+.bar{display:flex;gap:6px;margin-top:9px;}
+.b{flex:1;padding:11px 0;border:none;border-radius:10px;font-size:12.5px;font-weight:800;}
+.b-main{background:#1E6FE0;color:#fff;}
+.b-sub{background:#171C24;color:#9AA7B8;border:1px solid #232A35;}
+.b:active{opacity:.75;}
+
+.panel{margin-top:9px;border:1px solid #232A35;border-radius:10px;overflow:hidden;}
+.p-head{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:#171C24;font-size:12px;font-weight:800;color:#9AA7B8;}
+.p-body{padding:9px;display:none;background:#12161D;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.irow{display:flex;align-items:center;gap:4px;background:#171C24;border-radius:8px;padding:5px 6px;}
+.iname{font-size:10.5px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#C4CEDB;}
+.inp{width:38px;height:28px;background:#0E1116;border:1px solid #2A3341;border-radius:6px;color:#E7ECF3;text-align:center;font-size:13px;font-weight:800;}
+.inp.opt{border-color:#3D3320;color:#F5C572;}
+.hint{font-size:10px;color:#6B7789;margin-bottom:7px;line-height:1.6;}
+.chips{display:flex;flex-wrap:wrap;gap:5px;}
+.chip{font-size:11px;font-weight:700;padding:6px 9px;border-radius:8px;background:#1E3A2B;color:#8FE3A8;border:1px solid #2A5540;}
+.chip.off{background:#171C24;color:#5B6675;border-color:#232A35;text-decoration:line-through;}
+.log{font-size:11.5px;color:#C4CEDB;line-height:1.9;font-variant-numeric:tabular-nums;}
+.log b{color:#7DD3FC;}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:8px 2px 0;}
+.legend span{font-size:9.5px;color:#7A8699;display:flex;align-items:center;gap:3px;}
+.ldot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+.foot{margin-top:14px;padding:9px 10px;background:#12161D;border:1px solid #232A35;border-radius:9px;font-size:9.5px;color:#6B7789;line-height:1.7;word-break:break-all;}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1E6FE0;color:#fff;font-size:12px;font-weight:700;padding:9px 16px;border-radius:20px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:99;}
+.toast.on{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="title">송도 배차 히트맵</div>
+  <div><span class="clock" id="clock">--:--:--</span><span class="date" id="date"></span></div>
+</div>
+
+<div class="kpi">
+  <div class="k"><div class="k-l">적정</div><div class="k-v" id="k-opt">-</div></div>
+  <div class="k"><div class="k-l">현재</div><div class="k-v" id="k-cur">-</div></div>
+  <div class="k"><div class="k-l">하차</div><div class="k-v" style="color:#6EE7A8" id="k-drop">-</div></div>
+  <div class="k"><div class="k-l">배차후</div><div class="k-v" id="k-after">-</div></div>
+  <div class="k"><div class="k-l">달성율</div><div class="k-v" id="k-pct">-</div></div>
+</div>
+
+<div class="truck">
+  <div class="truck-l">상차 대수 <span style="color:#6B7789;font-weight:600;">(트럭에 실은 양)</span></div>
+  <button class="tbtn" onclick="adjTruck(-1)">−</button>
+  <div class="tval" id="truck-val">15</div>
+  <button class="tbtn" onclick="adjTruck(1)">+</button>
+  <span class="left-pill" id="left-pill">잔여 15</span>
+</div>
+
+<div id="stale"></div>
+<div id="map"></div>
+
+<div class="legend">
+  <span><i class="ldot" style="background:hsl(0,72%,55%)"></i>70% 미만</span>
+  <span><i class="ldot" style="background:hsl(50,72%,50%)"></i>70~99%</span>
+  <span><i class="ldot" style="background:hsl(140,65%,42%)"></i>100% 이상</span>
+  <span><i class="ldot" style="background:#2563EB"></i>포화</span>
+  <span>①②③ = 배차 우선순위</span>
+  <span><i class="ldot" style="background:#7F1D1D"></i>직전 하차 24시간 초과</span>
+</div>
+
+<div class="bar">
+  <button class="b b-main" onclick="closeRound()">회차 마감 · 하차→현재 반영</button>
+  <button class="b b-sub" onclick="undo()">되돌리기</button>
+</div>
+
+<div class="panel">
+  <div class="p-head" onclick="tog('p-vis')"><span>① 표시할 배치존 <span id="vis-cnt" style="color:#6EE7A8"></span></span><span id="a-p-vis">▼</span></div>
+  <div class="p-body" id="p-vis">
+    <div class="hint">눌러서 끄면 히트맵과 합계에서 빠집니다. 내 담당이 아닌 존을 꺼두세요.</div>
+    <div class="chips" id="vis-grid"></div>
+    <div class="bar"><button class="b b-sub" onclick="visAll(true)">전부 켜기</button><button class="b b-sub" onclick="visAll(false)">전부 끄기</button></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="p-head" onclick="tog('p-input')"><span>② 현재수량 · 적정수량 입력</span><span id="a-p-input">▼</span></div>
+  <div class="p-body" id="p-input">
+    <div class="hint">왼쪽 = 현재수량 · 오른쪽(노랑) = 적정수량. 적정을 바꾸면 타일 면적이 바뀝니다.</div>
+    <div class="grid2" id="input-grid"></div>
+    <div class="bar"><button class="b b-sub" onclick="clearCur()">현재수량 전부 0</button><button class="b b-sub" onclick="copyLink()">현황 링크 복사</button></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="p-head" onclick="tog('p-last')"><span>③ 직전 하차 기록</span><span id="a-p-last">▼</span></div>
+  <div class="p-body" id="p-last">
+    <div class="hint">카카오 화면의 <b>「6대 · 08.04(Tue) 16:19 하차」</b>를 옮겨 적는 칸입니다.<br>형식: <b>월일 시분 대수</b> → <b>0804 1619 6</b>. 북마클릿을 쓰면 자동으로 채워집니다.</div>
+    <div id="last-grid"></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="p-head" onclick="tog('p-fix')"><span>④ 수리 · 배터리 <span id="fix-cnt" style="color:#F5C572"></span></span><span id="a-p-fix">▼</span></div>
+  <div class="p-body" id="p-fix">
+    <div class="grid2" style="grid-template-columns:repeat(3,1fr);margin-bottom:8px;">
+      <div class="k" style="background:#2A1416;border-color:#4A1D1D;"><div class="k-l">전체 수리</div><div class="k-v" id="r-total" style="color:#FCA5A5">-</div></div>
+      <div class="k" style="background:#2A2113;border-color:#4A3A1D;"><div class="k-l">현장수리</div><div class="k-v" id="r-field" style="color:#FDE68A">-</div></div>
+      <div class="k" style="background:#1F1A2E;border-color:#3B2F5C;"><div class="k-l">입고수리</div><div class="k-v" id="r-ware" style="color:#C4B5FD">-</div></div>
+    </div>
+    <div class="grid2" style="margin-bottom:8px;">
+      <div class="k" style="background:#12233D;border-color:#1E3A5F;"><div class="k-l">배터리 GF</div><div class="k-v" id="b-gf" style="color:#93C5FD">-</div></div>
+      <div class="k" style="background:#171C24;"><div class="k-l">배터리 기타</div><div class="k-v" id="b-other" style="color:#C4CEDB">-</div></div>
+    </div>
+    <div class="log" id="fix-list"></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="p-head" onclick="tog('p-log')"><span>⑤ 하차 기록 <span id="log-cnt" style="color:#6EE7A8"></span></span><span id="a-p-log">▼</span></div>
+  <div class="p-body" id="p-log">
+    <div class="log" id="log-body"></div>
+    <div class="bar"><button class="b b-sub" onclick="resetDay()">오늘 기록 초기화</button></div>
+  </div>
+</div>
+
+<div class="foot" id="foot"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── 배치존 30곳 (2026-08-09 개편 반영, 북쪽→남쪽 순) ──
+   id = 카카오 zone_id · marg = 대당 한계이용(3~5월 실측, 신설 존은 미측정) */
+const DEF=[
+ {id:386, n:'이편한세상',    full:'송도이편한세상 정문',            g:2,opt:8, marg:0.27,sat:20},
+ {id:6736,n:'달빛공원역',    full:'송도달빛축제공원역 버스정류장',  g:2,opt:5, marg:null,sat:null},
+ {id:4941,n:'송도국제학교',  full:'송도국제학교 테니스장뒤 버스정류장',g:2,opt:5,marg:0.14,sat:16},
+ {id:4947,n:'힐스테이트',    full:'힐스테이크레이크송도APT정문',    g:2,opt:5, marg:0.32,sat:15},
+ {id:6743,n:'힐스5단지',     full:'송도힐스테이트 5단지',           g:2,opt:8, marg:null,sat:null},
+ {id:6748,n:'해돋이로3거리', full:'해돋이로 3거리',                 g:2,opt:5, marg:null,sat:null},
+ {id:4940,n:'센트럴파크역',  full:'센트럴파크역3번출구',            g:1,opt:8, marg:0.55,sat:10},
+ {id:365, n:'산책정원',      full:'센트럴파크 산책정원',            g:1,opt:15,marg:0.35,sat:19},
+ {id:388, n:'캠퍼스타운1번', full:'캠퍼스타운역1번출구',            g:1,opt:10,marg:null,sat:null},
+ {id:366, n:'테라스정원',    full:'센트럴파크 테라스정원',          g:1,opt:15,marg:0.17,sat:18},
+ {id:363, n:'캠퍼스타운2번', full:'캠퍼스타운역2번출구',            g:2,opt:20,marg:null,sat:null},
+ {id:375, n:'송도시외버스',  full:'송도시외버스환승센터',           g:1,opt:15,marg:0.33,sat:16},
+ {id:377, n:'캠타롯데캐슬',  full:'캠퍼스타운롯데캐슬오피스텔',     g:1,opt:15,marg:null,sat:null},
+ {id:373, n:'해돋이도서관',  full:'해돋이도서관',                   g:2,opt:5, marg:null,sat:null},
+ {id:364, n:'인천대2번',     full:'인천대입구역2번출구',            g:1,opt:20,marg:0.71,sat:22},
+ {id:368, n:'인천대1번',     full:'인천대입구역1번출구',            g:1,opt:20,marg:0.80,sat:18},
+ {id:6742,n:'프리미어아울렛',full:'송도프리미어아울렛 주차장',      g:2,opt:10,marg:null,sat:null},
+ {id:370, n:'타임스페이스',  full:'송도타임스페이스',               g:1,opt:10,marg:0.81,sat:14},
+ {id:4942,n:'더샵마스터뷰',  full:'송도더샵마스터뷰21블럭APT정문',  g:2,opt:8, marg:0.20,sat:17},
+ {id:6747,n:'이마트에브리데이',full:'이마트 에브리데이 (인천대입구역)',g:2,opt:3,marg:null,sat:null},
+ {id:389, n:'테크노파크3번', full:'테크노파크역3번출구',            g:2,opt:15,marg:null,sat:null},
+ {id:362, n:'테크노파크2번', full:'테크노파크역2번출구',            g:1,opt:20,marg:null,sat:null},
+ {id:376, n:'연세대학사C',   full:'연세대학교 송도학사C동',         g:2,opt:10,marg:null,sat:null},
+ {id:6745,n:'햇무리공원',    full:'햇무리공원 맞은편',              g:2,opt:10,marg:null,sat:null},
+ {id:6749,n:'미추홀공원',    full:'미추홀공원',                     g:2,opt:3, marg:null,sat:null},
+ {id:6744,n:'아미코젠',      full:'아미코젠 배지공장',              g:2,opt:5, marg:null,sat:null},
+ {id:6746,n:'인천대북문',    full:'인천대학교 북문',                g:2,opt:10,marg:null,sat:null},
+ {id:378, n:'지식정보단지',  full:'지식정보단지역4번출구',          g:2,opt:10,marg:0.43,sat:20},
+ {id:6750,n:'스마트스퀘어',  full:'송도스마트스퀘어',               g:2,opt:8, marg:null,sat:null},
+ {id:387, n:'라이크홈',      full:'라이크홈 기숙사',                g:2,opt:10,marg:0.25,sat:18},
+];
+const MARG_DEFAULT=0.40;   // 미측정 존의 한계이용 가정치
+let Z=DEF.map(d=>({...d,cur:0,drop:0,dropTime:null,lastTs:null,lastQty:0}));
+let hidden=new Set(), truck=15, log=[], closedRounds=[];
+let repairData=[], batData=[];
+
+function kst(){ return new Date(Date.now()+9*3600*1000); }
+function today(){ return kst().toISOString().substring(0,10); }
+function hhmm(d){ return d.toISOString().substring(11,16); }
+const KEY=()=>'heat_'+today();
+const VIS=()=>Z.filter(p=>!hidden.has(p.id));
+const cap=p=>p.sat?Math.min(p.sat,Math.round(p.opt*1.1)):Math.round(p.opt*1.1);
+const mg=p=>(p.marg==null?MARG_DEFAULT:p.marg);
+
+/* ── 저장 / 복원 ── */
+function save(){
+  localStorage.setItem(KEY(),JSON.stringify({
+    z:Z.map(p=>({i:p.id,cur:p.cur,drop:p.drop,dt:p.dropTime,opt:p.opt})),truck,log,closedRounds}));
+  localStorage.setItem('heat_last',JSON.stringify(Z.map(p=>({i:p.id,ts:p.lastTs,q:p.lastQty}))));
+  localStorage.setItem('heat_hidden',JSON.stringify([...hidden]));
+}
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(KEY())||'null');
+    if(s){
+      (s.z||[]).forEach(o=>{const p=Z.find(x=>x.id===o.i); if(!p)return;
+        p.cur=o.cur||0; p.drop=o.drop||0; p.dropTime=o.dt||null; if(o.opt) p.opt=o.opt;});
+      if(typeof s.truck==='number') truck=s.truck;
+      log=s.log||[]; closedRounds=s.closedRounds||[];
+    }
+    const L=JSON.parse(localStorage.getItem('heat_last')||'null');
+    if(L) L.forEach(o=>{const p=Z.find(x=>x.id===o.i); if(p){p.lastTs=o.ts||null; p.lastQty=o.q||0;}});
+    const H=JSON.parse(localStorage.getItem('heat_hidden')||'null');
+    if(H) hidden=new Set(H);
+  }catch(e){}
+}
+
+/* ── 직전 하차 시각 파싱 ── */
+function parseLast(str){
+  if(!str) return null;
+  const n=String(str).replace(/[^0-9]/g,'');
+  if(n.length<8) return null;
+  let mo,dd,hh,mi,rest,yr;
+  if(n.length>=12 && n.slice(0,2)==='20'){ yr=+n.substr(0,4);mo=+n.substr(4,2);dd=+n.substr(6,2);hh=+n.substr(8,2);mi=+n.substr(10,2);rest=n.slice(12); }
+  else{ mo=+n.substr(0,2);dd=+n.substr(2,2);hh=+n.substr(4,2);mi=+n.substr(6,2);rest=n.slice(8); }
+  if(!(mo>=1&&mo<=12&&dd>=1&&dd<=31&&hh<=23&&mi<=59)) return null;
+  const now=kst(); let y=(typeof yr==='number')?yr:now.getUTCFullYear();
+  let ts=Date.UTC(y,mo-1,dd,hh,mi);
+  if(typeof yr!=='number' && ts>now.getTime()+86400000) ts=Date.UTC(y-1,mo-1,dd,hh,mi);
+  return {ts, qty: rest?parseInt(rest)||0:0};
+}
+function lastTxt(ts){
+  const d=new Date(ts);
+  return ('0'+(d.getUTCMonth()+1)).slice(-2)+'.'+('0'+d.getUTCDate()).slice(-2)+' '+
+         ('0'+d.getUTCHours()).slice(-2)+':'+('0'+d.getUTCMinutes()).slice(-2);
+}
+function elapsed(ts){
+  if(!ts) return null;
+  const m=Math.max(0,Math.floor((kst().getTime()-ts)/60000));
+  if(m<60) return {txt:m+'분',h:m/60};
+  const h=Math.floor(m/60);
+  if(h<48) return {txt:h+'시간',h};
+  return {txt:Math.floor(h/24)+'일',h};
+}
+function elColor(h){
+  if(h==null) return {bg:'#374151',fg:'#D1D5DB'};
+  if(h<12)  return {bg:'#065F46',fg:'#A7F3D0'};
+  if(h<24)  return {bg:'#78350F',fg:'#FDE68A'};
+  if(h<72)  return {bg:'#7F1D1D',fg:'#FCA5A5'};
+  return {bg:'#450A0A',fg:'#FCA5A5'};
+}
+
+/* ── URL 수신 (?d= 현재 / ?o= 적정 / ?l= 직전하차, 모두 DEF 순서) ── */
+function parseIn(){
+  const raw=location.hash.slice(1)||location.search.slice(1); if(!raw) return false;
+  let q; try{ q=new URLSearchParams(raw); }catch(e){ return false; }
+  let got=false;
+  const o=q.get('o');
+  if(o) o.split(',').forEach((v,i)=>{const n=parseInt(v); if(Z[i]&&!isNaN(n)&&n>0)Z[i].opt=n;});
+  const d=q.get('d');
+  if(d) d.split(',').forEach((v,i)=>{const n=parseInt(v); if(Z[i]&&!isNaN(n)&&n>=0){Z[i].cur=n;got=true;}});
+  const lp=q.get('l');
+  if(lp) lp.split(',').forEach((v,i)=>{const r=parseLast(v); if(Z[i]&&r){Z[i].lastTs=r.ts;Z[i].lastQty=r.qty;}});
+  Z.forEach(p=>{ const v=q.get(p.n); if(v!==null){const n=parseInt(v); if(!isNaN(n)&&n>=0){p.cur=n;got=true;}} });
+  const rj=q.get('repair'); if(rj){ try{ repairData=JSON.parse(rj); }catch(e){} }
+  const bj=q.get('battery'); if(bj){ try{ batData=JSON.parse(bj); }catch(e){} }
+  history.replaceState(null,'',location.pathname);
+  return got;
+}
+
+/* ── 수리 · 배터리 ── */
+function renderFix(){
+  const F=repairData.filter(d=>d.repairType==='FIELD'), W=repairData.filter(d=>d.repairType!=='FIELD');
+  const gf=batData.filter(d=>d.model==='GF'), ot=batData.filter(d=>d.model!=='GF');
+  document.getElementById('r-total').textContent=repairData.length||'-';
+  document.getElementById('r-field').textContent=F.length||'-';
+  document.getElementById('r-ware').textContent=W.length||'-';
+  document.getElementById('b-gf').textContent=gf.length||'-';
+  document.getElementById('b-other').textContent=ot.length||'-';
+  document.getElementById('fix-cnt').textContent=
+    (repairData.length||batData.length)?`(수리 ${repairData.length} · 배터리 ${batData.length})`:'';
+  if(!repairData.length){
+    document.getElementById('fix-list').innerHTML='<div style="color:#6B7789">북마클릿 실행 시 수리 목록이 표시됩니다.</div>';
+    return;
+  }
+  const sorted=[...repairData].sort((a,b)=>
+    a.repairType!==b.repairType ? (a.repairType==='FIELD'?-1:1) : String(a.code).localeCompare(String(b.code)));
+  document.getElementById('fix-list').innerHTML=sorted.map(d=>{
+    const f=d.repairType==='FIELD';
+    return `<div style="padding:4px 0;border-bottom:1px solid #1C222C;">
+      <b style="color:#E7ECF3">${d.code}</b>
+      <span style="font-size:9.5px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:4px;background:${d.model==='GF'?'#12233D':'#232A35'};color:${d.model==='GF'?'#93C5FD':'#9AA7B8'}">${d.model||'?'}</span>
+      <span style="font-size:9.5px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:3px;background:${f?'#2A2113':'#1F1A2E'};color:${f?'#FDE68A':'#C4B5FD'}">${f?'현장':'입고'}</span>
+      <div style="font-size:11px;color:#9AA7B8;margin-top:1px">${(d.comments||[]).join(' / ')||'내역없음'}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── 트리맵(squarify): 면적 = 적정수량 ── */
+function worst(row,short){
+  const s=row.reduce((a,i)=>a+i.area,0);
+  const mx=Math.max(...row.map(i=>i.area)), mn=Math.min(...row.map(i=>i.area));
+  return Math.max((short*short*mx)/(s*s),(s*s)/(short*short*mn));
+}
+function squarify(items,X,Y,W,H){
+  const out=[], tot=items.reduce((s,i)=>s+i.value,0), sc=(W*H)/tot;
+  let list=items.map(i=>({...i,area:i.value*sc})), x=X,y=Y,w=W,h=H;
+  while(list.length){
+    const short=Math.min(w,h); let row=[],best=Infinity;
+    while(list.length){
+      const cand=row.concat([list[0]]), r=worst(cand,short);
+      if(row.length===0||r<=best){ best=r; row=cand; list.shift(); } else break;
+    }
+    const ra=row.reduce((s,i)=>s+i.area,0);
+    if(w>=h){ const rw=ra/h; let cy=y; row.forEach(i=>{const ih=i.area/rw; out.push({...i,x,y:cy,w:rw,h:ih}); cy+=ih;}); x+=rw; w-=rw; }
+    else    { const rh=ra/w; let cx=x; row.forEach(i=>{const iw=i.area/rh; out.push({...i,x:cx,y,w:iw,h:rh}); cx+=iw;}); y+=rh; h-=rh; }
+  }
+  return out;
+}
+function heat(p,over){
+  if(over) return {bg:'#BFDBFE',fg:'#14306B',line:'#2563EB'};
+  const t=Math.max(0,Math.min(1,p)), hue=Math.round(t*140);
+  return {bg:`hsl(${hue},74%,${86-t*4}%)`, fg:`hsl(${hue},72%,22%)`, line:`hsl(${hue},68%,42%)`};
+}
+
+/* ── 렌더 ── */
+function render(){
+  const V=VIS(), map=document.getElementById('map');
+  if(!V.length){ map.style.height='80px'; map.innerHTML='<div style="color:#6B7789;font-size:12px;padding:30px;text-align:center">표시할 존이 없습니다 — ① 패널에서 켜주세요</div>'; return; }
+  const W=map.clientWidth||360;
+  const H=Math.round(Math.max(480,Math.min(W*(1.3+V.length*0.042),1900)));
+  map.style.height=H+'px';
+
+  // 우선순위 = 부족대수 × 한계이용
+  const prio=V.filter(p=>p.cur+p.drop<Math.min(p.opt,cap(p)))
+    .map(p=>({p,s:(p.opt-p.cur-p.drop)*mg(p)}))
+    .sort((a,b)=>b.s-a.s).slice(0,3).map(o=>o.p.id);
+
+  const items=V.map((p,i)=>({i,value:Math.max(1,p.opt)})).sort((a,b)=>b.value-a.value);
+  const laid=squarify(items,0,0,W,H);
+
+  let html='';
+  laid.forEach(t=>{
+    const p=V[t.i], after=p.cur+p.drop, pct=p.opt>0?after/p.opt:0;
+    const over=after>=cap(p), c=heat(pct,over);
+    const G=3, x=t.x+G/2, y=t.y+G/2, w=Math.max(20,t.w-G), h=Math.max(20,t.h-G);
+    const s=Math.min(w,h);
+    const narrow=w<104, tight=h<100, micro=h<74||w<66;
+    const pad=micro?'2px 3px':(s<86?'3px 5px':'5px 6px');
+    const fName=Math.max(8,Math.min(13.5,s*0.17));
+    const fNum =Math.max(13,Math.min(38,Math.min(h*0.33,w*0.42)));
+    const fSub =Math.max(7.5,Math.min(11.5,s*0.13));
+    const bH   =Math.max(17,Math.min(30,h*0.23));
+    const fBtn =Math.round(bH*0.62);
+    const lamp =Math.max(5,Math.min(9,s*0.11));
+    const el=elapsed(p.lastTs), ec=elColor(el?el.h:null);
+    const elB=`<span class="elb" style="background:${ec.bg};color:${ec.fg};font-size:${Math.max(7.5,fSub-1)}px">${el?el.txt:'—'}</span>`;
+    const rk=prio.indexOf(p.id);
+    const timeTxt=p.dropTime||'';
+    const dropTag=p.drop?`<span style="font-size:${fSub+2}px;font-weight:800;color:${over?'#1D4ED8':'#0B7A3B'}">+${p.drop}</span>`:'';
+    const btn=(dl,lb)=>`<button class="dbtn" style="${narrow?'flex:1;':'width:'+Math.round(bH*1.15)+'px;'}height:${bH}px;font-size:${fBtn}px" onclick="drop(${p.id},${dl},event)">${lb}</button>`;
+    html+=`<div class="tile" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;padding:${pad};background:${c.bg};color:${c.fg};">
+      <div class="t-top">
+        <span class="lamp${(!over&&pct<0.5)?' crit':''}" style="width:${lamp}px;height:${lamp}px;background:${c.line}"></span>
+        ${rk>=0?`<span class="rankb" style="font-size:${Math.max(8,fName-1)}px">${'①②③'[rk]}</span>`:''}
+        <span class="t-name" style="font-size:${fName}px">${p.n}</span>
+        ${(!narrow&&!micro)?'<span style="margin-left:auto"></span>'+elB:''}
+      </div>
+      <div style="display:flex;align-items:baseline;gap:2px;" onclick="setDrop(${p.id},event)">
+        <span class="t-num" style="font-size:${fNum}px">${after}</span>
+        <span class="t-den" style="font-size:${fSub+1}px">/${p.opt}</span>
+        ${dropTag}
+        <span class="t-sub" style="font-size:${fSub}px;margin-left:auto;">${(narrow||micro)?(micro?'':elB):Math.round(pct*100)+'%'}</span>
+      </div>
+      ${tight?'':`<div class="t-last" style="font-size:${fSub}px" onclick="editLast(${p.id},event)">${narrow?elB+' '+(p.lastTs?lastTxt(p.lastTs):'기록없음'):(p.lastTs?'직전 '+lastTxt(p.lastTs)+(p.lastQty?' · '+p.lastQty+'대':''):'직전 하차 기록 없음')}</div>`}
+      <div class="t-row">
+        ${btn(-1,'−')}
+        ${(narrow||micro)?'':`<div class="dchip${p.drop?'':' zero'}" style="font-size:${fSub+1.5}px;line-height:${bH}px;height:${bH}px;" onclick="setDrop(${p.id},event)">${p.drop?'+'+p.drop+(timeTxt?' '+timeTxt:''):'0'}</div>`}
+        ${btn(1,'＋')}
+      </div>
+    </div>`;
+  });
+  map.innerHTML=html;
+
+  const oS=V.reduce((s,p)=>s+p.opt,0), cS=V.reduce((s,p)=>s+p.cur,0), dS=V.reduce((s,p)=>s+p.drop,0);
+  const aS=cS+dS, pc=oS?Math.round(aS/oS*100):0;
+  document.getElementById('k-opt').textContent=oS;
+  document.getElementById('k-cur').textContent=cS;
+  document.getElementById('k-drop').textContent='+'+dS;
+  document.getElementById('k-after').textContent=aS;
+  const kp=document.getElementById('k-pct');
+  kp.textContent=pc+'%'; kp.style.color=pc>=100?'#6EE7A8':pc>=85?'#F5C572':'#F87171';
+  document.getElementById('truck-val').textContent=truck;
+  const left=truck-dS, lp=document.getElementById('left-pill');
+  lp.textContent='잔여 '+left;
+  lp.style.background=left<0?'#4A1D1D':left===0?'#2A3341':'#1E3A2B';
+  lp.style.color=left<0?'#FCA5A5':left===0?'#9AA7B8':'#6EE7A8';
+
+  const known=V.filter(p=>p.lastTs).sort((a,b)=>a.lastTs-b.lastTs);
+  const unknown=V.filter(p=>!p.lastTs).length;
+  const se=document.getElementById('stale');
+  if(known.length){
+    const top=known.slice(0,3).map(p=>{
+      const e=elapsed(p.lastTs), cc=elColor(e.h);
+      return `${p.n} <span class="elb" style="background:${cc.bg};color:${cc.fg};font-size:9.5px">${e.txt}</span>`;
+    }).join(' · ');
+    se.innerHTML='⏱ 오래 방치된 순 &nbsp;'+top+(unknown?` <span style="color:#6B7789;font-weight:600;">· 기록없음 ${unknown}곳</span>`:'');
+  }else{
+    se.innerHTML='<span style="color:#6B7789;font-weight:600;">⏱ 직전 하차 기록 없음 — 북마클릿을 실행하거나 ③ 패널에서 입력하세요</span>';
+  }
+  document.getElementById('vis-cnt').textContent='('+V.length+'/'+Z.length+'곳)';
+  renderLog(); save();
+}
+
+/* ── 하차 조작 (id 기준) ── */
+const byId=id=>Z.find(p=>p.id===id);
+function drop(id,delta,ev){
+  if(ev)ev.stopPropagation();
+  const p=byId(id), nv=Math.max(0,p.drop+delta);
+  if(nv===p.drop) return;
+  p.drop=nv;
+  const t=hhmm(kst());
+  p.dropTime=nv>0?t:null;
+  log.unshift({t,n:p.n,d:delta,v:nv});
+  if(log.length>200) log.pop();
+  render();
+}
+function setDrop(id,ev){
+  if(ev)ev.stopPropagation();
+  const p=byId(id);
+  const v=prompt(p.full+'\n하차 수량 직접입력',p.drop);
+  if(v===null) return;
+  const n=parseInt(v); if(isNaN(n)||n<0) return;
+  const t=hhmm(kst());
+  log.unshift({t,n:p.n,d:n-p.drop,v:n});
+  p.drop=n; p.dropTime=n>0?t:null;
+  render();
+}
+function undo(){
+  if(!log.length){ toast('되돌릴 기록이 없습니다'); return; }
+  const e=log.shift(), p=Z.find(x=>x.n===e.n);
+  if(p){ p.drop=Math.max(0,p.drop-e.d); if(!p.drop) p.dropTime=null; }
+  render(); toast(e.n+' 되돌림');
+}
+function adjTruck(d){ truck=Math.max(0,truck+d); render(); }
+function closeRound(){
+  const V=VIS(), dS=V.reduce((s,p)=>s+p.drop,0);
+  if(!dS){ toast('하차 기록이 없습니다'); return; }
+  if(!confirm('하차 '+dS+'대를 현재수량에 반영하고 이번 회차를 마감합니다.')) return;
+  const snap={t:hhmm(kst()),total:dS,detail:{}};
+  Z.forEach(p=>{ if(p.drop){snap.detail[p.n]=p.drop;} p.cur+=p.drop; p.drop=0; p.dropTime=null; });
+  closedRounds.push(snap);
+  render(); toast(closedRounds.length+'회차 마감 · '+dS+'대 반영');
+}
+function resetDay(){
+  if(!confirm('오늘 하차 기록·회차 기록을 모두 지웁니다.')) return;
+  Z.forEach(p=>{p.drop=0;p.dropTime=null;}); log=[]; closedRounds=[];
+  render(); toast('초기화 완료');
+}
+function clearCur(){ Z.forEach(p=>p.cur=0); buildInputs(); render(); }
+
+/* ── 패널 ── */
+function buildVis(){
+  document.getElementById('vis-grid').innerHTML=Z.map(p=>
+    `<span class="chip${hidden.has(p.id)?' off':''}" onclick="toggleVis(${p.id})">${p.n} <b style="opacity:.6">${p.opt}</b></span>`).join('');
+}
+function toggleVis(id){ hidden.has(id)?hidden.delete(id):hidden.add(id); buildVis(); render(); }
+function visAll(on){ hidden = on?new Set():new Set(Z.map(p=>p.id)); buildVis(); render(); }
+
+function buildInputs(){
+  document.getElementById('input-grid').innerHTML=Z.map((p,i)=>
+    `<div class="irow">
+      <span class="iname" title="${p.full}"><b style="color:${p.g===1?'#7DD3FC':'#8FE3A8'}">${p.g}등급</b> ${p.n}</span>
+      <input class="inp" type="number" inputmode="numeric" min="0" max="60" value="${p.cur}" onchange="setCur(${i},this.value)" onfocus="this.select()">
+      <input class="inp opt" type="number" inputmode="numeric" min="1" max="60" value="${p.opt}" onchange="setOpt(${i},this.value)" onfocus="this.select()">
+    </div>`).join('');
+}
+function setCur(i,v){ const n=parseInt(v); Z[i].cur=isNaN(n)||n<0?0:n; render(); }
+function setOpt(i,v){ const n=parseInt(v); if(!isNaN(n)&&n>0) Z[i].opt=n; render(); }
+
+function lastInputVal(p){
+  if(!p.lastTs) return '';
+  const d=new Date(p.lastTs);
+  return ('0'+(d.getUTCMonth()+1)).slice(-2)+('0'+d.getUTCDate()).slice(-2)+' '+
+         ('0'+d.getUTCHours()).slice(-2)+('0'+d.getUTCMinutes()).slice(-2)+(p.lastQty?' '+p.lastQty:'');
+}
+function buildLast(){
+  document.getElementById('last-grid').innerHTML=Z.map((p,i)=>{
+    const e=elapsed(p.lastTs), c=elColor(e?e.h:null);
+    return `<div class="irow" style="margin-bottom:5px;">
+      <span class="iname" style="flex:0 0 100px;">${p.n}</span>
+      <input class="inp" style="flex:1;width:auto;text-align:left;padding:0 8px;font-size:12px;" type="text" inputmode="numeric"
+        placeholder="0804 1619 6" value="${lastInputVal(p)}" onchange="setLast(${i},this.value)" onfocus="this.select()">
+      <span class="elb" style="background:${c.bg};color:${c.fg};font-size:9.5px;">${e?e.txt:'없음'}</span>
+    </div>`;
+  }).join('');
+}
+function setLast(i,v){
+  const p=Z[i];
+  if(!String(v).trim()){ p.lastTs=null; p.lastQty=0; }
+  else{ const r=parseLast(v); if(!r){ toast('형식: 0804 1619 6'); buildLast(); return; } p.lastTs=r.ts; p.lastQty=r.qty; }
+  buildLast(); render();
+}
+function editLast(id,ev){
+  if(ev)ev.stopPropagation();
+  const p=byId(id), i=Z.indexOf(p);
+  const v=prompt(p.full+'\n직전 하차 (월일 시분 대수)\n예: 0804 1619 6', lastInputVal(p));
+  if(v!==null) setLast(i,v);
+}
+function copyLink(){
+  const base=location.origin+location.pathname;
+  const l=Z.map(p=>{
+    if(!p.lastTs) return '';
+    const d=new Date(p.lastTs);
+    return d.getUTCFullYear()+('0'+(d.getUTCMonth()+1)).slice(-2)+('0'+d.getUTCDate()).slice(-2)+
+           ('0'+d.getUTCHours()).slice(-2)+('0'+d.getUTCMinutes()).slice(-2)+(p.lastQty?'.'+p.lastQty:'');
+  }).join(',');
+  const url=base+'?d='+Z.map(p=>p.cur).join(',')+'&o='+Z.map(p=>p.opt).join(',')+(l.replace(/,/g,'')?'&l='+l:'');
+  navigator.clipboard?.writeText(url).then(()=>toast('링크 복사됨'),()=>prompt('복사하세요',url));
+}
+function renderLog(){
+  const dS=VIS().reduce((s,p)=>s+p.drop,0);
+  document.getElementById('log-cnt').textContent='(현재 회차 '+dS+'대 · 마감 '+closedRounds.length+'회)';
+  let h='';
+  if(closedRounds.length){
+    h+=closedRounds.map((r,i)=>`<div><b>${r.t}</b> ${i+1}회차 마감 — ${r.total}대 (${Object.entries(r.detail).map(([k,v])=>k+' '+v).join(', ')})</div>`).join('');
+    h+='<div style="height:6px"></div>';
+  }
+  h+= log.length ? log.slice(0,40).map(e=>`<div><b>${e.t}</b> ${e.n} ${e.d>0?'+'+e.d:e.d} → ${e.v}대</div>`).join('')
+                 : '<div style="color:#6B7789">아직 하차 기록이 없습니다.</div>';
+  document.getElementById('log-body').innerHTML=h;
+}
+function tog(id){
+  const b=document.getElementById(id), a=document.getElementById('a-'+id);
+  const open=b.style.display==='block';
+  b.style.display=open?'none':'block'; a.textContent=open?'▼':'▲';
+  if(!open && id==='p-last') buildLast();
+}
+let tt;
+function toast(m){
+  const el=document.getElementById('toast'); el.textContent=m; el.classList.add('on');
+  clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('on'),1600);
+}
+function tick(){
+  const d=kst();
+  document.getElementById('clock').textContent=d.toISOString().substring(11,19);
+  document.getElementById('date').textContent=d.toISOString().substring(0,10)+' ('+'일월화수목금토'[d.getUTCDay()]+')';
+}
+
+/* ── 시작 ── */
+load();
+const fromUrl=parseIn();
+buildVis(); buildInputs(); buildLast(); render(); renderFix();
+tick(); setInterval(tick,1000);
+setInterval(()=>{ const a=document.activeElement; if(!(a&&a.tagName==='INPUT')) render(); },60000);
+if(fromUrl) toast('북마클릿 데이터 반영됨');
+let rt; window.addEventListener('resize',()=>{clearTimeout(rt); rt=setTimeout(render,180);});
+document.getElementById('foot').innerHTML=
+ '<b>저장 위치</b><br>'+
+ '생성본: /mnt/user-data/outputs/dispatch_heat.html<br>'+
+ '배포: https://bada43131-ai.github.io/dispatch/dispatch_heat.html · 수집기: heat.js<br>'+
+ '저장소: github.com/bada43131-ai/dispatch<br>'+
+ '<b>배치존</b> 30곳 (2026-08-09 개편 반영, 적정 합계 311대) · 순서는 heat.js와 반드시 일치<br>'+
+ '<b>수신 형식</b> ?d=현재30 &o=적정30 &l=직전하차30(YYYYMMDDHHMM.대수) &repair=[JSON] &battery=[JSON]<br>'+
+ '<b>데이터</b> localStorage — 현재수량·하차는 날짜별(heat_YYYY-MM-DD), 직전 하차(heat_last)·표시설정(heat_hidden)은 유지';
+</script>
+</body>
+</html>
