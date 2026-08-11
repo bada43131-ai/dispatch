@@ -40,13 +40,11 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow
 .cell input{width:64px;height:36px;background:#0d1117;border:1px solid var(--line);border-radius:8px;color:var(--txt);text-align:center;font-size:15px;font-weight:700;outline:none;transition:border 0.15s;}
 .cell input:focus{border-color:var(--accent);background:#11161d;}
 .cell input::placeholder{color:#3a4450;}
-/* 충전완료는 칸이 여러개 */
 .multi{grid-template-columns:1fr 1fr;gap:6px;}
 .multi input{width:100%;}
 .wide-row{display:block;padding:10px 12px;border-bottom:1px solid var(--line);}
 .wide-row .name{margin-bottom:6px;}
 .wide-grid{display:grid;gap:6px;}
-/* 충전 그룹 박스 */
 .grp{margin:8px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#11171f;}
 .grp+.grp{margin-top:0;}
 .grp .row:last-child{border-bottom:none;}
@@ -86,7 +84,6 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow
 .delta.down{color:var(--bad);background:rgba(255,107,107,0.12);}
 .delta.same{color:var(--dim);background:rgba(138,151,166,0.12);}
 
-/* 인쇄(PDF) 리포트 */
 #print-report{display:none;}
 @media print{
   @page{size:A4 portrait;margin:10mm 12mm;}
@@ -100,7 +97,6 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow
   .pr-tot div:last-child{border-right:none;}
   .pr-tot .v{font-size:22px;font-weight:800;}
   .pr-tot .k{font-size:10px;color:#666;margin-top:2px;}
-  /* 2단 레이아웃 */
   .pr-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .pr-sec{margin-bottom:8px;}
   .pr-sec h3{font-size:12px;font-weight:800;border-bottom:2px solid #000;padding-bottom:2px;margin-bottom:4px;}
@@ -208,10 +204,10 @@ const badRows=[
   {key:'fire',name:'소화기 아래'},
   {key:'steel',name:'입구 스텐통'},
 ];
-const extNames=['김우열','형님','안민우','서윤석','김민석','서구','강호엽','박광일','',''];
+// ★ 외부보관: 진종용, 안준모, 성기안 추가 / 빈 칸 1개만
+const extNames=['김우열','형님','안민우','서윤석','김민석','서구','강호엽','박광일','진종용','안준모','성기안',''];
 
 const state=JSON.parse(localStorage.getItem('battery_state')||'{}');
-// 지난주 기록 초기 고정값 (한 번도 저장된 적 없을 때만)
 if(!localStorage.getItem('battery_lastweek')){
   localStorage.setItem('battery_lastweek',JSON.stringify({date:'지난주',a:587,g:71,all:587+71}));
 }
@@ -235,7 +231,7 @@ badRows.forEach(r=>{
 });
 document.getElementById('bad-rows').innerHTML=h;
 
-// 충전 보관 렌더 — 모든 항목 동일 행 형식, Alton/GF 박스로 그룹 구분
+// ★ 충전 보관 렌더 — ALTON에 구형(바닥), 충전대기 추가 / GF에 충전대기 추가
 const chargeCard=document.getElementById('charge-card');
 chargeCard.innerHTML=`
   <div class="colhd"><span>구분</span><span class="a">Alton</span><span class="g">GF</span></div>
@@ -253,6 +249,12 @@ chargeCard.innerHTML=`
     <div class="row"><span class="name">충전완료 2)</span>
       <span class="cell"><input type="number" inputmode="numeric" data-k="ch_done_a2" placeholder="0" value="${g('ch_done_a2')}"></span>
       <span></span></div>
+    <div class="row"><span class="name">구형(바닥)</span>
+      <span class="cell"><input type="number" inputmode="numeric" data-k="ch_old_a" placeholder="0" value="${g('ch_old_a')}"></span>
+      <span></span></div>
+    <div class="row"><span class="name">충전대기</span>
+      <span class="cell"><input type="number" inputmode="numeric" data-k="ch_wait_a" placeholder="0" value="${g('ch_wait_a')}"></span>
+      <span></span></div>
   </div>
   <div class="grp">
     <div class="grp-tag g-tag">GF</div>
@@ -260,6 +262,8 @@ chargeCard.innerHTML=`
       <span class="cell"><input type="number" inputmode="numeric" data-k="ch_3_g" placeholder="0" value="${g('ch_3_g')}"></span></div>
     <div class="row"><span class="name">충전완료</span><span></span>
       <span class="cell"><input type="number" inputmode="numeric" data-k="ch_done_g" placeholder="0" value="${g('ch_done_g')}"></span></div>
+    <div class="row"><span class="name">충전대기</span><span></span>
+      <span class="cell"><input type="number" inputmode="numeric" data-k="ch_wait_g" placeholder="0" value="${g('ch_wait_g')}"></span></div>
   </div>
 `;
 
@@ -300,13 +304,30 @@ document.querySelectorAll('input[data-k]').forEach(inp=>{
   document.getElementById(id).addEventListener('input',e=>{setV(id,e.target.value);recalc();});
 });
 
+// ★ Enter키로 다음 칸 이동 + 포커스 시 기존 값 전체 선택 (바로 덮어쓰기 가능)
+(function setupEnterNav(){
+  const allInputs=Array.from(document.querySelectorAll('input[type="number"],input[type="text"][data-k]'));
+  allInputs.forEach((inp,idx)=>{
+    inp.addEventListener('keydown',ev=>{
+      if(ev.key==='Enter'){
+        ev.preventDefault();
+        const next=allInputs[idx+1];
+        if(next){next.focus();next.select();}
+      }
+    });
+    inp.addEventListener('focus',()=>{
+      setTimeout(()=>inp.select(),0);
+    });
+  });
+})();
+
 function recalc(){
   // 불량
   let badA=0,badG=0;
   badRows.forEach(r=>{badA+=num('bad_'+r.key+'_a');badG+=num('bad_'+r.key+'_g');});
-  // 충전
-  const chA=num('ch_1_a')+num('ch_2_a')+num('ch_done_a1')+num('ch_done_a2');
-  const chG=num('ch_3_g')+num('ch_done_g');
+  // ★ 충전 (구형(바닥), 충전대기 포함)
+  const chA=num('ch_1_a')+num('ch_2_a')+num('ch_done_a1')+num('ch_done_a2')+num('ch_old_a')+num('ch_wait_a');
+  const chG=num('ch_3_g')+num('ch_done_g')+num('ch_wait_g');
   // 외부
   let extA=0,extG=0;
   extNames.forEach((n,i)=>{extA+=num('ext_'+i+'_a');extG+=num('ext_'+i+'_g');});
@@ -325,13 +346,11 @@ function recalc(){
     `정품 ${goodA+goodG}개 (Alton ${goodA} · GF ${goodG}) · 불량 ${badA+badG}개<br>`+
     `충전보관 ${chA+chG} · 외부보관 ${extA+extG}`;
 
-  // 현재 합계 보관 (엑셀 내보낼 때 지난주로 저장하기 위함)
   window._curTotal={a:totA,g:totG,all:totAll};
 
   // 지난주 대비
   const lw=JSON.parse(localStorage.getItem('battery_lastweek')||'null');
   const lwEl=document.getElementById('lastweek');
-  // 지난주 값 (저장된 게 없으면 0)
   const lwA=lw?(lw.a||0):0, lwG=lw?(lw.g||0):0;
   const lwAll=lwA+lwG;
   const dAll=totAll-lwAll, dA=totA-lwA, dG=totG-lwG;
@@ -353,7 +372,6 @@ function recalc(){
     `</div>`+
     `<div class="lw-hint">지난주 칸을 눌러 직접 수정할 수 있어요</div>`;
   lwEl.style.display='block';
-  // 지난주 입력 바인딩
   const bindLw=(id,key)=>{
     const el=document.getElementById(id);
     if(!el)return;
@@ -364,7 +382,6 @@ function recalc(){
       cur.all=(cur.a||0)+(cur.g||0);
       localStorage.setItem('battery_lastweek',JSON.stringify(cur));
     });
-    // 포커스 잃을 때 표 다시 그리기(증감 갱신)
     el.addEventListener('blur',()=>recalc());
     el.addEventListener('keydown',(e)=>{if(e.key==='Enter'){e.preventDefault();el.blur();}});
   };
@@ -387,17 +404,15 @@ function exportXlsx(){
   const dateStr=(state.date||today);
   const M=parseInt(dateStr.slice(5,7)), D=parseInt(dateStr.slice(8,10));
 
-  // 집계
   let badA=0,badG=0;
   badRows.forEach(r=>{badA+=num('bad_'+r.key+'_a');badG+=num('bad_'+r.key+'_g');});
-  const chA=num('ch_1_a')+num('ch_2_a')+num('ch_done_a1')+num('ch_done_a2');
-  const chG=num('ch_3_g')+num('ch_done_g');
+  const chA=num('ch_1_a')+num('ch_2_a')+num('ch_done_a1')+num('ch_done_a2')+num('ch_old_a')+num('ch_wait_a');
+  const chG=num('ch_3_g')+num('ch_done_g')+num('ch_wait_g');
   let extA=0,extG=0;
   extNames.forEach((n,i)=>{extA+=num('ext_'+i+'_a');extG+=num('ext_'+i+'_g');});
   const goodA=chA+extA, goodG=chG+extG;
   const totA=badA+goodA, totG=badG+goodG, totAll=totA+totG;
 
-  // 스타일 헬퍼
   const C=(rgb)=>({patternType:'solid',fgColor:{rgb}});
   const border=(style='thin')=>({top:{style},bottom:{style},left:{style},right:{style}});
   const borderM=(style='medium')=>border(style);
@@ -415,19 +430,16 @@ function exportXlsx(){
   const empty=()=>({v:'',t:'s',s:{border:border()}});
 
   const aoa=[];
-  // 제목
   aoa.push([{v:`관교창고 ${M}월 ${D}일자 배터리 보고서`,t:'s',s:{font:{bold:true,sz:14},alignment:{horizontal:'center',vertical:'center'}}},'','','','']);
   aoa.push([{v:dateStr,t:'s',s:{font:{sz:10,color:{rgb:'888888'}},alignment:{horizontal:'center'}}},'','','','']);
   aoa.push(['','','','','']);
 
-  // 전체 합계 박스
   aoa.push([hdr('구분'),hdr('Alton','2E75B6'),hdr('GF','ED7D31'),hdr('Total','375623'),'']);
   aoa.push([lbl('불량'),num2(badA),num2(badG),num2(badA+badG),'']);
   aoa.push([lbl('정품'),num2(goodA),num2(goodG),num2(goodA+goodG),'']);
   aoa.push([tot('Total'),tot(totA),tot(totG),tot(totAll),'']);
   aoa.push(['','','','','']);
 
-  // 불량 배터리
   aoa.push([hdr('불량 배터리'),hdr('Alton','2E75B6'),hdr('GF','ED7D31'),'','']);
   badRows.forEach(r=>{
     aoa.push([cell(r.name,false,'FFF2CC','left'),num2(num('bad_'+r.key+'_a')),num2(num('bad_'+r.key+'_g')),empty(),empty()]);
@@ -435,15 +447,14 @@ function exportXlsx(){
   aoa.push([sub('소계'),sub(badA),sub(badG),empty(),empty()]);
   aoa.push(['','','','','']);
 
-  // 충전 보관
+  // ★ 충전 보관 — 구형(바닥), 충전대기, GF 충전대기 추가
   aoa.push([hdr('정품 — 충전 보관'),hdr('Alton','2E75B6'),hdr('GF','ED7D31'),'','']);
-  [['충전 1)',num('ch_1_a'),''],[' 충전 2)',num('ch_2_a'),''],[' 충전완료 1)',num('ch_done_a1'),''],[' 충전완료 2)',num('ch_done_a2'),''],[' GF 충전 3)','',num('ch_3_g')],[' GF 충전완료','',num('ch_done_g')]].forEach(([n,a,g])=>{
-    aoa.push([cell(n,false,'F2F2F2','left'),num2(a===''?'':a),num2(g===''?'':g),empty(),empty()]);
+  [['충전 1)',num('ch_1_a'),''],['충전 2)',num('ch_2_a'),''],['충전완료 1)',num('ch_done_a1'),''],['충전완료 2)',num('ch_done_a2'),''],['구형(바닥)',num('ch_old_a'),''],['충전대기',num('ch_wait_a'),''],['GF 충전 3)','',num('ch_3_g')],['GF 충전완료','',num('ch_done_g')],['GF 충전대기','',num('ch_wait_g')]].forEach(([n,a,gg])=>{
+    aoa.push([cell(n,false,'F2F2F2','left'),num2(a===''?'':a),num2(gg===''?'':gg),empty(),empty()]);
   });
   aoa.push([sub('소계'),sub(chA),sub(chG),empty(),empty()]);
   aoa.push(['','','','','']);
 
-  // 외부 보관
   aoa.push([hdr('정품 — 외부 보관'),hdr('Alton','2E75B6'),hdr('GF','ED7D31'),'','']);
   extNames.forEach((n,i)=>{
     const dispName = n || g('ext_'+i+'_name') || '';
@@ -452,29 +463,21 @@ function exportXlsx(){
   aoa.push([sub('소계'),sub(extA),sub(extG),empty(),empty()]);
   aoa.push(['','','','','']);
 
-  // 입고기기
   aoa.push([hdr('입고기기'),hdr('Alton','2E75B6'),hdr('GF','ED7D31'),hdr('FA','70AD47'),'']);
   aoa.push([empty(),num2(num('in-alton')),num2(num('in-gf')),num2(num('in-fa')),empty()]);
 
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-
-  // 열 너비
   ws['!cols']=[{wch:18},{wch:10},{wch:10},{wch:10},{wch:6}];
-
-  // 행 높이
   ws['!rows']=[{hpt:24},{hpt:14},{hpt:6},{hpt:20}];
-
-  // 셀 병합: 제목, 섹션 헤더 나머지 열
   ws['!merges']=[
-    {s:{r:0,c:0},e:{r:0,c:4}}, // 제목
-    {s:{r:1,c:0},e:{r:1,c:4}}, // 날짜
+    {s:{r:0,c:0},e:{r:0,c:4}},
+    {s:{r:1,c:0},e:{r:1,c:4}},
   ];
 
   XLSX.utils.book_append_sheet(wb,ws,'배터리보고');
   const fn=`카카오_배터리_보고_${dateStr.replace(/-/g,'').slice(2)}.xlsx`;
   XLSX.writeFile(wb,fn);
 
-  // 이번 주 총 수량을 "지난주"로 기억
   if(window._curTotal){
     localStorage.setItem('battery_lastweek',JSON.stringify({
       date:dateStr,a:window._curTotal.a,g:window._curTotal.g,all:window._curTotal.all
@@ -483,6 +486,7 @@ function exportXlsx(){
   }
 }
 
+// ★ 이미지 저장: 2장으로 변경 (1장=위쪽, 2장=정품-외부보관 이후)
 async function exportImg(){
   recalc();
   const dateStr=(state.date||today);
@@ -493,7 +497,6 @@ async function exportImg(){
   window.scrollTo(0,0);
   await new Promise(r=>setTimeout(r,150));
 
-  // 전체 캔버스 한 번만 찍기
   const fullW=document.documentElement.scrollWidth;
   const fullH=document.documentElement.scrollHeight;
 
@@ -504,10 +507,7 @@ async function exportImg(){
       windowWidth:fullW, windowHeight:fullH,
     });
 
-    // 3구간 경계 계산 (px, scale 적용 전 기준)
     const header=document.querySelector('header');
-    const totbar=document.querySelector('.totbar');
-    const secBad=document.getElementById('sec-bad');
     const secCharge=document.getElementById('sec-charge');
     const secExt=document.getElementById('sec-ext');
     const secIn=document.getElementById('sec-in');
@@ -516,16 +516,14 @@ async function exportImg(){
     const bot=(el)=>el.getBoundingClientRect().bottom+window.scrollY;
 
     const zones=[
-      // 1장: header ~ 불량배터리 끝
-      {y1:top(header),      y2:bot(secBad),    name:'1_합계및불량'},
-      // 2장: 충전보관
-      {y1:top(secCharge),   y2:bot(secCharge), name:'2_충전보관'},
-      // 3장: 외부보관 ~ 입고기기
-      {y1:top(secExt),      y2:bot(secIn),     name:'3_외부및입고'},
+      // 1장: header ~ 충전보관 끝 (합계, 불량, 충전보관 포함)
+      {y1:top(header),    y2:bot(secCharge), name:'1_합계_불량_충전'},
+      // 2장: 외부보관 ~ 입고기기 끝
+      {y1:top(secExt),    y2:bot(secIn),     name:'2_외부_입고'},
     ];
 
-    const pad=16; // 상하 여백 px
-    const sc=2;   // html2canvas scale
+    const pad=16;
+    const sc=2;
 
     for(let i=0;i<zones.length;i++){
       const {y1,y2,name}=zones[i];
@@ -542,7 +540,7 @@ async function exportImg(){
       a.download=`배터리보고_${dateStr.replace(/-/g,'')}_${name}.png`;
       a.href=slice.toDataURL('image/png');
       a.click();
-      await new Promise(r=>setTimeout(r,300)); // 다운로드 간격
+      await new Promise(r=>setTimeout(r,300));
     }
   }finally{
     hideEls.forEach(el=>el.style.display='');
@@ -554,18 +552,15 @@ function exportPdf(){
   recalc();
   const dateStr=(state.date||today);
   const dLabel=`${parseInt(dateStr.slice(5,7))}월 ${parseInt(dateStr.slice(8,10))}일`;
-  // 집계
   let badA=0,badG=0; badRows.forEach(r=>{badA+=num('bad_'+r.key+'_a');badG+=num('bad_'+r.key+'_g');});
-  const chA=num('ch_1_a')+num('ch_2_a')+num('ch_done_a1')+num('ch_done_a2');
-  const chG=num('ch_3_g')+num('ch_done_g');
+  const chA=num('ch_1_a')+num('ch_2_a')+num('ch_done_a1')+num('ch_done_a2')+num('ch_old_a')+num('ch_wait_a');
+  const chG=num('ch_3_g')+num('ch_done_g')+num('ch_wait_g');
   let extA=0,extG=0; extNames.forEach((n,i)=>{extA+=num('ext_'+i+'_a');extG+=num('ext_'+i+'_g');});
   const goodA=chA+extA,goodG=chG+extG;
   const totA=badA+goodA,totG=badG+goodG,totAll=totA+totG;
 
   const td=(v)=>`<td class="r">${v}</td>`;
-  // 불량 행
   let badHtml=badRows.map(r=>`<tr><td>${r.name}</td>${td(num('bad_'+r.key+'_a'))}${td(num('bad_'+r.key+'_g'))}</tr>`).join('');
-  // 외부 행 (값 있는 사람만)
   let extHtml=extNames.map((n,i)=>{const a=num('ext_'+i+'_a'),gg=num('ext_'+i+'_g');return (a||gg)?`<tr><td>${n}</td>${td(a)}${td(gg)}</tr>`:'';}).join('');
 
   const lw=JSON.parse(localStorage.getItem('battery_lastweek')||'null');
@@ -608,8 +603,11 @@ function exportPdf(){
             <tr><td>충전 2)</td>${td(num('ch_2_a'))}${td('')}</tr>
             <tr><td>충전완료 1)</td>${td(num('ch_done_a1'))}${td('')}</tr>
             <tr><td>충전완료 2)</td>${td(num('ch_done_a2'))}${td('')}</tr>
+            <tr><td>구형(바닥)</td>${td(num('ch_old_a'))}${td('')}</tr>
+            <tr><td>충전대기</td>${td(num('ch_wait_a'))}${td('')}</tr>
             <tr><td>GF 충전 3)</td>${td('')}${td(num('ch_3_g'))}</tr>
             <tr><td>GF 충전완료</td>${td('')}${td(num('ch_done_g'))}</tr>
+            <tr><td>GF 충전대기</td>${td('')}${td(num('ch_wait_g'))}</tr>
             <tr class="sub"><td>소계</td>${td(chA)}${td(chG)}</tr>
           </table>
         </div>
@@ -637,5 +635,6 @@ function exportPdf(){
   window.print();
 }
 </script>
+<!-- 저장위치: https://github.com/bada43131-ai/dispatch/battery_report.html -->
 </body>
 </html>
